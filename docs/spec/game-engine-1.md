@@ -1,4 +1,4 @@
-# BYO20 — Game Engine Layer Spec v0.1.0
+# BYO20 — Game Engine Layer Spec v1.0
 
 > **Status:** Complete. All game engine subsystems designed and specced.
 
