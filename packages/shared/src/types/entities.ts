@@ -7,7 +7,7 @@ export const PositionSchema = z.object({
 })
 export type Position = z.infer<typeof PositionSchema>
 
-// All 15 D&D 5e conditions, as a Zod enum so the wire format is validated.
+// D&D 5.5e (2024) conditions, as a Zod enum so the wire format is validated.
 export const ConditionNameSchema = z.enum([
   'blinded',
   'charmed',
