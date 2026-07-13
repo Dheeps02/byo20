@@ -1,4 +1,4 @@
-# 006 — Vercel AI SDK as LLM Abstraction
+# 006 — Vercel AI SDK as LLM Abstraction v1.0
 
 ## Status
 Accepted

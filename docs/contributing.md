@@ -1,4 +1,4 @@
-# Contributing v0.1.0
+# Contributing v0.1
 
 ## Branch Strategy
 

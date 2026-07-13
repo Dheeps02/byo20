@@ -1,4 +1,4 @@
-# Setup v0.1.0
+# Setup v0.1
 
 ## Prerequisites
 

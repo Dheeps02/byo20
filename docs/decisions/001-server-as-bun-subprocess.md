@@ -1,4 +1,4 @@
-# 001 — Server as Bun Subprocess
+# 001 — Server as Bun Subprocess v1.0
 
 ## Status
 Accepted

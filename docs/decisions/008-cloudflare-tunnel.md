@@ -1,4 +1,4 @@
-# 008 — Cloudflare Tunnel for Multiplayer Connectivity
+# 008 — Cloudflare Tunnel for Multiplayer Connectivity v1.0
 
 ## Status
 Accepted

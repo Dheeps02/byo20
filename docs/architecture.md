@@ -1,4 +1,4 @@
-# BYO20 Architecture v0.1.0
+# BYO20 Architecture v0.1
 
 ## Overview
 
