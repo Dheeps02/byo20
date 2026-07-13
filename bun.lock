@@ -1,0 +1,85 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "byo20",
+    },
+    "apps/desktop": {
+      "name": "@byo20/desktop",
+      "version": "0.0.1",
+      "dependencies": {
+        "@byo20/shared": "workspace:*",
+        "@byo20/storage": "workspace:*",
+      },
+    },
+    "apps/server": {
+      "name": "@byo20/server",
+      "version": "0.0.1",
+      "dependencies": {
+        "@byo20/ai": "workspace:*",
+        "@byo20/engine": "workspace:*",
+        "@byo20/shared": "workspace:*",
+        "@byo20/storage": "workspace:*",
+        "@byo20/transport": "workspace:*",
+      },
+    },
+    "packages/ai": {
+      "name": "@byo20/ai",
+      "version": "0.0.1",
+      "dependencies": {
+        "@byo20/engine": "workspace:*",
+        "@byo20/shared": "workspace:*",
+        "@byo20/storage": "workspace:*",
+      },
+    },
+    "packages/core": {
+      "name": "@byo20/engine",
+      "version": "0.0.1",
+      "dependencies": {
+        "@byo20/shared": "workspace:*",
+        "@byo20/storage": "workspace:*",
+      },
+    },
+    "packages/network": {
+      "name": "@byo20/transport",
+      "version": "0.0.1",
+      "dependencies": {
+        "@byo20/engine": "workspace:*",
+        "@byo20/shared": "workspace:*",
+        "@byo20/storage": "workspace:*",
+      },
+    },
+    "packages/shared": {
+      "name": "@byo20/shared",
+      "version": "0.0.1",
+      "dependencies": {
+        "zod": "^3.25.0",
+      },
+    },
+    "packages/storage": {
+      "name": "@byo20/storage",
+      "version": "0.0.1",
+      "dependencies": {
+        "@byo20/shared": "workspace:*",
+      },
+    },
+  },
+  "packages": {
+    "@byo20/ai": ["@byo20/ai@workspace:packages/ai"],
+
+    "@byo20/desktop": ["@byo20/desktop@workspace:apps/desktop"],
+
+    "@byo20/engine": ["@byo20/engine@workspace:packages/core"],
+
+    "@byo20/server": ["@byo20/server@workspace:apps/server"],
+
+    "@byo20/shared": ["@byo20/shared@workspace:packages/shared"],
+
+    "@byo20/storage": ["@byo20/storage@workspace:packages/storage"],
+
+    "@byo20/transport": ["@byo20/transport@workspace:packages/network"],
+
+    "zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
+  }
+}
