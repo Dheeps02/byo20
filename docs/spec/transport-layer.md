@@ -1,4 +1,4 @@
-# BYO20 — Transport Layer Spec v1.0
+# BYO20 — Transport Layer Spec v1.0.0
 
 ## What This Layer Does
 

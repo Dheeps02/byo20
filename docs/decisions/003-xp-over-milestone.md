@@ -1,4 +1,4 @@
-# 003 — XP-Based Leveling Over Milestone Mode v1.0
+# 003 — XP-Based Leveling Over Milestone Mode v1.0.0
 
 ## Status
 Accepted

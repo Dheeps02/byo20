@@ -1,4 +1,4 @@
-# 005 — AGPL-3.0 License v1.0
+# 005 — AGPL-3.0 License v1.0.0
 
 ## Status
 Accepted

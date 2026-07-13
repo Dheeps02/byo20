@@ -1,4 +1,4 @@
-# BYO20 — Storage Layer Spec v1.0
+# BYO20 — Storage Layer Spec v1.0.0
 
 > **Note:** All schemas in this document are rough prototypes. They are subject to change during implementation as understanding of D&D 5.5e mechanics improves and edge cases are discovered.
 

@@ -1,4 +1,4 @@
-# 002 — Babylon.js over Three.js v1.0
+# 002 — Babylon.js over Three.js v1.0.0
 
 ## Status
 Accepted

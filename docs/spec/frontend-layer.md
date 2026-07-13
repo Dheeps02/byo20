@@ -1,4 +1,4 @@
-# BYO20 — Frontend Layer Spec v0.1
+# BYO20 — Frontend Layer Spec v0.1.0
 
 > **Status:** In progress. Covers decisions locked through session 1. Remaining components to be designed in session 2.
 

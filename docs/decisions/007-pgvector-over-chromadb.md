@@ -1,4 +1,4 @@
-# 007 — pgvector over ChromaDB v1.0
+# 007 — pgvector over ChromaDB v1.0.0
 
 ## Status
 Accepted

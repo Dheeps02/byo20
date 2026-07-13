@@ -1,4 +1,4 @@
-# BYO20 — AI Layer Spec v1.0
+# BYO20 — AI Layer Spec v1.0.0
 
 > **Status:** Complete. All AI layer subsystems designed and specced.
 

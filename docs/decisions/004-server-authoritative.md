@@ -1,4 +1,4 @@
-# 004 — Server-Authoritative Game State v1.0
+# 004 — Server-Authoritative Game State v1.0.0
 
 ## Status
 Accepted

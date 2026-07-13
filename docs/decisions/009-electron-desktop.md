@@ -1,4 +1,4 @@
-# 009 — Electron for Cross-Platform Desktop v1.0
+# 009 — Electron for Cross-Platform Desktop v1.0.0
 
 ## Status
 Accepted

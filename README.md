@@ -1,4 +1,4 @@
-# BYO20 v0.1
+# BYO20 v0.1.0
 
 Self-hosted, open-source D&D 5.5e (2024 ruleset) virtual tabletop with an AI Dungeon Master.
 
