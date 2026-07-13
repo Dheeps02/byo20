@@ -1,0 +1,11 @@
+{
+  "name": "@byo20/engine",
+  "version": "0.0.1",
+  "private": true,
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@byo20/shared": "workspace:*",
+    "@byo20/storage": "workspace:*"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "@byo20/desktop",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "@byo20/shared": "workspace:*",
+    "@byo20/storage": "workspace:*"
+  }
+}

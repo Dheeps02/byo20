@@ -1,0 +1,8 @@
+{
+  "name": "byo20",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}

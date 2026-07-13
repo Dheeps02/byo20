@@ -1,0 +1,12 @@
+{
+  "name": "@byo20/server",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "@byo20/shared": "workspace:*",
+    "@byo20/storage": "workspace:*",
+    "@byo20/engine": "workspace:*",
+    "@byo20/transport": "workspace:*",
+    "@byo20/ai": "workspace:*"
+  }
+}
