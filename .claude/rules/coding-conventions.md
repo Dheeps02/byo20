@@ -6,6 +6,11 @@
 - Prefix interfaces with `I`: `IRulesEngine`, `IGameStateStore`
 - No implicit returns on functions with meaningful output
 
+## Docstrings
+- Every function, type, interface, class, and enum gets a JSDoc `/** ... */` docstring — exported or not
+- One line is fine for obvious things; a short paragraph for anything with non-trivial behaviour or constraints
+- No multi-line blocks for simple getters or trivial wrappers
+
 ## Imports
 - Cross-package: always use package name (`@byo20/shared`), never relative paths
 - Within a package: relative paths only
