@@ -192,6 +192,7 @@ Every message — in both directions — uses the same JSON envelope:
 | `LOOT_GRANTED` | Items awarded |
 | `LEVEL_UP` | Character levelled up |
 | `REST_RESULT` | HP recovered, spell slots restored |
+| `NPC_LOCATION_UPDATE` | NPC position update during active-scene movement (World Sim tick) |
 
 ### Server → Client — Narrative
 
