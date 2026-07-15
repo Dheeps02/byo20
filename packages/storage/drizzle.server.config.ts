@@ -1,8 +1,10 @@
 import { defineConfig } from 'drizzle-kit'
 
-// Drizzle Kit config for byo20_server (DM/host side).
-// Used by the db:generate:server and db:migrate:server scripts only — not at runtime.
-// At runtime the app connects via createServerDb() in src/postgres/client.ts.
+/**
+ * Drizzle Kit config for byo20_server (DM/host side).
+ * Used by the db:generate:server and db:migrate:server scripts only — not at runtime.
+ * At runtime the app connects via createServerDb() in src/postgres/client.ts.
+ */
 export default defineConfig({
   schema: './src/postgres/schema/server',
   out: './migrations/server',

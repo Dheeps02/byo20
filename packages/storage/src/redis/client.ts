@@ -15,13 +15,15 @@
  */
 import Redis from 'ioredis'
 
-// Safety-net TTL for combat keys. If an encounter or turn ends without the server
-// calling the clear* helpers (e.g. crash mid-combat), these keys auto-expire rather
-// than leaking in Redis forever. 24h is generous enough to survive any realistic
-// session pause; real cleanup always happens via clearEncounterEffects / clearTurnResources.
+/** Safety-net TTL for combat keys. If an encounter or turn ends without the server
+ * calling the clear* helpers (e.g. crash mid-combat), these keys auto-expire rather
+ * than leaking in Redis forever. 24h is generous enough to survive any realistic
+ * session pause; real cleanup always happens via clearEncounterEffects / clearTurnResources. */
 const EFFECTS_TTL_SECONDS = 86_400
+/** Safety-net TTL for turn resource keys. Matches EFFECTS_TTL_SECONDS for the same reason. */
 const TURN_RESOURCES_TTL_SECONDS = 86_400
 
+/** Create an ioredis client. Connects lazily on first command. */
 export function createRedisClient(url: string): Redis {
   return new Redis(url, {
     lazyConnect: true,        // don't connect until first command
@@ -31,25 +33,31 @@ export function createRedisClient(url: string): Redis {
 
 // ── Key builders ──────────────────────────────────────────────────────────────
 
+/** Redis key for a campaign's villain agenda sorted set. */
 export const agendaKey = (campaignId: string) => `campaign:${campaignId}:agenda`
+/** Redis key for an encounter's active effects hash. */
 export const effectsKey = (encounterId: string) => `encounter:${encounterId}:effects`
+/** Redis key for a character's current-turn action resources hash. */
 export const turnResourcesKey = (characterId: string) => `character:${characterId}:turn_resources`
+/** Redis key for a campaign's world clock string. */
 export const worldClockKey = (campaignId: string) => `world:${campaignId}:clock`
 
 // ── World clock ───────────────────────────────────────────────────────────────
 
+/** Read the current in-game world clock (minutes elapsed). Returns 0 if unset. */
 export async function getWorldClock(redis: Redis, campaignId: string): Promise<number> {
   const val = await redis.get(worldClockKey(campaignId))
   return val ? parseInt(val, 10) : 0
 }
 
+/** Write the current in-game world clock (minutes elapsed). */
 export async function setWorldClock(redis: Redis, campaignId: string, clock: number): Promise<void> {
   await redis.set(worldClockKey(campaignId), clock)
 }
 
 // ── Agenda sorted set ─────────────────────────────────────────────────────────
 
-// Add a single agenda event to the sorted set.
+/** Add a single agenda event to the campaign's ZSET, scored by game-clock minutes. */
 export async function scheduleAgendaEvent(
   redis: Redis,
   campaignId: string,
@@ -59,7 +67,7 @@ export async function scheduleAgendaEvent(
   await redis.zadd(agendaKey(campaignId), firesAtClock, eventId)
 }
 
-// Return all event IDs whose fires_at_clock <= currentClock (i.e. due to fire).
+/** Return all event IDs whose fires_at_clock <= currentClock (due to fire). */
 export async function pollDueAgendaEvents(
   redis: Redis,
   campaignId: string,
@@ -68,10 +76,10 @@ export async function pollDueAgendaEvents(
   return redis.zrangebyscore(agendaKey(campaignId), 0, currentClock)
 }
 
-// Remove a single agenda event by ID after it has been successfully processed.
-// Prefer this over removeFiredAgendaEvents in the server tick loop — removes
-// one event at a time so a processing failure leaves unprocessed events in the
-// set for retry on the next tick.
+/** Remove a single agenda event by ID after it has been successfully processed.
+ * Prefer this over removeFiredAgendaEvents in the server tick loop — removes one
+ * event at a time so a processing failure leaves unprocessed events in the set for
+ * retry on the next tick. */
 export async function removeAgendaEvent(
   redis: Redis,
   campaignId: string,
@@ -80,9 +88,9 @@ export async function removeAgendaEvent(
   await redis.zrem(agendaKey(campaignId), eventId)
 }
 
-// Bulk-remove all events up to and including upToClock.
-// Only safe to call after every event in the range has been processed
-// successfully. Use removeAgendaEvent per-event if partial failure is possible.
+/** Bulk-remove all events up to and including upToClock. Only safe to call after
+ * every event in the range has been processed successfully. Use removeAgendaEvent
+ * per-event if partial failure is possible. */
 export async function removeFiredAgendaEvents(
   redis: Redis,
   campaignId: string,
@@ -91,7 +99,10 @@ export async function removeFiredAgendaEvents(
   await redis.zremrangebyscore(agendaKey(campaignId), 0, upToClock)
 }
 
-// Rebuild the sorted set from Postgres rows on server restart.
+/**
+ * Rebuild the agenda sorted set from Postgres rows on server restart.
+ * Clears the existing key first, then bulk-inserts all pending events.
+ */
 export async function rebuildAgendaFromDb(
   redis: Redis,
   campaignId: string,
@@ -107,6 +118,7 @@ export async function rebuildAgendaFromDb(
 
 // ── Active effects (per encounter, per entity) ────────────────────────────────
 
+/** Fetch the JSON-encoded active effect list for an entity in an encounter. Returns [] if none. */
 export async function getEntityEffects(
   redis: Redis,
   encounterId: string,
@@ -123,6 +135,7 @@ export async function getEntityEffects(
   }
 }
 
+/** Write the active effect list for an entity. Overwrites the previous value. */
 export async function setEntityEffects(
   redis: Redis,
   encounterId: string,
@@ -136,20 +149,22 @@ export async function setEntityEffects(
   await pipeline.exec()
 }
 
+/** Delete the entire effects hash for an encounter (called on encounter end). */
 export async function clearEncounterEffects(redis: Redis, encounterId: string): Promise<void> {
   await redis.del(effectsKey(encounterId))
 }
 
 // ── Turn resources (per character) ────────────────────────────────────────────
 
-// Returns used resources for this turn as {field: value} string pairs.
-// An empty object {} means all resources are available — the engine treats a
-// missing key as "at maximum". clearTurnResources deletes the hash rather than
-// resetting fields, which is equivalent to a full refresh by this convention.
+/** Fetch a character's current-turn action resource hash. Returns {} if not set.
+ * An empty object means all resources are available — the engine treats a missing
+ * key as "at maximum". clearTurnResources deletes the hash rather than resetting
+ * fields, which is equivalent to a full refresh by this convention. */
 export async function getTurnResources(redis: Redis, characterId: string): Promise<Record<string, string>> {
   return redis.hgetall(turnResourcesKey(characterId))
 }
 
+/** Write a character's current-turn action resources. Overwrites the previous value. */
 export async function setTurnResources(
   redis: Redis,
   characterId: string,
@@ -162,6 +177,7 @@ export async function setTurnResources(
   await pipeline.exec()
 }
 
+/** Delete a character's turn resources hash (called on turn end). */
 export async function clearTurnResources(redis: Redis, characterId: string): Promise<void> {
   await redis.del(turnResourcesKey(characterId))
 }

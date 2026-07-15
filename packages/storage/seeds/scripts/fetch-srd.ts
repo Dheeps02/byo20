@@ -26,6 +26,7 @@ const OUT_DIR = resolve(import.meta.dir, '../srd')
 const BASE_2024 = 'https://www.dnd5eapi.co/api/2024'
 const BASE_2014 = 'https://www.dnd5eapi.co/api/2014'
 
+/** Fetch all items at a list endpoint, then fetch each item's detail page in parallel. */
 async function fetchAll(baseUrl: string, endpoint: string): Promise<unknown[]> {
   const list = await fetch(`${baseUrl}/${endpoint}`).then(r => r.json()) as { results: Array<{ index: string }> }
   console.log(`  Fetching ${list.results.length} ${endpoint}...`)
@@ -36,6 +37,7 @@ async function fetchAll(baseUrl: string, endpoint: string): Promise<unknown[]> {
   )
 }
 
+/** JSON-serialize data and write it to a file in OUT_DIR. */
 async function write(filename: string, data: unknown[]): Promise<void> {
   await writeFile(resolve(OUT_DIR, filename), JSON.stringify(data, null, 2))
   console.log(`  ✓ ${filename} (${data.length} rows)`)
@@ -44,6 +46,7 @@ async function write(filename: string, data: unknown[]): Promise<void> {
 // ── Transformers ──────────────────────────────────────────────────────────────
 // Each transformer maps the API shape to our schema column names.
 
+/** Map a raw API spell object to our srd.spells column shape. */
 function transformSpell(s: Record<string, unknown>) {
   const comps = s.components as string[] ?? []
   const material = s.material as string | null ?? null
@@ -69,6 +72,7 @@ function transformSpell(s: Record<string, unknown>) {
   }
 }
 
+/** Map a raw API monster object to our srd.monsters column shape. */
 function transformMonster(m: Record<string, unknown>) {
   return {
     id: m.index,
@@ -105,6 +109,7 @@ function transformMonster(m: Record<string, unknown>) {
   }
 }
 
+/** Map a raw API species/race object to our srd.species column shape. */
 function transformSpecies(s: Record<string, unknown>) {
   return {
     id: s.index,
@@ -116,6 +121,7 @@ function transformSpecies(s: Record<string, unknown>) {
   }
 }
 
+/** Map a raw API background object to our srd.backgrounds column shape. */
 function transformBackground(b: Record<string, unknown>) {
   return {
     id: b.index,
@@ -130,6 +136,7 @@ function transformBackground(b: Record<string, unknown>) {
   }
 }
 
+/** Map a raw API class object to our srd.classes column shape. */
 function transformClass(c: Record<string, unknown>) {
   return {
     id: c.index,
@@ -146,6 +153,7 @@ function transformClass(c: Record<string, unknown>) {
   }
 }
 
+/** Map a raw API subclass object to our srd.subclasses column shape. */
 function transformSubclass(s: Record<string, unknown>) {
   return {
     id: s.index,
@@ -157,6 +165,7 @@ function transformSubclass(s: Record<string, unknown>) {
   }
 }
 
+/** Map a raw API feat object to our srd.feats column shape. */
 function transformFeat(f: Record<string, unknown>) {
   return {
     id: f.index,
@@ -169,6 +178,7 @@ function transformFeat(f: Record<string, unknown>) {
   }
 }
 
+/** Map a raw API equipment object to our srd.items column shape. */
 function transformItem(i: Record<string, unknown>) {
   return {
     id: i.index,
@@ -181,6 +191,7 @@ function transformItem(i: Record<string, unknown>) {
   }
 }
 
+/** Map a raw API magic item object to our srd.magic_items column shape. */
 function transformMagicItem(i: Record<string, unknown>) {
   return {
     id: i.index,
@@ -195,6 +206,7 @@ function transformMagicItem(i: Record<string, unknown>) {
   }
 }
 
+/** Map a raw API condition object to our srd.conditions column shape. */
 function transformCondition(c: Record<string, unknown>) {
   return {
     id: c.index,
@@ -204,6 +216,7 @@ function transformCondition(c: Record<string, unknown>) {
   }
 }
 
+/** Map a raw API weapon-property object to our srd.weapon_masteries column shape. */
 function transformWeaponMastery(w: Record<string, unknown>) {
   return {
     id: w.index,
@@ -216,6 +229,7 @@ function transformWeaponMastery(w: Record<string, unknown>) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
+/** Fetch all SRD entities, apply patches, and write JSON seed files to seeds/srd/. */
 async function main() {
   console.log('Fetching SRD data from dnd5eapi.co...\n')
 

@@ -20,9 +20,12 @@ import { ruleset_version } from './schema/local/srd'
 const SERVER_MIGRATIONS = resolve(import.meta.dir, '../../migrations/server')
 const LOCAL_MIGRATIONS = resolve(import.meta.dir, '../../migrations/local')
 
+/** Drizzle client + raw postgres.js connection for byo20_server. */
 export type ServerDb = Awaited<ReturnType<typeof createServerDb>>
+/** Drizzle client + raw postgres.js connection for byo20_local. */
 export type LocalDb = Awaited<ReturnType<typeof createLocalDb>>
 
+/** Connect to byo20_server, run pending migrations, and return the Drizzle client. Max 10 connections. */
 export async function createServerDb(url: string) {
   const sql = postgres(url, { max: 10 })
   const db = drizzle(sql, { schema: serverSchema })
@@ -30,6 +33,7 @@ export async function createServerDb(url: string) {
   return { db, sql }
 }
 
+/** Connect to byo20_local, run pending migrations, and return the Drizzle client. Max 5 connections. */
 export async function createLocalDb(url: string) {
   const sql = postgres(url, { max: 5 })
   const db = drizzle(sql, { schema: localSchema })
@@ -37,8 +41,10 @@ export async function createLocalDb(url: string) {
   return { db, sql }
 }
 
-// Hard fail if the seeded ruleset doesn't match what the engine declares.
-// Mismatch means the app binary and the DB data are out of sync — not recoverable at runtime.
+/**
+ * Assert that the seeded ruleset matches what the engine declares.
+ * Hard-fails on mismatch — binary and DB data are out of sync, not recoverable at runtime.
+ */
 export async function checkRulesetVersion(
   localDb: LocalDb['db'],
   expectedRulesetId: string,

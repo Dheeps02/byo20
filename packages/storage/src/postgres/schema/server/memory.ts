@@ -14,11 +14,14 @@ import { event_log } from './log'
 import { quests } from './world'
 import { vector } from '../vector-type'
 
+/** Drizzle schema handle for the `memory` Postgres schema. */
 export const memory = pgSchema('memory')
 
-// NPC semantic memory — injected into NPC specialist context.
-// Decay is computed using created_at_clock vs. current world_clock.
-// Significance = true skips decay entirely (major plot beats, betrayals).
+/**
+ * NPC semantic memory — injected into NPC specialist context.
+ * Decay is computed using created_at_clock vs. current world_clock.
+ * Significance = true skips decay entirely (major plot beats, betrayals).
+ */
 export const npc_memories = memory.table('npc_memories', {
   id: uuid('id').primaryKey().defaultRandom(),
   npc_id: uuid('npc_id').notNull().references(() => npcs.id),
@@ -30,8 +33,10 @@ export const npc_memories = memory.table('npc_memories', {
   created_at_clock: integer('created_at_clock').notNull(), // world-clock minutes at creation
 })
 
-// Faction semantic memory — injected into faction/world context.
-// rep_delta tracks reputation change caused by this event for drift computation.
+/**
+ * Faction semantic memory — injected into faction/world context.
+ * rep_delta tracks reputation change caused by this event for drift computation.
+ */
 export const faction_events = memory.table('faction_events', {
   id: uuid('id').primaryKey().defaultRandom(),
   faction_id: uuid('faction_id').notNull().references(() => factions.id),

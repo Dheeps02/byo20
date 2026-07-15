@@ -13,10 +13,12 @@
  */
 import { randomUUID } from 'crypto'
 
+/** Recursive partial — every property at any depth is optional. Used to type factory overrides. */
 type DeepPartial<T> = { [K in keyof T]?: T[K] }
 
 // ── Campaigns ─────────────────────────────────────────────────────────────────
 
+/** Build a minimal valid campaign row. Override any field via the overrides partial. */
 export function campaignFactory(overrides: DeepPartial<Record<string, unknown>> = {}) {
   return {
     id: randomUUID(),
@@ -45,6 +47,7 @@ export function campaignFactory(overrides: DeepPartial<Record<string, unknown>> 
 
 // ── Characters ────────────────────────────────────────────────────────────────
 
+/** Build a minimal valid character row. Override any field via the overrides partial. */
 export function characterFactory(overrides: DeepPartial<Record<string, unknown>> = {}) {
   return {
     id: randomUUID(),
@@ -66,6 +69,7 @@ export function characterFactory(overrides: DeepPartial<Record<string, unknown>>
 
 // ── Character campaign state ───────────────────────────────────────────────────
 
+/** Build a minimal valid character_campaign_state row linked to characterId and campaignId. */
 export function characterCampaignStateFactory(
   characterId: string,
   campaignId: string,
@@ -105,6 +109,7 @@ export function characterCampaignStateFactory(
 
 // ── NPCs ──────────────────────────────────────────────────────────────────────
 
+/** Build a minimal valid NPC row linked to campaignId. */
 export function npcFactory(campaignId: string, overrides: DeepPartial<Record<string, unknown>> = {}) {
   return {
     id: randomUUID(),
@@ -142,6 +147,7 @@ export function npcFactory(campaignId: string, overrides: DeepPartial<Record<str
 
 // ── Factions ──────────────────────────────────────────────────────────────────
 
+/** Build a minimal valid faction row linked to campaignId. */
 export function factionFactory(campaignId: string, overrides: DeepPartial<Record<string, unknown>> = {}) {
   return {
     id: randomUUID(),
@@ -158,6 +164,7 @@ export function factionFactory(campaignId: string, overrides: DeepPartial<Record
 
 // ── Encounters ────────────────────────────────────────────────────────────────
 
+/** Build a minimal valid encounter row linked to campaignId. */
 export function encounterFactory(campaignId: string, overrides: DeepPartial<Record<string, unknown>> = {}) {
   return {
     id: randomUUID(),
@@ -172,6 +179,7 @@ export function encounterFactory(campaignId: string, overrides: DeepPartial<Reco
 
 // ── Sessions ──────────────────────────────────────────────────────────────────
 
+/** Build a minimal valid session row linked to campaignId. */
 export function sessionFactory(campaignId: string, overrides: DeepPartial<Record<string, unknown>> = {}) {
   return {
     id: randomUUID(),
@@ -185,6 +193,7 @@ export function sessionFactory(campaignId: string, overrides: DeepPartial<Record
 
 // ── Quests ────────────────────────────────────────────────────────────────────
 
+/** Build a minimal valid quest row linked to campaignId, with a single-node DAG. */
 export function questFactory(campaignId: string, overrides: DeepPartial<Record<string, unknown>> = {}) {
   return {
     id: randomUUID(),

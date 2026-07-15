@@ -8,9 +8,10 @@
 import { boolean, integer, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 import { campaigns } from './game'
 
+/** Drizzle schema handle for the `combat` Postgres schema. */
 export const combat = pgSchema('combat')
 
-// One row per combat encounter. Supports parallel encounters for split parties.
+/** One row per combat encounter. Supports parallel encounters for split parties. */
 export const encounters = combat.table('encounters', {
   id: uuid('id').primaryKey().defaultRandom(),
   campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
@@ -20,7 +21,7 @@ export const encounters = combat.table('encounters', {
   ended_at: timestamp('ended_at', { withTimezone: true }),
 })
 
-// One row per combatant in an encounter (player, NPC, or AI player).
+/** One row per combatant in an encounter (player, NPC, or AI player). */
 export const initiative_entries = combat.table('initiative_entries', {
   id: uuid('id').primaryKey().defaultRandom(),
   encounter_id: uuid('encounter_id').notNull().references(() => encounters.id),

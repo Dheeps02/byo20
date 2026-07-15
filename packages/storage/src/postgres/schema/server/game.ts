@@ -7,9 +7,10 @@
  */
 import { boolean, integer, jsonb, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
+/** Drizzle schema handle for the `game` Postgres schema. */
 export const game = pgSchema('game')
 
-// The campaign world: story, DM settings, AI config, world gen state.
+/** The campaign world: story, DM settings, AI config, and world gen state. */
 export const campaigns = game.table('campaigns', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
@@ -33,8 +34,10 @@ export const campaigns = game.table('campaigns', {
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-// Character identity — portable across campaigns.
-// Note: created_at added here (not in spec for game.characters but present in local.characters — likely spec oversight).
+/**
+ * Character identity — portable across campaigns.
+ * Note: created_at added here (not in spec for game.characters but present in local.characters — likely spec oversight).
+ */
 export const characters = game.table('characters', {
   id: uuid('id').primaryKey().defaultRandom(),
   owner_user_id: text('owner_user_id').notNull(),
@@ -51,8 +54,10 @@ export const characters = game.table('characters', {
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-// How a character exists within one specific campaign.
-// A character can be in multiple campaigns — one row per campaign membership.
+/**
+ * How a character exists within one specific campaign.
+ * A character can be in multiple campaigns — one row per campaign membership.
+ */
 export const character_campaign_state = game.table('character_campaign_state', {
   id: uuid('id').primaryKey().defaultRandom(),
   character_id: uuid('character_id').notNull().references(() => characters.id),
@@ -83,7 +88,7 @@ export const character_campaign_state = game.table('character_campaign_state', {
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-// One row per class the character has levels in. A Fighter 3 / Wizard 2 = two rows.
+/** One row per class the character has levels in. A Fighter 3 / Wizard 2 = two rows. */
 export const character_classes = game.table('character_classes', {
   id: uuid('id').primaryKey().defaultRandom(),
   character_campaign_state_id: uuid('character_campaign_state_id')

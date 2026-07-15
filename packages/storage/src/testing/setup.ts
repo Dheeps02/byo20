@@ -22,15 +22,18 @@ import EmbeddedPostgres from 'embedded-postgres'
 import { createServerDb, createLocalDb } from '../postgres/client'
 import type { ServerDb, LocalDb } from '../postgres/client'
 
+/** Postgres user created for the embedded test instance. */
 const TEST_USER = 'byo20_test'
+/** Postgres password for the embedded test instance. */
 const TEST_PASS = 'byo20_test'
 
+/** Derive a per-worker RAM-backed directory from the process PID. */
 function testDir(): string {
   return `/dev/shm/byo20-test-${process.pid}`
 }
 
-// Ask the OS for a free port by binding on 0, reading back the assigned port,
-// then releasing it. Tiny TOCTOU window is acceptable in test-only context.
+/** Ask the OS for a free port by binding on 0, reading back the assigned port,
+ * then releasing it. Tiny TOCTOU window is acceptable in test-only context. */
 async function getFreePort(): Promise<number> {
   return new Promise((resolve, reject) => {
     const srv = createServer()
@@ -42,14 +45,22 @@ async function getFreePort(): Promise<number> {
   })
 }
 
-// Symbol sentinel for withRollback — cannot be accidentally matched by an error
-// thrown from inside fn itself (unlike a string message).
+/** Symbol sentinel for withRollback — cannot be accidentally matched by an error
+ * thrown from inside fn itself (unlike a string message). */
 const ROLLBACK = Symbol('rollback')
 
+/** Module-level embedded Postgres instance, shared across all tests in this worker. */
 let pg: EmbeddedPostgres | null = null
+/** Cached server DB connection for this worker. */
 let _serverDb: ServerDb | null = null
+/** Cached local DB connection for this worker. */
 let _localDb: LocalDb | null = null
 
+/**
+ * Start an embedded Postgres instance, create both app databases, enable pgvector,
+ * run all migrations, and return the Drizzle clients.
+ * Call once in beforeAll for each test worker.
+ */
 export async function setupTestDb(): Promise<{ serverDb: ServerDb; localDb: LocalDb }> {
   // Remove any stale directory left by a previous crash before initialising.
   // force: true makes this a no-op if the path doesn't exist.
@@ -92,6 +103,10 @@ export async function setupTestDb(): Promise<{ serverDb: ServerDb; localDb: Loca
   return { serverDb: _serverDb, localDb: _localDb }
 }
 
+/**
+ * Close all DB connections and stop the embedded Postgres instance.
+ * Call in afterAll for each test worker.
+ */
 export async function teardownTestDb(): Promise<void> {
   if (_serverDb) await _serverDb.sql.end()
   if (_localDb) await _localDb.sql.end()
@@ -104,8 +119,11 @@ export async function teardownTestDb(): Promise<void> {
   _localDb = null
 }
 
-// Call inside beforeEach for tests that mutate data.
-// Wraps the test in a transaction that always rolls back — no cleanup needed.
+/**
+ * Wrap a mutating test body in a transaction that always rolls back.
+ * Use inside beforeEach — no manual cleanup needed between tests.
+ * The rollback is forced by throwing a sentinel error after fn completes.
+ */
 export async function withRollback<T>(
   db: ServerDb['db'] | LocalDb['db'],
   fn: (tx: Parameters<Parameters<typeof db.transaction>[0]>[0]) => Promise<T>,

@@ -16,7 +16,10 @@ import {
 import { npcs, factions, quests, world_zones } from '../src/postgres/schema/server/world'
 import { sessions } from '../src/postgres/schema/server/log'
 
-// Fixed UUIDs for the dev seed so re-runs produce consistent references.
+/**
+ * Fixed UUIDs for the dev seed so re-runs produce consistent cross-table references.
+ * Override individual fields when inserting if you need variation.
+ */
 const DEV = {
   campaignId:  '00000000-0000-0000-0000-000000000001',
   char1Id:     '00000000-0000-0000-0000-000000000010',
@@ -29,6 +32,7 @@ const DEV = {
   zoneId:      '00000000-0000-0000-0000-000000000060',
 }
 
+/** Connect to byo20_server and insert a sample campaign, characters, NPC, faction, quest, and session. */
 async function main() {
   const serverUrl = process.env.SERVER_DB_URL
   if (!serverUrl) {

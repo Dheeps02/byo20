@@ -11,10 +11,13 @@
  * combat mechanics, so correctness here matters.
  */
 
+/** A single SRD spell row as returned by the fetch script transformer. */
 type SpellRow = Record<string, unknown>
 
-// Spells that use Emanation AoE in 2024 (centered on caster, moves with them).
-// The 2014 API returns these as 'sphere' — we patch them to 'emanation'.
+/**
+ * Spells that use Emanation AoE in 2024 (centered on caster, moves with them).
+ * The 2014 API returns these as 'sphere' — we patch them to 'emanation'.
+ */
 const EMANATION_SPELLS = new Set([
   'blade-ward',
   'death-ward',
@@ -29,8 +32,10 @@ const EMANATION_SPELLS = new Set([
   'warding-bond',
 ])
 
-// Conjure spells redesigned in 2024 — new description replaces the old
-// "roll on a table and the DM picks the creature" mechanic.
+/**
+ * Conjure spells redesigned in 2024 — new description replaces the old
+ * "roll on a table and the DM picks the creature" mechanic.
+ */
 const CONJURE_PATCHES: Record<string, Partial<SpellRow>> = {
   'conjure-animals': {
     description: [
@@ -70,6 +75,10 @@ const CONJURE_PATCHES: Record<string, Partial<SpellRow>> = {
   },
 }
 
+/**
+ * Apply all 2024 patches to the fetched spell list.
+ * Returns a new array — does not mutate the input.
+ */
 export function applySpellPatches(spells: SpellRow[]): SpellRow[] {
   return spells.map(spell => {
     const id = spell.id as string

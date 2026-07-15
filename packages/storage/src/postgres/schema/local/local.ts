@@ -7,8 +7,10 @@
  */
 import { integer, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
+/** Drizzle schema handle for the `local` Postgres schema. */
 export const local = pgSchema('local')
 
+/** Characters created on this machine before joining a hosted campaign. */
 export const local_characters = local.table('characters', {
   id: uuid('id').primaryKey().defaultRandom(),
   owner_user_id: text('owner_user_id').notNull(),

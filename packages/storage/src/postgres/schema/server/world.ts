@@ -7,8 +7,10 @@
 import { boolean, integer, jsonb, pgSchema, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core'
 import { campaigns } from './game'
 
+/** Drizzle schema handle for the `world` Postgres schema. */
 export const world = pgSchema('world')
 
+/** NPC identity and stat block for a campaign. faction_id is a plain uuid — FK deferred below to break the circular reference with factions. */
 export const npcs = world.table('npcs', {
   id: uuid('id').primaryKey().defaultRandom(),
   campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
@@ -41,8 +43,10 @@ export const npcs = world.table('npcs', {
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-// Factions reference their leader NPC — both tables reference each other.
-// Drizzle handles this with a deferred FK; faction_id on npcs is a plain uuid above.
+/**
+ * Factions reference their leader NPC — both tables reference each other.
+ * Drizzle handles this with a deferred FK; faction_id on npcs is a plain uuid above.
+ */
 export const factions = world.table('factions', {
   id: uuid('id').primaryKey().defaultRandom(),
   campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
@@ -54,7 +58,7 @@ export const factions = world.table('factions', {
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-// Per-character standing with each faction.
+/** Per-character standing with each faction. reputation ranges -100 to 100. */
 export const character_faction_reputation = world.table('character_faction_reputation', {
   id: uuid('id').primaryKey().defaultRandom(),
   character_campaign_state_id: uuid('character_campaign_state_id').notNull(),
@@ -64,7 +68,7 @@ export const character_faction_reputation = world.table('character_faction_reput
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-// Faction-to-faction relationships. Enforce faction_a_id < faction_b_id at the app layer.
+/** Faction-to-faction relationships. Enforce faction_a_id < faction_b_id at the app layer. */
 export const faction_relationships = world.table('faction_relationships', {
   id: uuid('id').primaryKey().defaultRandom(),
   faction_a_id: uuid('faction_a_id').notNull().references(() => factions.id),
@@ -73,7 +77,7 @@ export const faction_relationships = world.table('faction_relationships', {
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-// Party-wide quest log. Nodes are a DAG stored as JSONB.
+/** Party-wide quest log. Nodes are a DAG stored as JSONB. */
 export const quests = world.table('quests', {
   id: uuid('id').primaryKey().defaultRandom(),
   campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
@@ -87,8 +91,10 @@ export const quests = world.table('quests', {
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-// Hex grid. One row per hex. Surrogate UUID PK used as FK target — avoids 3-column composite FKs.
-// (campaign_id, hex_q, hex_r) is a UNIQUE constraint, not the PK.
+/**
+ * Hex grid. One row per hex. Surrogate UUID PK used as FK target — avoids 3-column composite FKs.
+ * (campaign_id, hex_q, hex_r) is a UNIQUE constraint, not the PK.
+ */
 export const world_zones = world.table('world_zones', {
   id: uuid('id').primaryKey().defaultRandom(),
   campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
@@ -103,8 +109,10 @@ export const world_zones = world.table('world_zones', {
   unique('world_zones_campaign_hex_unique').on(t.campaign_id, t.hex_q, t.hex_r),
 ])
 
-// Villain / world events scheduled at campaign gen. Fires on world_clock_tick.
-// Also tracked in Redis as a sorted set for fast O(log N) lookup by clock value.
+/**
+ * Villain / world events scheduled at campaign gen. Fires on world_clock_tick.
+ * Also tracked in Redis as a sorted set for fast O(log N) lookup by clock value.
+ */
 export const campaign_agenda = world.table('campaign_agenda', {
   id: uuid('id').primaryKey().defaultRandom(),
   campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
@@ -117,7 +125,7 @@ export const campaign_agenda = world.table('campaign_agenda', {
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-// Required narrative gates and major story beats.
+/** Required narrative gates and major story beats. */
 export const campaign_milestones = world.table('campaign_milestones', {
   id: uuid('id').primaryKey().defaultRandom(),
   campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
@@ -131,7 +139,7 @@ export const campaign_milestones = world.table('campaign_milestones', {
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-// Pre-generated narration strings. Refreshed in background on milestone completion.
+/** Pre-generated narration strings. Refreshed in background on milestone completion. */
 export const narration_pool = world.table('narration_pool', {
   id: uuid('id').primaryKey().defaultRandom(),
   campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
@@ -140,8 +148,10 @@ export const narration_pool = world.table('narration_pool', {
   generated_at: timestamp('generated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-// Rolling window of full campaign state snapshots. Max 10 per campaign.
-// Mutable game state only — append-only logs are never snapshotted.
+/**
+ * Rolling window of full campaign state snapshots. Max 10 per campaign.
+ * Mutable game state only — append-only logs are never snapshotted.
+ */
 export const campaign_snapshots = world.table('campaign_snapshots', {
   id: uuid('id').primaryKey().defaultRandom(),
   campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),

@@ -16,9 +16,10 @@ import { campaigns } from './game'
 import { encounters } from './combat'
 import { vector } from '../vector-type'
 
+/** Drizzle schema handle for the `log` Postgres schema. */
 export const log = pgSchema('log')
 
-// Controlled vocabulary for significant world events. New types require a migration.
+/** Controlled vocabulary for significant world events. New types require a migration. */
 export const event_type_enum = pgEnum('event_type', [
   'encounter_started',
   'encounter_ended',
@@ -52,7 +53,7 @@ export const event_type_enum = pgEnum('event_type', [
   'narration_pool_refreshed',
 ])
 
-// Vocabulary for combat actions — separate from event_type.
+/** Vocabulary for combat actions — separate from event_type. */
 export const combat_action_type_enum = pgEnum('combat_action_type', [
   'attack',
   'cast_spell',
@@ -71,7 +72,7 @@ export const combat_action_type_enum = pgEnum('combat_action_type', [
   'death_save',
 ])
 
-// Individual sessions / sittings. Append-only.
+/** Individual play sessions / sittings. Append-only. */
 export const sessions = log.table('sessions', {
   id: uuid('id').primaryKey().defaultRandom(),
   campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
@@ -80,7 +81,7 @@ export const sessions = log.table('sessions', {
   summary: text('summary'),                                  // AI-generated end-of-session summary
 })
 
-// Every significant world event. Append-only. Has vector embedding for AI semantic recall.
+/** Every significant world event. Append-only. Has vector embedding for AI semantic recall. */
 export const event_log = log.table('event_log', {
   id: uuid('id').primaryKey().defaultRandom(),
   campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
@@ -92,7 +93,7 @@ export const event_log = log.table('event_log', {
   timestamp: timestamp('timestamp', { withTimezone: true }).notNull().defaultNow(),
 })
 
-// Every combat action taken. Append-only.
+/** Every combat action taken. Append-only. */
 export const combat_log = log.table('combat_log', {
   id: uuid('id').primaryKey().defaultRandom(),
   encounter_id: uuid('encounter_id').notNull().references(() => encounters.id),
@@ -107,7 +108,7 @@ export const combat_log = log.table('combat_log', {
   timestamp: timestamp('timestamp', { withTimezone: true }).notNull().defaultNow(),
 })
 
-// Raw NPC dialogue history. Append-only. Group conversations only (no whispers pre-v1.0).
+/** Raw NPC dialogue history. Append-only. Group conversations only (no whispers pre-v1.0). */
 export const npc_dialogue_log = log.table('npc_dialogue_log', {
   id: uuid('id').primaryKey().defaultRandom(),
   campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
@@ -119,7 +120,7 @@ export const npc_dialogue_log = log.table('npc_dialogue_log', {
   timestamp: timestamp('timestamp', { withTimezone: true }).notNull().defaultNow(),
 })
 
-// OOC party chat. Append-only. Persisted across sessions.
+/** OOC party chat. Append-only. Persisted across sessions. */
 export const party_chat_log = log.table('party_chat_log', {
   id: uuid('id').primaryKey().defaultRandom(),
   campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),

@@ -20,11 +20,16 @@ import {
 
 const SRD_DIR = resolve(import.meta.dir, 'srd')
 
+/** Read and JSON-parse a seed file from seeds/srd/. */
 async function readJson<T>(filename: string): Promise<T[]> {
   const raw = await readFile(resolve(SRD_DIR, filename), 'utf8')
   return JSON.parse(raw) as T[]
 }
 
+/**
+ * Insert rows into a Drizzle table in batches of 500, using ON CONFLICT DO NOTHING.
+ * Logs a skip message if the rows array is empty.
+ */
 async function seedTable<T extends Record<string, unknown>>(
   db: Awaited<ReturnType<typeof createLocalDb>>['db'],
   table: { $inferInsert: T } & Parameters<typeof db.insert>[0],
@@ -45,6 +50,7 @@ async function seedTable<T extends Record<string, unknown>>(
   console.log(`  ✓ ${label}: ${inserted} rows`)
 }
 
+/** Read all SRD JSON files, connect to byo20_local, and upsert every table. */
 async function main() {
   const url = process.env.LOCAL_DB_URL
   if (!url) {

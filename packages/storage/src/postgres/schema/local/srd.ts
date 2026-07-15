@@ -10,8 +10,10 @@
  */
 import { boolean, integer, jsonb, numeric, pgSchema, text } from 'drizzle-orm/pg-core'
 
+/** Drizzle schema handle for the `srd` Postgres schema. */
 export const srd = pgSchema('srd')
 
+/** SRD playable species (races). Seeded from dnd5eapi.co/api/2024/races. */
 export const species = srd.table('species', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -21,6 +23,7 @@ export const species = srd.table('species', {
   traits: jsonb('traits'),
 })
 
+/** SRD character backgrounds. Seeded from dnd5eapi.co/api/2024/backgrounds. */
 export const backgrounds = srd.table('backgrounds', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -33,6 +36,7 @@ export const backgrounds = srd.table('backgrounds', {
   equipment: jsonb('equipment'),
 })
 
+/** SRD character classes. Seeded from dnd5eapi.co/api/2024/classes. */
 export const classes = srd.table('classes', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -47,6 +51,7 @@ export const classes = srd.table('classes', {
   features_table: jsonb('features_table'),      // what you get at each level
 })
 
+/** SRD subclasses. Seeded from dnd5eapi.co/api/2024/subclasses. References srd.classes. */
 export const subclasses = srd.table('subclasses', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -56,6 +61,7 @@ export const subclasses = srd.table('subclasses', {
   features: jsonb('features'),
 })
 
+/** SRD feats. Seeded from dnd5eapi.co/api/2024/feats. */
 export const feats = srd.table('feats', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -66,6 +72,7 @@ export const feats = srd.table('feats', {
   benefits: jsonb('benefits'),
 })
 
+/** SRD spells. Seeded from dnd5eapi.co/api/2014/spells (2014 endpoint — 2024 is incomplete). */
 export const spells = srd.table('spells', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -85,6 +92,7 @@ export const spells = srd.table('spells', {
   effects: jsonb('effects'),                    // ordered array of effect primitives
 })
 
+/** SRD monsters. Seeded from dnd5eapi.co/api/2024/monsters. */
 export const monsters = srd.table('monsters', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -119,6 +127,7 @@ export const monsters = srd.table('monsters', {
   treasure_type: text('treasure_type').default('none'), // individual | hoard | none
 })
 
+/** SRD equipment and gear. Seeded from dnd5eapi.co/api/2024/equipment. */
 export const srd_items = srd.table('items', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -129,6 +138,7 @@ export const srd_items = srd.table('items', {
   properties: jsonb('properties'),
 })
 
+/** SRD magic items. Seeded from dnd5eapi.co/api/2024/magic-items. */
 export const magic_items = srd.table('magic_items', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -141,6 +151,7 @@ export const magic_items = srd.table('magic_items', {
   properties: jsonb('properties'),
 })
 
+/** SRD conditions (blinded, charmed, etc.). Seeded from dnd5eapi.co/api/2024/conditions. */
 export const conditions = srd.table('conditions', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -148,6 +159,7 @@ export const conditions = srd.table('conditions', {
   effects: jsonb('effects'),
 })
 
+/** SRD weapon mastery properties. Seeded from dnd5eapi.co/api/2024/weapon-properties. */
 export const weapon_masteries = srd.table('weapon_masteries', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -156,13 +168,13 @@ export const weapon_masteries = srd.table('weapon_masteries', {
   effect: text('effect'),
 })
 
-// XP-to-level lookup. 20 rows, hand-written in the seed script.
+/** XP-to-level lookup. 20 rows, hand-written in the seed script. */
 export const xp_thresholds = srd.table('xp_thresholds', {
   level: integer('level').primaryKey(),         // 1–20
   xp_required: integer('xp_required').notNull(),
 })
 
-// BYO20's loot tables (not DMG content — custom equivalent).
+/** BYO20's custom loot tables (not DMG content). Hand-written in seeds/srd/loot_tables.json. */
 export const loot_tables = srd.table('loot_tables', {
   id: text('id').primaryKey(),
   treasure_type: text('treasure_type').notNull(), // individual | hoard
@@ -173,7 +185,7 @@ export const loot_tables = srd.table('loot_tables', {
   item_count_range: jsonb('item_count_range'),
 })
 
-// Single-row table. Checked against IRulesEngine on every server startup.
+/** Single-row table. Checked against IRulesEngine on every server startup. Mismatch = hard fail. */
 export const ruleset_version = srd.table('ruleset_version', {
   ruleset_id: text('ruleset_id').primaryKey(),   // e.g. 'dnd-5.5e-2024'
   srd_version: text('srd_version').notNull(),    // e.g. '5.2.1'

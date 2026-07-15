@@ -11,9 +11,10 @@
 import { boolean, integer, jsonb, numeric, pgSchema, text, uuid } from 'drizzle-orm/pg-core'
 import { campaigns } from './game'
 
+/** Drizzle schema handle for the `items` Postgres schema. */
 export const items_schema = pgSchema('items')
 
-// Base item record — every item in the campaign world lives here.
+/** Base item record — every item in the campaign world lives here. */
 export const items = items_schema.table('items', {
   id: uuid('id').primaryKey().defaultRandom(),
   campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
@@ -29,7 +30,7 @@ export const items = items_schema.table('items', {
   quantity: integer('quantity').notNull().default(1),
 })
 
-// Chests, bags, crates — a location that items can be stored in.
+/** Chests, bags, crates — a location that items can be stored in. */
 export const containers = items_schema.table('containers', {
   id: uuid('id').primaryKey().defaultRandom(),
   campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
@@ -39,6 +40,7 @@ export const containers = items_schema.table('containers', {
   owner_id: uuid('owner_id'),                       // null if owned by the world
 })
 
+/** Stat extension for melee weapons. PK is item_id (1:1 with items). */
 export const melee_item_stats = items_schema.table('melee_item_stats', {
   item_id: uuid('item_id').primaryKey().references(() => items.id),
   damage_die: text('damage_die').notNull(),          // e.g. '1d8'
@@ -46,6 +48,7 @@ export const melee_item_stats = items_schema.table('melee_item_stats', {
   properties: jsonb('properties'),                   // ["finesse", "versatile"]
 })
 
+/** Stat extension for ranged weapons. PK is item_id (1:1 with items). */
 export const ranged_item_stats = items_schema.table('ranged_item_stats', {
   item_id: uuid('item_id').primaryKey().references(() => items.id),
   damage_die: text('damage_die').notNull(),
@@ -55,6 +58,7 @@ export const ranged_item_stats = items_schema.table('ranged_item_stats', {
   ammo_type: text('ammo_type'),                       // arrow | bolt | dart etc
 })
 
+/** Stat extension for armor and shields. PK is item_id (1:1 with items). */
 export const armor_stats = items_schema.table('armor_stats', {
   item_id: uuid('item_id').primaryKey().references(() => items.id),
   ac: integer('ac').notNull(),
@@ -63,11 +67,13 @@ export const armor_stats = items_schema.table('armor_stats', {
   str_requirement: integer('str_requirement'),        // null if none
 })
 
+/** Stat extension for spell focus items. PK is item_id (1:1 with items). */
 export const spell_focus_stats = items_schema.table('spell_focus_stats', {
   item_id: uuid('item_id').primaryKey().references(() => items.id),
   focus_type: text('focus_type').notNull(),           // arcane | druidic | holy_symbol
 })
 
+/** Stat extension for consumable items (potions, scrolls, etc). PK is item_id (1:1 with items). */
 export const consumable_stats = items_schema.table('consumable_stats', {
   item_id: uuid('item_id').primaryKey().references(() => items.id),
   effect: jsonb('effect').notNull(),
@@ -76,6 +82,7 @@ export const consumable_stats = items_schema.table('consumable_stats', {
   recharge: text('recharge').notNull(),               // dawn | dusk | never
 })
 
+/** Stat extension for magic items. PK is item_id (1:1 with items). */
 export const magic_item_stats = items_schema.table('magic_item_stats', {
   item_id: uuid('item_id').primaryKey().references(() => items.id),
   custom_name: text('custom_name'),

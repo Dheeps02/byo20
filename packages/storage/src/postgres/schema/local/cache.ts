@@ -23,6 +23,7 @@ import {
 } from 'drizzle-orm/pg-core'
 import { vector } from '../vector-type'
 
+/** Drizzle schema handle for the `cache` Postgres schema. */
 export const cache = pgSchema('cache')
 
 // ---------------------------------------------------------------------------
@@ -30,6 +31,7 @@ export const cache = pgSchema('cache')
 // Server schema files import these helpers so column shapes stay in sync.
 // ---------------------------------------------------------------------------
 
+/** Shared column shape for character identity rows (game.characters and cache.characters). */
 export const characterColumns = {
   id: uuid('id').primaryKey(),
   owner_user_id: text('owner_user_id').notNull(),
@@ -46,6 +48,7 @@ export const characterColumns = {
   created_at: timestamp('created_at', { withTimezone: true }).notNull(),
 }
 
+/** Shared column shape for character campaign state rows. */
 export const characterCampaignStateColumns = {
   id: uuid('id').primaryKey(),
   character_id: uuid('character_id').notNull(),
@@ -76,6 +79,7 @@ export const characterCampaignStateColumns = {
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull(),
 }
 
+/** Shared column shape for character class rows. */
 export const characterClassColumns = {
   id: uuid('id').primaryKey(),
   character_campaign_state_id: uuid('character_campaign_state_id').notNull(),
@@ -85,6 +89,7 @@ export const characterClassColumns = {
   prepared_spells: text('prepared_spells').array(),
 }
 
+/** Shared column shape for item rows. */
 export const itemColumns = {
   id: uuid('id').primaryKey(),
   campaign_id: uuid('campaign_id').notNull(),
@@ -100,6 +105,7 @@ export const itemColumns = {
   quantity: integer('quantity').notNull(),
 }
 
+/** Shared column shape for encounter rows. */
 export const encounterColumns = {
   id: uuid('id').primaryKey(),
   campaign_id: uuid('campaign_id').notNull(),
@@ -109,6 +115,7 @@ export const encounterColumns = {
   ended_at: timestamp('ended_at', { withTimezone: true }),
 }
 
+/** Shared column shape for initiative entry rows. */
 export const initiativeEntryColumns = {
   id: uuid('id').primaryKey(),
   encounter_id: uuid('encounter_id').notNull(),
@@ -120,6 +127,7 @@ export const initiativeEntryColumns = {
   surprised: boolean('surprised').notNull(),
 }
 
+/** Shared column shape for event log rows. Uses TEXT for event_type — avoids enum dep on byo20_local. */
 export const eventLogColumns = {
   id: uuid('id').primaryKey(),
   campaign_id: uuid('campaign_id').notNull(),
@@ -131,6 +139,7 @@ export const eventLogColumns = {
   timestamp: timestamp('timestamp', { withTimezone: true }).notNull(),
 }
 
+/** Shared column shape for NPC rows. */
 export const npcColumns = {
   id: uuid('id').primaryKey(),
   campaign_id: uuid('campaign_id').notNull(),
@@ -163,6 +172,7 @@ export const npcColumns = {
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull(),
 }
 
+/** Shared column shape for faction rows. */
 export const factionColumns = {
   id: uuid('id').primaryKey(),
   campaign_id: uuid('campaign_id').notNull(),
@@ -174,6 +184,7 @@ export const factionColumns = {
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull(),
 }
 
+/** Shared column shape for character faction reputation rows. */
 export const factionReputationColumns = {
   id: uuid('id').primaryKey(),
   character_campaign_state_id: uuid('character_campaign_state_id').notNull(),
@@ -183,6 +194,7 @@ export const factionReputationColumns = {
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull(),
 }
 
+/** Shared column shape for quest rows. */
 export const questColumns = {
   id: uuid('id').primaryKey(),
   campaign_id: uuid('campaign_id').notNull(),
@@ -196,6 +208,7 @@ export const questColumns = {
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull(),
 }
 
+/** Shared column shape for session rows. */
 export const sessionColumns = {
   id: uuid('id').primaryKey(),
   campaign_id: uuid('campaign_id').notNull(),
@@ -204,6 +217,7 @@ export const sessionColumns = {
   summary: text('summary'),
 }
 
+/** Shared column shape for combat log rows. Uses TEXT for action_type — avoids enum dep on byo20_local. */
 export const combatLogColumns = {
   id: uuid('id').primaryKey(),
   encounter_id: uuid('encounter_id').notNull(),
@@ -218,6 +232,7 @@ export const combatLogColumns = {
   timestamp: timestamp('timestamp', { withTimezone: true }).notNull(),
 }
 
+/** Shared column shape for party chat log rows. */
 export const partyChatLogColumns = {
   id: uuid('id').primaryKey(),
   campaign_id: uuid('campaign_id').notNull(),
@@ -232,17 +247,31 @@ export const partyChatLogColumns = {
 // Each spreads its shared column helper so structure stays in sync with server.
 // ---------------------------------------------------------------------------
 
+/** Cached mirror of game.characters. */
 export const cache_characters = cache.table('characters', characterColumns)
+/** Cached mirror of game.character_campaign_state. */
 export const cache_character_campaign_state = cache.table('character_campaign_state', characterCampaignStateColumns)
+/** Cached mirror of game.character_classes. */
 export const cache_character_classes = cache.table('character_classes', characterClassColumns)
+/** Cached mirror of items.items. */
 export const cache_items = cache.table('items', itemColumns)
+/** Cached mirror of combat.encounters. */
 export const cache_encounters = cache.table('encounters', encounterColumns)
+/** Cached mirror of combat.initiative_entries. */
 export const cache_initiative_entries = cache.table('initiative_entries', initiativeEntryColumns)
+/** Cached mirror of log.event_log. */
 export const cache_event_log = cache.table('event_log', eventLogColumns)
+/** Cached mirror of world.npcs. */
 export const cache_npcs = cache.table('npcs', npcColumns)
+/** Cached mirror of world.factions. */
 export const cache_factions = cache.table('factions', factionColumns)
+/** Cached mirror of world.character_faction_reputation. */
 export const cache_character_faction_reputation = cache.table('character_faction_reputation', factionReputationColumns)
+/** Cached mirror of world.quests. */
 export const cache_quests = cache.table('quests', questColumns)
+/** Cached mirror of log.sessions. */
 export const cache_sessions = cache.table('sessions', sessionColumns)
+/** Cached mirror of log.combat_log. */
 export const cache_combat_log = cache.table('combat_log', combatLogColumns)
+/** Cached mirror of log.party_chat_log. */
 export const cache_party_chat_log = cache.table('party_chat_log', partyChatLogColumns)
