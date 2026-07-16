@@ -4,8 +4,8 @@
  * NPCs, factions, reputation, quests, hex grid, villain agenda,
  * campaign milestones, narration pool, and campaign snapshots.
  */
-import { boolean, integer, jsonb, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core'
-import { campaigns, characters } from './game'
+import { boolean, integer, jsonb, pgSchema, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core'
+import { campaigns } from './game'
 
 export const world = pgSchema('world')
 
@@ -99,9 +99,9 @@ export const world_zones = world.table('world_zones', {
   content: jsonb('content'),                                // populated on full gen
   generated_at: timestamp('generated_at', { withTimezone: true }),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({
-  hex_unique: { columns: [t.campaign_id, t.hex_q, t.hex_r] },
-}))
+}, (t) => [
+  unique('world_zones_campaign_hex_unique').on(t.campaign_id, t.hex_q, t.hex_r),
+])
 
 // Villain / world events scheduled at campaign gen. Fires on world_clock_tick.
 // Also tracked in Redis as a sorted set for fast O(log N) lookup by clock value.
