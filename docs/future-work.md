@@ -43,6 +43,8 @@ Update this file as items are resolved or new ones are found.
 
 **Decision needed:** Before implementing the world tick in `@byo20/engine`, decide whether to add NPC position keys to the Redis schema (currently only agenda, effects, turn resources, world clock are specced), or accept the Postgres write-per-tick cost for simplicity.
 
+**Likely outcome:** Postgres-only is probably fine. A self-hosted game with 30 NPCs doing 30 UPDATEs every 5 in-game minutes is negligible load. Only pursue the Redis path if profiling shows tick writes are actually a bottleneck. If so, rework is isolated to `src/redis/client.ts` (new key helpers) and `saveNPC` in `game-state-store.ts` (split position updates from full saves).
+
 ---
 
 ## `@byo20/shared`
