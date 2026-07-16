@@ -1007,6 +1007,51 @@ Characters created locally before joining any campaign. Column shape is identica
 
 ---
 
+---
+
+## Redis Configuration
+
+Redis runs as a sidecar process spawned by Electron main on host launch (same as `byo20_server` Postgres — only active when hosting). It is never exposed externally.
+
+Both AOF and RDB persistence are enabled. AOF provides durability (at most one second of data loss on crash). RDB provides fast startup — replaying a large AOF log on restart is slower than loading a snapshot.
+
+```
+# Persistence
+appendonly yes
+appendfsync everysec        # flush AOF to disk every second — good balance of durability vs performance
+save 60 1                   # RDB snapshot every 60s if at least 1 key changed
+
+# Memory
+maxmemory 256mb             # sufficient for a single self-hosted campaign
+maxmemory-policy allkeys-lru  # evict least recently used keys if memory fills
+
+# Network (local only — Redis never exposed externally)
+bind 127.0.0.1
+protected-mode yes
+```
+
+### Key Lifecycle
+
+**Session keys** (`session:{campaign_id}:*`) are created when a session starts and wiped atomically at `SESSION_ENDED`. `world_clock` and `phase` are checkpointed to Postgres on every phase transition and at session end.
+
+**Combat keys** (`combat:{encounter_id}:*`) are created at `INITIATIVE_ROLL` and wiped atomically at `COMBAT_ENDED`. Before wiping, all character state (HP, conditions, temp_hp, spell slots used, class resources, concentrating_on) is flushed to Postgres `character_campaign_state`.
+
+### Crash Recovery
+
+```
+Electron launches
+  → spawns Postgres sidecar
+  → spawns Redis sidecar
+  → Redis loads AOF → reconstructs last known state
+  → server checks Redis for active session / combat
+    → found → resume, push STATE_SNAPSHOT to reconnecting players
+    → not found → clean start, load from Postgres
+```
+
+If Redis data is unavailable after a crash (e.g. corrupted AOF), the server falls back to the last Postgres checkpoint values for character state and treats there as being no active combat. The DM may need to manually restore combat context.
+
+---
+
 ## Sync Strategy
 
 ```
