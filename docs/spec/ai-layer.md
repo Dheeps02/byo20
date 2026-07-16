@@ -211,6 +211,16 @@ Specialist output
       → then stream prose
 ```
 
+### Lore Context (Epic campaigns only)
+
+When `world_depth = 'epic'`, the Orchestrator runs a similarity search on `lore_entries` alongside existing pgvector sources (`npc_memories`, `faction_events`) and injects relevant chunks into specialist context.
+
+- **NPC Specialist** — receives lore chunks relevant to the NPC's location, faction, and the current conversation topic. Enables NPCs to naturally reference world history, local legends, and faction lore. See `npc-dialogue.md` skill file for guidance on handling lore the party hasn't formally unlocked yet (hint vs. spoil distinction).
+- **DM Specialist** — receives lore relevant to the current zone and active quests. Ensures quest gen and encounter framing stays consistent with authored world history.
+- **Narration Specialist** — receives lore for scene-setting. A ruined city narration can reference its fall. A forest path can reference the old kingdom's road markers.
+
+`unlocked_at_clock` on `lore_entries` tracks party discovery — not access control for the AI. All lore is available to all specialists at all times. The `npc-dialogue.md` skill file governs how NPCs handle undiscovered lore (allude, don't dump).
+
 ---
 
 ## Specialist Agents
@@ -324,6 +334,7 @@ Skill files live in the app's asset directory and are read at runtime — no reb
 | `narration-combat.md` | Narration Specialist | Combat narration |
 | `narration-exploration.md` | Narration Specialist | Exploration/scene narration |
 | `session-summary.md` | Narration Specialist | Session end |
+| `world-gen-epic.md` | DM Specialist | Epic world gen lore/prophecy/rumor passes |
 
 ### What Skill Files Contain
 
@@ -561,6 +572,17 @@ campaigns.world_gen_status = 'complete'
   → DM enters campaign lobby
 ```
 
+**Epic world gen — additional passes (Epic only)**
+
+Triggered after the standard 7-pass pipeline completes when `world_depth = 'epic'`.
+
+- **Lore authoring pass** — DM Specialist generates `lore_entries` rows for faction histories, world history, key location lore, and any named NPC backstories. Chunked into sections per book. Embeddings generated and stored.
+- **Prophecy pass** — DM Specialist generates one campaign prophecy grounded in `campaign_milestones`. Stored for Narration Specialist to reference at milestone events.
+- **Rumor seeding pass** — DM Specialist generates a pool of true and false rumors seeded from `campaign_agenda` and faction relationships. (Requires rumor system — see `docs/future-features.md`. Deferred until that system is specced.)
+- **Found document pass** — DM Specialist pre-authors found documents for key locations. (Deferred — see `docs/future-features.md`.)
+
+Epic world gen consumes significantly more tokens than Standard. This cost is one-time at campaign creation and does not recur during play.
+
 ### Terrain Awareness
 
 The terrain JSON produced in Stage 1 is passed to every DM Specialist invocation — both during initial gen and lazy gen. Skill files instruct the agent on placement conventions. The agent outputs hex coordinates; the engine validates them against the actual heightmap before writing. Invalid placement → agent retried with constraint feedback.
@@ -732,6 +754,10 @@ NPC Specialist fails
 | Campaign snapshots | Full mutable state dump at key triggers (encounter_end, milestone, rest, quest_transition, session_start, session_end). Rolling window of 10 per campaign — oldest deleted on overflow. Append-only logs never snapshotted or rolled back. DM-initiated rollback notifies all clients. AI generates human-readable label per snapshot. |
 | AI players | Deferred to v1.1/v1.2 |
 | Human DM takeover mid-session | Deferred post v1.0 |
+| World depth | `world_depth` flag on campaigns. Standard = 7-pass gen only. Epic = additional lore/prophecy passes. |
+| Lore context | Orchestrator injects `lore_entries` similarity results into all 3 specialists (Epic only) |
+| Undiscovered lore | Available to AI at all times. Skill file governs hint-vs-spoil behaviour, not access control. |
+| Epic world gen cost | One-time at campaign creation. No additional per-event cost during play. |
 
 ---
 
