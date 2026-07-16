@@ -1358,6 +1358,8 @@ Every other source generates its quest object (and fires its `world_mutation` in
 | `auto_grant` | Fires immediately on terminal node resolution, no return trip |
 | `claim_location` | Reward sits in a `containers` row at a location (reuses the existing camp-stash pattern), party collects whenever |
 
+**`unlock_library_access`** — Epic campaigns only. Flips `campaigns.library_access_unlocked = true`. Per-party; one completion covers all connected players. Engine writes the flag and emits a `STATE_DELTA` so all clients update immediately. Has no effect if `world_depth = 'standard'` — engine should guard against this and log a warning if triggered on a Standard campaign.
+
 `mail_dispatch` (delayed delivery via messenger) was considered and **cut for v1** — there's no SRD/RAW mechanic backing delayed message delivery (Sending and Message are both instant, no postal system exists in the ruleset), so it would've required new clock-polling infra to support a purely homebrew flavor beat with no rules grounding. The same narrative effect ("a raven arrives with your reward") is achievable via `auto_grant` wrapped in narration, with zero new infra.
 
 ### Failure Consequences
@@ -1493,3 +1495,6 @@ Full column definitions to be finalized when written into storage-layer.md (cros
 | Reward/consequence delivery | `npc_handoff` \| `auto_grant` \| `claim_location`. `mail_dispatch` cut — no RAW grounding, no infra added. |
 | Failure consequences | Same `TerminalPayload` shape as success, negative deltas. Price markup modelled as `ActiveEffect` (`merchant_price_modifier`), no new system. |
 | Quest log visibility | Current + past nodes only. No future branches shown. |
+| Library remote access trigger | Quest terminal reward type: `unlock_library_access` |
+| Library access scope | Campaign-scoped, per-party. Single completion unlocks for all. |
+| Guard | Engine no-ops `unlock_library_access` on Standard campaigns |
