@@ -24,7 +24,7 @@ export {
   createRedisClient,
   agendaKey, effectsKey, turnResourcesKey, worldClockKey,
   getWorldClock, setWorldClock,
-  scheduleAgendaEvent, pollDueAgendaEvents, removeFiredAgendaEvents, rebuildAgendaFromDb,
+  scheduleAgendaEvent, pollDueAgendaEvents, removeAgendaEvent, removeFiredAgendaEvents, rebuildAgendaFromDb,
   getEntityEffects, setEntityEffects, clearEncounterEffects,
   getTurnResources, setTurnResources, clearTurnResources,
 } from './redis/client'

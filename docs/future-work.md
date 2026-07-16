@@ -72,6 +72,21 @@ Update this file as items are resolved or new ones are found.
 
 **What:** After `createLocalDb`, call `await checkRulesetVersion(localDb.db, engine.RULESET_ID)` before accepting any connections. This is the safety check that prevents schema/data mismatches from silently corrupting game state.
 
+### Implement per-event agenda processing loop
+**Where:** `apps/server` world tick handler
+
+**What:** The server tick loop must process agenda events one at a time and remove each individually using `removeAgendaEvent` after successful processing — not bulk-remove with `removeFiredAgendaEvents`. This ensures a failure mid-tick leaves unprocessed events in the ZSET for retry on the next tick (the `<= currentClock` range query catches them again).
+
+```typescript
+const due = await pollDueAgendaEvents(redis, campaignId, currentClock)
+for (const eventId of due) {
+  await processAgendaEvent(eventId)       // engine handles the event
+  await removeAgendaEvent(redis, campaignId, eventId)  // remove only after success
+}
+```
+
+Only use `removeFiredAgendaEvents` (bulk) when you can guarantee the entire batch succeeded — e.g. inside a transaction where failure rolls back everything.
+
 ### Wire `rebuildAgendaFromDb` on restart
 **Where:** `apps/server` startup sequence
 

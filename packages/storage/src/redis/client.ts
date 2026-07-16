@@ -61,7 +61,21 @@ export async function pollDueAgendaEvents(
   return redis.zrangebyscore(agendaKey(campaignId), 0, currentClock)
 }
 
-// Remove fired events from the sorted set.
+// Remove a single agenda event by ID after it has been successfully processed.
+// Prefer this over removeFiredAgendaEvents in the server tick loop — removes
+// one event at a time so a processing failure leaves unprocessed events in the
+// set for retry on the next tick.
+export async function removeAgendaEvent(
+  redis: Redis,
+  campaignId: string,
+  eventId: string,
+): Promise<void> {
+  await redis.zrem(agendaKey(campaignId), eventId)
+}
+
+// Bulk-remove all events up to and including upToClock.
+// Only safe to call after every event in the range has been processed
+// successfully. Use removeAgendaEvent per-event if partial failure is possible.
 export async function removeFiredAgendaEvents(
   redis: Redis,
   campaignId: string,
