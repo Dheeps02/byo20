@@ -21,7 +21,20 @@ Every table, column, and constraint is specced there. Don't invent columns.
 - All tables have `created_at TIMESTAMPTZ` unless explicitly noted otherwise
 
 ## Migrations
-- Numbered sequentially: `0001_initial.sql`, `0002_add_quests.sql`
+
+**Naming convention:** `{number}-{operation}-{schema}-{table}.sql`
+
+```
+0000-initial.sql                              ← special case, covers all tables
+0001-add-world-narration-pool.sql             ← new table
+0002-add-game-campaigns-api-model.sql         ← new column
+0003-alter-log-event-type-add-values.sql      ← enum change
+0004-drop-combat-old-combat-state.sql         ← remove table
+```
+
+- Use `-` between blocks, not `_`
+- Operations: `add` | `drop` | `alter` | `rename` | `seed`
+- Pass `--name` to drizzle-kit: `bunx drizzle-kit generate --config=... --name=add-world-narration-pool`
 - Always append-only — never modify an existing migration
 - Run `drizzle-kit generate` to produce migrations from schema changes
 - Test migrations against a clean DB before committing
