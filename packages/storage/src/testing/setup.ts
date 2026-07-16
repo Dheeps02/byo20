@@ -6,14 +6,18 @@
  *
  * Directory: /dev/shm/byo20-test-{pid}/ — RAM-backed tmpfs on Linux.
  *   - Avoids disk I/O during tests (fast)
- *   - Cleaned up naturally when the process exits
  *   - PID-scoped so parallel workers never collide
+ *   - Stale dirs from crashes are cleaned before each run
  *
- * Port: 20000 + (pid % 30000) — PID-derived, very unlikely to collide.
+ * Port: dynamically assigned by the OS (bind on 0) — no collisions possible.
  *
  * Linux only. This test suite doesn't run on macOS or Windows because
  * /dev/shm isn't available there. CI runs on Linux.
  */
+import { createServer } from 'net'
+import type { AddressInfo } from 'net'
+import { rmSync } from 'fs'
+import { Client } from 'pg'
 import EmbeddedPostgres from 'embedded-postgres'
 import { createServerDb, createLocalDb } from '../postgres/client'
 import type { ServerDb, LocalDb } from '../postgres/client'
@@ -21,20 +25,37 @@ import type { ServerDb, LocalDb } from '../postgres/client'
 const TEST_USER = 'byo20_test'
 const TEST_PASS = 'byo20_test'
 
-function testPort(): number {
-  return 20000 + (process.pid % 30000)
-}
-
 function testDir(): string {
   return `/dev/shm/byo20-test-${process.pid}`
 }
+
+// Ask the OS for a free port by binding on 0, reading back the assigned port,
+// then releasing it. Tiny TOCTOU window is acceptable in test-only context.
+async function getFreePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const srv = createServer()
+    srv.listen(0, '127.0.0.1', () => {
+      const port = (srv.address() as AddressInfo).port
+      srv.close(() => resolve(port))
+    })
+    srv.on('error', reject)
+  })
+}
+
+// Symbol sentinel for withRollback — cannot be accidentally matched by an error
+// thrown from inside fn itself (unlike a string message).
+const ROLLBACK = Symbol('rollback')
 
 let pg: EmbeddedPostgres | null = null
 let _serverDb: ServerDb | null = null
 let _localDb: LocalDb | null = null
 
 export async function setupTestDb(): Promise<{ serverDb: ServerDb; localDb: LocalDb }> {
-  const port = testPort()
+  // Remove any stale directory left by a previous crash before initialising.
+  // force: true makes this a no-op if the path doesn't exist.
+  rmSync(testDir(), { recursive: true, force: true })
+
+  const port = await getFreePort()
 
   pg = new EmbeddedPostgres({
     databaseDir: testDir(),
@@ -47,26 +68,24 @@ export async function setupTestDb(): Promise<{ serverDb: ServerDb; localDb: Loca
   await pg.initialise()
   await pg.start()
 
-  // Enable pgvector and create the two app databases
+  // Install pgvector into template1 before creating the app databases.
+  // Postgres copies template1 when creating a new DB, so any extension
+  // installed here is automatically present in byo20_server and byo20_local.
+  const t1 = new Client({ host: 'localhost', port, user: TEST_USER, password: TEST_PASS, database: 'template1' })
+  await t1.connect()
+  await t1.query('CREATE EXTENSION IF NOT EXISTS vector')
+  await t1.end()
+
   const adminClient = pg.getPgClient()
   await adminClient.connect()
-  await adminClient.query('CREATE EXTENSION IF NOT EXISTS vector')
   await adminClient.query('CREATE DATABASE byo20_server')
   await adminClient.query('CREATE DATABASE byo20_local')
   await adminClient.end()
 
   const base = `postgresql://${TEST_USER}:${TEST_PASS}@localhost:${port}`
 
-  // Enable pgvector in each new database (extensions are per-database in Postgres)
-  for (const dbName of ['byo20_server', 'byo20_local']) {
-    const dbClient = pg.getPgClient()
-    // getPgClient defaults to the admin database; connect to the specific one
-    Object.assign(dbClient, { database: dbName })
-    await dbClient.connect()
-    await dbClient.query('CREATE EXTENSION IF NOT EXISTS vector')
-    await dbClient.end()
-  }
-
+  // createServerDb and createLocalDb auto-run Drizzle migrations on connect,
+  // so the schema is fully set up by the time these calls return.
   _serverDb = await createServerDb(`${base}/byo20_server`)
   _localDb = await createLocalDb(`${base}/byo20_local`)
 
@@ -95,11 +114,10 @@ export async function withRollback<T>(
   try {
     await db.transaction(async (tx) => {
       result = await fn(tx)
-      // Force rollback after fn completes
-      throw new Error('__rollback__')
+      throw ROLLBACK
     })
   } catch (e) {
-    if (e instanceof Error && e.message === '__rollback__') return result!
+    if (e === ROLLBACK) return result!
     throw e
   }
   return result!
