@@ -4,22 +4,25 @@
  * Each factory returns a minimal valid row with sensible defaults.
  * Override any field by passing a partial: factory({ name: 'Custom' }).
  *
+ * IDs are random UUIDs on every call — parallel-safe (no PK clashes between
+ * workers). Capture the return value when you need to reference the ID in a
+ * related row.
+ *
  * Factories don't insert — they just return the row shape. Use them with
  * db.insert(...).values(factory()) in your test setup.
  *
- * IDs default to a stable deterministic UUID per factory so tests can
- * reference related rows without juggling dynamic IDs. Override when you
- * need multiple rows of the same type in one test.
+ * Overrides are shallow-merged. Passing a partial JSONB value (e.g.
+ * { death_saves: { success: 1 } }) replaces the whole field, not just
+ * the nested key. Pass the full object when overriding JSONB fields.
+ *
+ * Note: character class is in the separate `character_classes` table, not on
+ * `characters`. Use a `characterClassesFactory` insert alongside `characterFactory`.
  */
 import { randomUUID } from 'crypto'
 
-/** Recursive partial — every property at any depth is optional. Used to type factory overrides. */
-type DeepPartial<T> = { [K in keyof T]?: T[K] }
-
 // ── Campaigns ─────────────────────────────────────────────────────────────────
 
-/** Build a minimal valid campaign row. Override any field via the overrides partial. */
-export function campaignFactory(overrides: DeepPartial<Record<string, unknown>> = {}) {
+function campaignDefaults() {
   return {
     id: randomUUID(),
     name: 'Test Campaign',
@@ -41,14 +44,17 @@ export function campaignFactory(overrides: DeepPartial<Record<string, unknown>> 
     api_key_blob: null,
     created_at: new Date(),
     updated_at: new Date(),
-    ...overrides,
   }
+}
+
+/** Build a minimal valid campaign row. Override any field via the overrides partial. */
+export function campaignFactory(overrides: Partial<ReturnType<typeof campaignDefaults>> = {}) {
+  return { ...campaignDefaults(), ...overrides }
 }
 
 // ── Characters ────────────────────────────────────────────────────────────────
 
-/** Build a minimal valid character row. Override any field via the overrides partial. */
-export function characterFactory(overrides: DeepPartial<Record<string, unknown>> = {}) {
+function characterDefaults() {
   return {
     id: randomUUID(),
     owner_user_id: 'player-user-1',
@@ -63,18 +69,17 @@ export function characterFactory(overrides: DeepPartial<Record<string, unknown>>
     stat_wis: 13,
     stat_cha: 8,
     created_at: new Date(),
-    ...overrides,
   }
+}
+
+/** Build a minimal valid character row. Override any field via the overrides partial. */
+export function characterFactory(overrides: Partial<ReturnType<typeof characterDefaults>> = {}) {
+  return { ...characterDefaults(), ...overrides }
 }
 
 // ── Character campaign state ───────────────────────────────────────────────────
 
-/** Build a minimal valid character_campaign_state row linked to characterId and campaignId. */
-export function characterCampaignStateFactory(
-  characterId: string,
-  campaignId: string,
-  overrides: DeepPartial<Record<string, unknown>> = {},
-) {
+function characterCampaignStateDefaults(characterId: string, campaignId: string) {
   return {
     id: randomUUID(),
     character_id: characterId,
@@ -85,7 +90,7 @@ export function characterCampaignStateFactory(
     hp_max: 10,
     hit_dice_remaining: 1,
     spell_slots: null,
-    conditions: [],
+    conditions: [] as string[],
     death_saves: { success: 0, failure: 0 },
     position: { x: 0, y: 0, z: 0 },
     is_active: true,
@@ -96,21 +101,28 @@ export function characterCampaignStateFactory(
     prepared_spells: null,
     weapon_masteries: null,
     languages: ['common'],
-    skill_proficiencies: {},
-    saving_throw_profs: [],
-    feats_taken: [],
+    skill_proficiencies: {} as Record<string, string>,
+    saving_throw_profs: [] as string[],
+    feats_taken: [] as string[],
     concentrating_on: null,
-    tool_proficiencies: [],
+    tool_proficiencies: [] as string[],
     pending_levelup: null,
     updated_at: new Date(),
-    ...overrides,
   }
+}
+
+/** Build a minimal valid character_campaign_state row linked to characterId and campaignId. */
+export function characterCampaignStateFactory(
+  characterId: string,
+  campaignId: string,
+  overrides: Partial<ReturnType<typeof characterCampaignStateDefaults>> = {},
+) {
+  return { ...characterCampaignStateDefaults(characterId, campaignId), ...overrides }
 }
 
 // ── NPCs ──────────────────────────────────────────────────────────────────────
 
-/** Build a minimal valid NPC row linked to campaignId. */
-export function npcFactory(campaignId: string, overrides: DeepPartial<Record<string, unknown>> = {}) {
+function npcDefaults(campaignId: string) {
   return {
     id: randomUUID(),
     campaign_id: campaignId,
@@ -133,22 +145,25 @@ export function npcFactory(campaignId: string, overrides: DeepPartial<Record<str
     proficiency_bonus: 2,
     traits: null,
     actions: null,
-    resistances: [],
-    immunities: [],
+    resistances: [] as string[],
+    immunities: [] as string[],
     spells: null,
     senses: { passive_perception: 10 },
-    languages: { common: true },
+    languages: { common: true } as Record<string, boolean>,
     legendary_resistances: null,
     treasure_type: 'none',
     updated_at: new Date(),
-    ...overrides,
   }
+}
+
+/** Build a minimal valid NPC row linked to campaignId. */
+export function npcFactory(campaignId: string, overrides: Partial<ReturnType<typeof npcDefaults>> = {}) {
+  return { ...npcDefaults(campaignId), ...overrides }
 }
 
 // ── Factions ──────────────────────────────────────────────────────────────────
 
-/** Build a minimal valid faction row linked to campaignId. */
-export function factionFactory(campaignId: string, overrides: DeepPartial<Record<string, unknown>> = {}) {
+function factionDefaults(campaignId: string) {
   return {
     id: randomUUID(),
     campaign_id: campaignId,
@@ -158,14 +173,17 @@ export function factionFactory(campaignId: string, overrides: DeepPartial<Record
     leader_npc_id: null,
     territory: null,
     updated_at: new Date(),
-    ...overrides,
   }
+}
+
+/** Build a minimal valid faction row linked to campaignId. */
+export function factionFactory(campaignId: string, overrides: Partial<ReturnType<typeof factionDefaults>> = {}) {
+  return { ...factionDefaults(campaignId), ...overrides }
 }
 
 // ── Encounters ────────────────────────────────────────────────────────────────
 
-/** Build a minimal valid encounter row linked to campaignId. */
-export function encounterFactory(campaignId: string, overrides: DeepPartial<Record<string, unknown>> = {}) {
+function encounterDefaults(campaignId: string) {
   return {
     id: randomUUID(),
     campaign_id: campaignId,
@@ -173,28 +191,34 @@ export function encounterFactory(campaignId: string, overrides: DeepPartial<Reco
     round: 1,
     started_at: new Date(),
     ended_at: null,
-    ...overrides,
   }
+}
+
+/** Build a minimal valid encounter row linked to campaignId. */
+export function encounterFactory(campaignId: string, overrides: Partial<ReturnType<typeof encounterDefaults>> = {}) {
+  return { ...encounterDefaults(campaignId), ...overrides }
 }
 
 // ── Sessions ──────────────────────────────────────────────────────────────────
 
-/** Build a minimal valid session row linked to campaignId. */
-export function sessionFactory(campaignId: string, overrides: DeepPartial<Record<string, unknown>> = {}) {
+function sessionDefaults(campaignId: string) {
   return {
     id: randomUUID(),
     campaign_id: campaignId,
     started_at: new Date(),
     ended_at: null,
     summary: null,
-    ...overrides,
   }
+}
+
+/** Build a minimal valid session row linked to campaignId. */
+export function sessionFactory(campaignId: string, overrides: Partial<ReturnType<typeof sessionDefaults>> = {}) {
+  return { ...sessionDefaults(campaignId), ...overrides }
 }
 
 // ── Quests ────────────────────────────────────────────────────────────────────
 
-/** Build a minimal valid quest row linked to campaignId, with a single-node DAG. */
-export function questFactory(campaignId: string, overrides: DeepPartial<Record<string, unknown>> = {}) {
+function questDefaults(campaignId: string) {
   return {
     id: randomUUID(),
     campaign_id: campaignId,
@@ -206,6 +230,52 @@ export function questFactory(campaignId: string, overrides: DeepPartial<Record<s
     current_node_id: 'start',
     created_at: new Date(),
     updated_at: new Date(),
-    ...overrides,
   }
+}
+
+/** Build a minimal valid quest row linked to campaignId, with a single-node DAG. */
+export function questFactory(campaignId: string, overrides: Partial<ReturnType<typeof questDefaults>> = {}) {
+  return { ...questDefaults(campaignId), ...overrides }
+}
+
+// ── World zones ───────────────────────────────────────────────────────────────
+
+function worldZoneDefaults(campaignId: string) {
+  return {
+    id: randomUUID(),
+    campaign_id: campaignId,
+    hex_q: 0,
+    hex_r: 0,
+    gen_state: 'ungenerated',
+    zone_type: null,
+    content: null,
+    generated_at: null,
+    updated_at: new Date(),
+  }
+}
+
+/** Build a minimal valid world_zone row linked to campaignId. */
+export function worldZoneFactory(campaignId: string, overrides: Partial<ReturnType<typeof worldZoneDefaults>> = {}) {
+  return { ...worldZoneDefaults(campaignId), ...overrides }
+}
+
+// ── Agenda events ─────────────────────────────────────────────────────────────
+
+function agendaEventDefaults(campaignId: string) {
+  return {
+    id: randomUUID(),
+    campaign_id: campaignId,
+    title: 'Test Event',
+    description: 'A test agenda event.',
+    fires_at_clock: 100,
+    fired: false,
+    fired_at: null,
+    world_mutations: null,
+    created_at: new Date(),
+  }
+}
+
+/** Build a minimal valid agenda_event row linked to campaignId. */
+export function agendaEventFactory(campaignId: string, overrides: Partial<ReturnType<typeof agendaEventDefaults>> = {}) {
+  return { ...agendaEventDefaults(campaignId), ...overrides }
 }
