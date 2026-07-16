@@ -387,7 +387,9 @@ export class PostgresGameStateStore implements IGameStateStore {
       const factionIds = factionRows.map(r => r.id)
       const encounterIds = encounterRows.map(r => r.id)
 
-      // Delete in FK-safe order (children first, then parents)
+      // Delete in FK-safe order (children first, then parents).
+      // inArray with empty array is invalid SQL → guard with if (ids.length).
+      // eq(col, value) is always valid even with 0 matching rows → no guard needed.
       if (npcIds.length) await tx.delete(npc_memories).where(inArray(npc_memories.npc_id, npcIds))
       if (factionIds.length) await tx.delete(faction_events).where(inArray(faction_events.faction_id, factionIds))
       if (encounterIds.length) await tx.delete(initiative_entries).where(inArray(initiative_entries.encounter_id, encounterIds))
