@@ -17,6 +17,36 @@ Update this file as items are resolved or new ones are found.
 2. Update `IGameStateStore` and `IVectorStore` in `@byo20/shared` to use them
 3. Remove `Row` alias and `as typeof` casts in `game-state-store.ts`
 
+### Return typed `ActionResources` from `getTurnResources`
+**Where:** `src/redis/client.ts`, `@byo20/shared`
+
+**What:** `getTurnResources` currently returns `Record<string, string>` — raw Redis strings. Once `ActionResources` is defined in `@byo20/shared`, update `getTurnResources` to parse and return that type directly so the engine receives clean typed data instead of raw strings.
+
+**When to fix:** When `ActionResources` lands in `@byo20/shared`.
+
+### Make agenda poll + remove atomic (Lua script)
+**Where:** `src/redis/client.ts`
+
+**What:** `pollDueAgendaEvents` and `removeAgendaEvent` are two separate Redis round-trips. If the server crashes between them, the event fires again on restart (double-fire). A Lua script executes atomically inside Redis — poll and remove in a single operation with no crash window.
+
+```lua
+-- atomic_poll_remove.lua
+local events = redis.call('ZRANGEBYSCORE', KEYS[1], 0, ARGV[1])
+for _, id in ipairs(events) do
+  redis.call('ZREM', KEYS[1], id)
+end
+return events
+```
+
+**When to fix:** Before production. For dev/testing, double-fire on crash is acceptable. For production, this is a correctness issue.
+
+### Rebuild effects and turn resources from Postgres on crash recovery
+**Where:** `src/redis/client.ts`, `apps/server` startup
+
+**What:** `rebuildAgendaFromDb` exists for the agenda, but there is no equivalent for encounter effects or turn resources. After a crash with AOF disabled or corrupted, these are lost. The engine needs a defined fallback — either accept the loss (effects reset on crash, resume from clean state) or persist enough to Postgres to rebuild.
+
+**Decision needed:** Whether to checkpoint live effect state to Postgres during combat (costly) or accept that a crash mid-combat means that combat round restarts clean. Log the decision in an ADR when the server combat loop is designed.
+
 ### Add typed query functions per domain
 **Where:** `src/postgres/queries/` (directory doesn't exist yet)
 

@@ -15,6 +15,13 @@
  */
 import Redis from 'ioredis'
 
+// Safety-net TTL for combat keys. If an encounter or turn ends without the server
+// calling the clear* helpers (e.g. crash mid-combat), these keys auto-expire rather
+// than leaking in Redis forever. 24h is generous enough to survive any realistic
+// session pause; real cleanup always happens via clearEncounterEffects / clearTurnResources.
+const EFFECTS_TTL_SECONDS = 86_400
+const TURN_RESOURCES_TTL_SECONDS = 86_400
+
 export function createRedisClient(url: string): Redis {
   return new Redis(url, {
     lazyConnect: true,        // don't connect until first command
@@ -106,7 +113,14 @@ export async function getEntityEffects(
   entityId: string,
 ): Promise<unknown[]> {
   const raw = await redis.hget(effectsKey(encounterId), entityId)
-  return raw ? (JSON.parse(raw) as unknown[]) : []
+  if (!raw) return []
+  try {
+    return JSON.parse(raw) as unknown[]
+  } catch {
+    // Malformed data — treat as empty. Can happen if the process died mid-write.
+    // The engine re-applies effects from its own state on the next action.
+    return []
+  }
 }
 
 export async function setEntityEffects(
@@ -115,7 +129,11 @@ export async function setEntityEffects(
   entityId: string,
   effects: unknown[],
 ): Promise<void> {
-  await redis.hset(effectsKey(encounterId), entityId, JSON.stringify(effects))
+  const key = effectsKey(encounterId)
+  const pipeline = redis.pipeline()
+  pipeline.hset(key, entityId, JSON.stringify(effects))
+  pipeline.expire(key, EFFECTS_TTL_SECONDS)
+  await pipeline.exec()
 }
 
 export async function clearEncounterEffects(redis: Redis, encounterId: string): Promise<void> {
@@ -124,6 +142,10 @@ export async function clearEncounterEffects(redis: Redis, encounterId: string): 
 
 // ── Turn resources (per character) ────────────────────────────────────────────
 
+// Returns used resources for this turn as {field: value} string pairs.
+// An empty object {} means all resources are available — the engine treats a
+// missing key as "at maximum". clearTurnResources deletes the hash rather than
+// resetting fields, which is equivalent to a full refresh by this convention.
 export async function getTurnResources(redis: Redis, characterId: string): Promise<Record<string, string>> {
   return redis.hgetall(turnResourcesKey(characterId))
 }
@@ -133,7 +155,11 @@ export async function setTurnResources(
   characterId: string,
   resources: Record<string, string>,
 ): Promise<void> {
-  await redis.hset(turnResourcesKey(characterId), resources)
+  const key = turnResourcesKey(characterId)
+  const pipeline = redis.pipeline()
+  pipeline.hset(key, resources)
+  pipeline.expire(key, TURN_RESOURCES_TTL_SECONDS)
+  await pipeline.exec()
 }
 
 export async function clearTurnResources(redis: Redis, characterId: string): Promise<void> {
