@@ -125,6 +125,8 @@ The world, the story, the DM's setup.
 | `narration_mode` | TEXT | `economy` \| `balanced` \| `quality` — DM-configured narration tier behaviour, default `balanced` |
 | `api_provider` | TEXT | `anthropic` \| `openai` \| `google` \| `ollama` — selected at campaign setup |
 | `api_key_blob` | TEXT | safeStorage-encrypted API key blob — **null for ollama** |
+| `world_depth` | `TEXT NOT NULL DEFAULT 'standard'` | `'standard'` \| `'epic'`. Set at campaign creation, never changed. Controls world gen depth and lore infrastructure availability. |
+| `library_access_unlocked` | `BOOLEAN NOT NULL DEFAULT FALSE` | **Epic only.** Per-party remote Codex lore access. Flipped `true` when the qualifying library quest is completed. Physical library visit populates the Lore tab separately — this flag controls remote access only. Has no effect when `world_depth = 'standard'`. |
 | `created_at` | TIMESTAMPTZ | |
 | `updated_at` | TIMESTAMPTZ | |
 
@@ -573,6 +575,26 @@ Party-wide quest log. One row per quest. Structure is a DAG — see game-engine.
 | `current_node_id` | TEXT | Pointer into `nodes` |
 | `created_at` | TIMESTAMPTZ | |
 | `updated_at` | TIMESTAMPTZ | |
+
+---
+
+#### `lore_entries` (pgvector) — Epic only
+
+World lore authored by the AI DM during Epic world gen, plus found documents discovered during play. Chunked by section for lazy loading and vector search. Only populated when `campaigns.world_depth = 'epic'`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | |
+| `campaign_id` | UUID FK → `campaigns` | |
+| `book_id` | TEXT | Slug identifying the parent book, e.g. `history-of-valdris`, `faction-crimson-veil`. Groups sections into a readable book in the Codex. |
+| `book_title` | TEXT | Human-readable title shown in Codex UI. |
+| `section_title` | TEXT | Chapter or section heading. |
+| `page_number` | INTEGER | Ordering within the book. |
+| `content` | TEXT | Section prose. TOAST handles large content automatically. |
+| `embedding` | `vector(1536)` | For Orchestrator semantic recall — AI DM and NPC Specialist pull relevant lore via similarity search. |
+| `source_type` | TEXT | `'world_gen'` \| `'found_document'` \| `'discovered'` |
+| `unlocked_at_clock` | INTEGER | **Nullable.** World clock minutes when the party first accessed this entry. `null` = not yet discovered by party. NPCs can still reference lore the party hasn't unlocked — see npc-dialogue.md skill file guidance. |
+| `created_at` | TIMESTAMPTZ | |
 
 ---
 
