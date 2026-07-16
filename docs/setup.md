@@ -31,6 +31,8 @@ TODO — fill in during implementation.
 bun test
 ```
 
+> **Linux only.** The test suite uses `embedded-postgres` pointed at `/dev/shm/byo20-test-${process.pid}/` — a RAM-backed tmpfs path, zero disk writes, process-scoped to avoid worker collision when Bun runs test files in parallel. Cleaned up in `afterAll`. Windows is not supported for running tests. CI runs on Linux runners only.
+
 ---
 
 ## Type Checking
@@ -54,4 +56,4 @@ bunx biome format --write .
 
 ## Sidecars
 
-When you host a campaign, Electron's main process automatically spawns three sidecars: a `byo20_server` Postgres instance, a `byo20_local` Postgres instance, and a Redis process. You don't need to install or manage any of them manually — they're bundled. `byo20_local` also spins up on client-only (join) mode.
+When you host a campaign, Electron's main process automatically spawns four sidecars: Postgres (hosting both `byo20_server` and `byo20_local` databases on port `5433`), Redis (`6380`), Ollama (`11435`), and the Bun game server. You don't need to install or manage any of them manually — they're bundled. Postgres and Ollama also spin up in client-only (join) mode.
