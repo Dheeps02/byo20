@@ -25,16 +25,17 @@ Every table, column, and constraint is specced there. Don't invent columns.
 **Naming convention:** `{number}-{operation}-{schema}-{table}.sql`
 
 ```
-0000-initial.sql                              ← special case, covers all tables
-0001-add-world-narration-pool.sql             ← new table
-0002-add-game-campaigns-api-model.sql         ← new column
-0003-alter-log-event-type-add-values.sql      ← enum change
-0004-drop-combat-old-combat-state.sql         ← remove table
+0000-initial.sql                                  ← special case, covers all tables
+0001-add-world-narration_pool.sql                 ← new table
+0002-add-game-campaigns-api_key_blob.sql          ← new column
+0003-alter-log-event_type-add_values.sql          ← enum change
+0004-drop-combat-old_combat_state.sql             ← remove table
 ```
 
-- Use `-` between blocks, not `_`
+- `-` between blocks (number, operation, schema, table)
+- `_` within a block when the name itself has multiple words
 - Operations: `add` | `drop` | `alter` | `rename` | `seed`
-- Pass `--name` to drizzle-kit: `bunx drizzle-kit generate --config=... --name=add-world-narration-pool`
+- Pass `--name` to drizzle-kit: `bunx drizzle-kit generate --config=... --name=add-world-narration_pool`
 - Always append-only — never modify an existing migration
 - Run `drizzle-kit generate` to produce migrations from schema changes
 - Test migrations against a clean DB before committing
