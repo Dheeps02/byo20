@@ -96,6 +96,12 @@ export interface IGameStateStore {
   /** Upsert a world zone row. */
   saveWorldZone(zone: Row): Promise<void>
 
+  // World objects
+  /** Fetch all world objects in a hex zone within a campaign. */
+  getWorldObjects(campaignId: string, zoneQ: number, zoneR: number): Promise<Row[]>
+  /** Upsert a world object row. */
+  saveWorldObject(obj: Row): Promise<void>
+
   // Append-only logs — these methods INSERT only, never UPDATE or DELETE
   /** Append a row to event_log. Never updated or deleted. */
   appendEventLog(entry: Row): Promise<void>
@@ -140,4 +146,10 @@ export interface IVectorStore {
   upsertFactionEvent(event: Row): Promise<void>
   /** Return the topK most semantically similar faction events by cosine distance. */
   queryFactionEvents(factionId: string, queryEmbedding: number[], topK: number): Promise<Row[]>
+
+  // Lore entries — Epic campaigns only; queried by the Orchestrator for Specialist context
+  /** Upsert a lore entry row including its 768-dim embedding. */
+  upsertLoreEntry(entry: Row): Promise<void>
+  /** Return the topK most semantically relevant lore entries for a campaign by cosine distance. */
+  queryLoreEntries(campaignId: string, queryEmbedding: number[], topK: number): Promise<Row[]>
 }
