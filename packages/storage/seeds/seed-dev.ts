@@ -60,7 +60,7 @@ async function main() {
       campaign_length: 'medium',
       tone: 'high_fantasy',
       world_gen_status: 'complete',
-      terrain_seed: 'dev-seed-42',
+      campaign_seed: 'dev-seed-42',
       narration_mode: 'balanced',
       api_provider: 'ollama',
       api_key_blob: null,
@@ -219,17 +219,16 @@ async function main() {
       campaign_id: DEV.campaignId,
       hex_q: 0,
       hex_r: 0,
-      terrain: 'swamp',
-      label: 'Approach to the Sunken Citadel',
-      biome: 'coastal_wetland',
-      climate: 'temperate',
-      points_of_interest: [
-        { name: 'Crumbling Gate', type: 'dungeon_entrance' },
-        { name: 'Gibbet', type: 'landmark' },
-      ],
-      travel_cost: 2,
-      is_explored: true,
-      fog_state: {},
+      gen_state: 'full',
+      zone_type: 'wilderness',
+      heightmap_chunk: null,
+      content: {
+        world_object_ids: [],
+        npc_ids: [DEV.npcId],
+        encounter_zones: [],
+        quest_hooks: [DEV.questId],
+      },
+      generated_at: new Date(),
     }).onConflictDoNothing()
     console.log('  ✓ world zone: Approach to the Sunken Citadel')
 
