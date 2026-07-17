@@ -47,6 +47,17 @@ return events
 
 **Decision needed:** Whether to checkpoint live effect state to Postgres during combat (costly) or accept that a crash mid-combat means that combat round restarts clean. Log the decision in an ADR when the server combat loop is designed.
 
+### Mark rolled-back log entries to prevent ghost AI recall
+**Where:** `src/postgres/schema/server/log.ts`, `@byo20/ai` semantic recall queries
+
+**What:** Log tables are intentionally append-only — rollbacks don't delete rows. But after a DM rollback, `event_log` contains events from the rewound timeline. The Orchestrator's semantic recall queries (`queryMemories`, `queryFactionEvents`) will surface these "ghost" events and inject them into Specialist context — an NPC could reference a battle the party technically never fought.
+
+**Proposed fix:** Add a nullable `rolled_back_at TIMESTAMPTZ` column to `event_log` (and potentially `combat_log`). Null = canon event. Non-null = from a rewound timeline. `rollbackToSnapshot` sets `rolled_back_at = now()` on all log entries with `timestamp > snapshot.created_at`. AI recall queries add `WHERE rolled_back_at IS NULL`.
+
+**Decision needed:** Needs an ADR. Questions to resolve: do `npc_memories` and `faction_events` (which reference `event_log.id`) also need marking? Does the DM UI show rolled-back events differently, or hide them? What about nested rollbacks (rolling back to before a previous rollback)?
+
+**When to fix:** Before the AI layer is wired. Retrofitting this after Specialists are implemented means updating every semantic recall call site.
+
 ### Add typed query functions per domain
 **Where:** `src/postgres/queries/` (directory doesn't exist yet)
 
