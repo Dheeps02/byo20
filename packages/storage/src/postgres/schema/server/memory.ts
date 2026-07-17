@@ -7,11 +7,10 @@
  * Queried with cosine similarity: <=> operator in raw SQL, or via
  * PostgresVectorStore which wraps the queries.
  */
-import { boolean, integer, pgSchema, text, uuid } from 'drizzle-orm/pg-core'
-import { npcs } from './world'
-import { factions } from './world'
+import { boolean, integer, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { npcs, factions, quests } from './world'
+import { campaigns } from './game'
 import { event_log } from './log'
-import { quests } from './world'
 import { vector } from '../vector-type'
 
 /** Drizzle schema handle for the `memory` Postgres schema. */
@@ -45,4 +44,22 @@ export const faction_events = memory.table('faction_events', {
   embedding: vector('embedding', 768).notNull(),
   rep_delta: integer('rep_delta').notNull().default(0),
   created_at_clock: integer('created_at_clock').notNull(),
+})
+
+/**
+ * Chunked lore content authored during Epic world gen — faction histories, world
+ * history, key location lore, named NPC backstories. The Orchestrator runs
+ * similarity search against this table to inject relevant lore into Specialist
+ * calls during play. Only populated for world_depth = 'epic' campaigns.
+ */
+export const lore_entries = memory.table('lore_entries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  embedding: vector('embedding', 768).notNull(),
+  category: text('category').notNull(),   // faction_history | world_history | location_lore | npc_backstory | prophecy
+  source_id: uuid('source_id'),           // nullable FK to faction / npc / zone
+  source_type: text('source_type'),       // faction | npc | zone — null if no specific source
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })

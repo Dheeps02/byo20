@@ -5,6 +5,7 @@
  * campaign milestones, narration pool, and campaign snapshots.
  */
 import { boolean, integer, jsonb, pgSchema, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core'
+import { bytea } from '../vector-type'
 import { campaigns } from './game'
 
 /** Drizzle schema handle for the `world` Postgres schema. */
@@ -102,12 +103,35 @@ export const world_zones = world.table('world_zones', {
   hex_r: integer('hex_r').notNull(),                        // axial coordinate r
   gen_state: text('gen_state').notNull().default('ungenerated'), // ungenerated | partial | full
   zone_type: text('zone_type'),                             // wilderness | town | dungeon | coastal | mountain | forest
+  heightmap_chunk: bytea('heightmap_chunk'),                // LZ4-compressed Float32Array — null until terrain gen runs
   content: jsonb('content'),                                // populated on full gen
   generated_at: timestamp('generated_at', { withTimezone: true }),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   unique('world_zones_campaign_hex_unique').on(t.campaign_id, t.hex_q, t.hex_r),
 ])
+
+/**
+ * Persistent world entities with meaningful game state: buildings, structures,
+ * landmarks, siege equipment, vehicles. Anything the AI DM might reference by
+ * name or that can be interacted with, damaged, or destroyed gets a row here.
+ * Pure scenery (trees, road segments) does not.
+ */
+export const world_objects = world.table('world_objects', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
+  zone_q: integer('zone_q').notNull(),
+  zone_r: integer('zone_r').notNull(),
+  name: text('name').notNull(),
+  object_type: text('object_type').notNull(),               // building | structure | landmark | siege_equipment | vehicle
+  status: text('status').notNull().default('intact'),       // intact | damaged | destroyed | locked | sealed
+  position: jsonb('position').notNull(),                    // { x, y, z }
+  owner_type: text('owner_type'),                           // world | faction | npc — null if unowned
+  owner_id: uuid('owner_id'),                               // null if unowned
+  properties: jsonb('properties'),                          // object-specific mechanical state
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
 
 /**
  * Villain / world events scheduled at campaign gen. Fires on world_clock_tick.

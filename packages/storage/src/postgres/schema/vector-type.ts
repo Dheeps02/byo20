@@ -1,6 +1,20 @@
 import { customType } from 'drizzle-orm/pg-core'
 
 /**
+ * Custom Drizzle column type for Postgres BYTEA.
+ *
+ * Drizzle doesn't ship a built-in bytea type. We map it to Node's Buffer — the
+ * pg driver already deserializes BYTEA wire bytes to Buffer automatically.
+ *
+ * Usage:
+ *   heightmap_chunk: bytea('heightmap_chunk')
+ */
+export const bytea = (name: string) =>
+  customType<{ data: Buffer; driverData: Buffer }>({
+    dataType() { return 'bytea' },
+  })(name)
+
+/**
  * Custom Drizzle column type for pgvector's vector(N) column.
  *
  * Drizzle doesn't ship a built-in vector type, so we define our own using

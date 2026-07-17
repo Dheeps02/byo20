@@ -8,6 +8,13 @@
       "when": 1784034381510,
       "tag": "0000-initial",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784268613608,
+      "tag": "0001-add-cache-world_objects",
+      "breakpoints": true
     }
   ]
 }

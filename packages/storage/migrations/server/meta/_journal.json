@@ -8,6 +8,13 @@
       "when": 1784034369120,
       "tag": "0000-initial",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784268576577,
+      "tag": "0001-add-world_depth-world_objects-lore_entries",
+      "breakpoints": true
     }
   ]
 }

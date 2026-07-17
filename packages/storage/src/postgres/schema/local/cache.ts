@@ -242,6 +242,23 @@ export const partyChatLogColumns = {
   timestamp: timestamp('timestamp', { withTimezone: true }).notNull(),
 }
 
+/** Shared column shape for world object rows. */
+export const worldObjectColumns = {
+  id: uuid('id').primaryKey(),
+  campaign_id: uuid('campaign_id').notNull(),
+  zone_q: integer('zone_q').notNull(),
+  zone_r: integer('zone_r').notNull(),
+  name: text('name').notNull(),
+  object_type: text('object_type').notNull(),
+  status: text('status').notNull(),
+  position: jsonb('position').notNull(),
+  owner_type: text('owner_type'),
+  owner_id: uuid('owner_id'),
+  properties: jsonb('properties'),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull(),
+}
+
 // ---------------------------------------------------------------------------
 // cache.* tables — one per mirrored server table.
 // Each spreads its shared column helper so structure stays in sync with server.
@@ -275,3 +292,5 @@ export const cache_sessions = cache.table('sessions', sessionColumns)
 export const cache_combat_log = cache.table('combat_log', combatLogColumns)
 /** Cached mirror of log.party_chat_log. */
 export const cache_party_chat_log = cache.table('party_chat_log', partyChatLogColumns)
+/** Cached mirror of world.world_objects — objects in zones the party has visited. */
+export const cache_world_objects = cache.table('world_objects', worldObjectColumns)

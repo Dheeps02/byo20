@@ -22,7 +22,7 @@ import {
 } from './schema/server/items'
 import {
   npcs, factions, character_faction_reputation, faction_relationships,
-  quests, world_zones, campaign_agenda, campaign_milestones, narration_pool,
+  quests, world_zones, world_objects, campaign_agenda, campaign_milestones, narration_pool,
   campaign_snapshots,
 } from './schema/server/world'
 import { encounters, initiative_entries } from './schema/server/combat'
@@ -261,6 +261,26 @@ export class PostgresGameStateStore implements IGameStateStore {
     const v = zone as typeof world_zones.$inferInsert
     await this.db.insert(world_zones).values(v)
       .onConflictDoUpdate({ target: world_zones.id, set: withoutId(zone) as typeof world_zones.$inferInsert })
+  }
+
+  // ── World objects ──────────────────────────────────────────────────────────
+
+  /** Fetch all world objects in a hex zone within a campaign. */
+  async getWorldObjects(campaignId: string, zoneQ: number, zoneR: number): Promise<Row[]> {
+    return this.db.select().from(world_objects).where(
+      and(
+        eq(world_objects.campaign_id, campaignId),
+        eq(world_objects.zone_q, zoneQ),
+        eq(world_objects.zone_r, zoneR),
+      )
+    ) as Promise<Row[]>
+  }
+
+  /** Upsert a world object row. */
+  async saveWorldObject(obj: Row): Promise<void> {
+    const v = obj as typeof world_objects.$inferInsert
+    await this.db.insert(world_objects).values(v)
+      .onConflictDoUpdate({ target: world_objects.id, set: withoutId(obj) as typeof world_objects.$inferInsert })
   }
 
   // ── Append-only logs ───────────────────────────────────────────────────────

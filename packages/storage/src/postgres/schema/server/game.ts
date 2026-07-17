@@ -26,7 +26,10 @@ export const campaigns = game.table('campaigns', {
   campaign_length: text('campaign_length').notNull(),            // short | medium | long
   tone: text('tone').notNull(),                                  // gritty | high_fantasy | dark | comedic
   world_gen_status: text('world_gen_status').notNull().default('pending'), // pending | generating | complete
-  terrain_seed: text('terrain_seed'),
+  campaign_seed: text('campaign_seed'),
+  heightmap_resolution: integer('heightmap_resolution'),
+  world_depth: text('world_depth').notNull().default('standard'), // standard | epic — set once at campaign creation
+  library_access_unlocked: boolean('library_access_unlocked').notNull().default(false), // Epic only — flipped true by qualifying quest
   narration_mode: text('narration_mode').notNull().default('balanced'), // economy | balanced | quality
   api_provider: text('api_provider').notNull(),                  // anthropic | openai | google | ollama
   api_key_blob: text('api_key_blob'),                           // null for ollama; safeStorage-encrypted

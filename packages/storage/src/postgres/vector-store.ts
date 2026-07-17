@@ -11,8 +11,7 @@
 import { eq, sql } from 'drizzle-orm'
 import type { IVectorStore } from '@byo20/shared'
 import type { ServerDb } from './client'
-import { npc_memories } from './schema/server/memory'
-import { faction_events } from './schema/server/memory'
+import { npc_memories, faction_events, lore_entries } from './schema/server/memory'
 
 /** Drizzle DB reference for byo20_server. */
 type Db = ServerDb['db']
@@ -68,6 +67,27 @@ export class PostgresVectorStore implements IVectorStore {
     return this.db.select().from(faction_events)
       .where(eq(faction_events.faction_id, factionId))
       .orderBy(sql`${faction_events.embedding} <=> ${vecLiteral}::vector`)
+      .limit(topK) as Promise<Row[]>
+  }
+
+  // ── Lore entries (Epic campaigns only) ────────────────────────────────────
+
+  /** Upsert a lore entry row. Conflict target is the row's own UUID. */
+  async upsertLoreEntry(entry: Row): Promise<void> {
+    const v = entry as typeof lore_entries.$inferInsert
+    await this.db.insert(lore_entries).values(v)
+      .onConflictDoUpdate({
+        target: lore_entries.id,
+        set: (({ id: _id, ...rest }) => rest)(entry) as typeof lore_entries.$inferInsert,
+      })
+  }
+
+  /** Return the topK lore entries for a campaign closest to queryEmbedding by cosine distance. */
+  async queryLoreEntries(campaignId: string, queryEmbedding: number[], topK: number): Promise<Row[]> {
+    const vecLiteral = toVectorLiteral(queryEmbedding)
+    return this.db.select().from(lore_entries)
+      .where(eq(lore_entries.campaign_id, campaignId))
+      .orderBy(sql`${lore_entries.embedding} <=> ${vecLiteral}::vector`)
       .limit(topK) as Promise<Row[]>
   }
 }
