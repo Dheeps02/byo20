@@ -159,7 +159,7 @@ export const conditions = srd.table('conditions', {
   effects: jsonb('effects'),
 })
 
-/** SRD weapon mastery properties. Seeded from dnd5eapi.co/api/2024/weapon-properties. */
+/** SRD weapon mastery properties. Seeded from dnd5eapi.co/api/2024/weapon-mastery-properties. */
 export const weapon_masteries = srd.table('weapon_masteries', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),

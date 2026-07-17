@@ -28,7 +28,10 @@ export const cache = pgSchema('cache')
 
 // ---------------------------------------------------------------------------
 // Shared column shape helpers — defined once, spread into each table.
-// Server schema files import these helpers so column shapes stay in sync.
+// These helpers are spread into cache.* tables only — server schema files
+// do NOT import from here. Server-to-cache column sync is a manual contract:
+// when a server table changes, update the matching helper here, or cache
+// reads will silently diverge.
 // ---------------------------------------------------------------------------
 
 /** Shared column shape for character identity rows (game.characters and cache.characters). */

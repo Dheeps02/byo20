@@ -62,7 +62,7 @@ export const factions = world.table('factions', {
 /** Per-character standing with each faction. reputation ranges -100 to 100. */
 export const character_faction_reputation = world.table('character_faction_reputation', {
   id: uuid('id').primaryKey().defaultRandom(),
-  character_campaign_state_id: uuid('character_campaign_state_id').notNull(),
+  character_campaign_state_id: uuid('character_campaign_state_id').notNull(), // no .references() — world.* cannot FK into game.*; integrity enforced at app layer
   faction_id: uuid('faction_id').notNull().references(() => factions.id),
   reputation: integer('reputation').notNull().default(0),  // -100 to 100
   attitude: text('attitude').notNull().default('indifferent'), // friendly | indifferent | hostile
@@ -76,7 +76,9 @@ export const faction_relationships = world.table('faction_relationships', {
   faction_b_id: uuid('faction_b_id').notNull().references(() => factions.id),
   relationship: text('relationship').notNull(),             // ally | rival | enemy | neutral
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => [
+  unique('faction_relationships_pair_unique').on(t.faction_a_id, t.faction_b_id),
+])
 
 /** Party-wide quest log. Nodes are a DAG stored as JSONB. */
 export const quests = world.table('quests', {
