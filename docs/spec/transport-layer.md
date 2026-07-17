@@ -365,4 +365,4 @@ AI players have no network connection. They are internal to the server process. 
 | Mid-combat disconnect | Configurable: auto_skip (default) / ai_takeover / freeze |
 | Host vs DM | Separated — host retains admin in AI DM mode |
 | Campaign portability | Full Postgres dump, host handoff supported |
-| Version enforcement | Client must be >= host version, checked on WS handshake after invite code validation |
+| Version enforcement | Client app version must match host version, checked on WS handshake after invite code validation. Mismatch rejects connection with a human-readable message. |
