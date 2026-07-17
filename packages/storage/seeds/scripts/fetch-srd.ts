@@ -249,7 +249,7 @@ async function main() {
     fetchAll(BASE_2024, 'equipment'),
     fetchAll(BASE_2024, 'magic-items'),
     fetchAll(BASE_2024, 'conditions'),
-    fetchAll(BASE_2024, 'weapon-properties'), // closest to weapon masteries
+    fetchAll(BASE_2024, 'weapon-mastery-properties'),
   ])
 
   await Promise.all([
