@@ -366,7 +366,7 @@ export class PostgresGameStateStore implements IGameStateStore {
       const [
         campaignRow,
         ccsData, classData, repData, relData,
-        npcData, factionData, questData, zoneData,
+        npcData, factionData, questData, zoneData, objectData,
         agendaData, milestoneData, narrationData,
         encounterData, initData,
         memData, factionEventData,
@@ -381,6 +381,7 @@ export class PostgresGameStateStore implements IGameStateStore {
         tx.select().from(factions).where(eq(factions.campaign_id, campaignId)),
         tx.select().from(quests).where(eq(quests.campaign_id, campaignId)),
         tx.select().from(world_zones).where(eq(world_zones.campaign_id, campaignId)),
+        tx.select().from(world_objects).where(eq(world_objects.campaign_id, campaignId)),
         tx.select().from(campaign_agenda).where(eq(campaign_agenda.campaign_id, campaignId)),
         tx.select().from(campaign_milestones).where(eq(campaign_milestones.campaign_id, campaignId)),
         tx.select().from(narration_pool).where(eq(narration_pool.campaign_id, campaignId)),
@@ -402,6 +403,7 @@ export class PostgresGameStateStore implements IGameStateStore {
         factions: factionData,
         quests: questData,
         world_zones: zoneData,
+        world_objects: objectData,
         campaign_agenda: agendaData,
         campaign_milestones: milestoneData,
         narration_pool: narrationData,
@@ -470,6 +472,7 @@ export class PostgresGameStateStore implements IGameStateStore {
       await tx.delete(character_campaign_state).where(eq(character_campaign_state.campaign_id, campaignId))
       await tx.delete(items).where(eq(items.campaign_id, campaignId))
       await tx.delete(containers).where(eq(containers.campaign_id, campaignId))
+      await tx.delete(world_objects).where(eq(world_objects.campaign_id, campaignId))
       await tx.delete(world_zones).where(eq(world_zones.campaign_id, campaignId))
       await tx.delete(campaign_agenda).where(eq(campaign_agenda.campaign_id, campaignId))
       await tx.delete(campaign_milestones).where(eq(campaign_milestones.campaign_id, campaignId))
@@ -492,6 +495,7 @@ export class PostgresGameStateStore implements IGameStateStore {
       if (s.faction_relationships?.length) await tx.insert(faction_relationships).values(s.faction_relationships as typeof faction_relationships.$inferInsert[])
       if (s.quests?.length) await tx.insert(quests).values(s.quests as typeof quests.$inferInsert[])
       if (s.world_zones?.length) await tx.insert(world_zones).values(s.world_zones as typeof world_zones.$inferInsert[])
+      if (s.world_objects?.length) await tx.insert(world_objects).values(s.world_objects as typeof world_objects.$inferInsert[])
       if (s.campaign_agenda?.length) await tx.insert(campaign_agenda).values(s.campaign_agenda as typeof campaign_agenda.$inferInsert[])
       if (s.campaign_milestones?.length) await tx.insert(campaign_milestones).values(s.campaign_milestones as typeof campaign_milestones.$inferInsert[])
       if (s.narration_pool?.length) await tx.insert(narration_pool).values(s.narration_pool as typeof narration_pool.$inferInsert[])
