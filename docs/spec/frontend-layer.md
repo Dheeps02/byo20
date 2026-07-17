@@ -439,9 +439,9 @@ Player-facing reference panel. HTML/CSS modal overlay — not a Babylon.js scene
 
 **Visual design:** bookshelf with distinct books per category. Clicking a book opens it with a CSS 3D page-flip animation to a table of contents. Selecting a ToC entry page-flips to that content. Animations use `perspective`, `transform-style: preserve-3d`, `rotateY` transitions.
 
-**Trigger:** `#mention` chips in chat, hotkey, or UI button.
+**Trigger:** book icon overlay on canvas (always visible during play) or `#mention` chip clicks in chat (`#spell`, `#item`, `#npc`, `#quest`). Also openable via hotkey.
 
-**Size:** centered modal, ~90% viewport.
+**Size:** centered modal, ~90% viewport. Not full screen. Clicking outside or pressing Escape closes it.
 
 **Books / tab structure:**
 
@@ -462,6 +462,10 @@ Player-facing reference panel. HTML/CSS modal overlay — not a Babylon.js scene
 - Remote access is per-party. One player completing the quest unlocks it for everyone.
 
 **Lore framing:** the Codex is narratively the Grand Library's catalogue. No tutorial needed — players understand the link once they visit in-world.
+
+**Content sources:**
+- Rules, Spells, Bestiary, Conditions: SRD data from `srd.*` tables
+- Lore: `lore_entries` rows for this campaign, grouped by `category`
 
 ---
 
