@@ -111,8 +111,7 @@ export async function teardownTestDb(): Promise<void> {
   if (_serverDb) await _serverDb.sql.end()
   if (_localDb) await _localDb.sql.end()
   if (pg) {
-    await pg.stop()
-    await pg.dropDatabaseCluster()
+    await pg.stop()  // persistent: false means stop() deletes the data directory
   }
   pg = null
   _serverDb = null
@@ -122,7 +121,7 @@ export async function teardownTestDb(): Promise<void> {
 /**
  * Wrap a mutating test body in a transaction that always rolls back.
  * Use inside beforeEach — no manual cleanup needed between tests.
- * The rollback is forced by throwing a sentinel error after fn completes.
+ * The rollback is forced by throwing a sentinel Symbol after fn completes.
  */
 export async function withRollback<T>(
   db: ServerDb['db'] | LocalDb['db'],

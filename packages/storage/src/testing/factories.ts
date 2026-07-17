@@ -38,7 +38,10 @@ function campaignDefaults() {
     campaign_length: 'medium',
     tone: 'high_fantasy',
     world_gen_status: 'complete',
-    terrain_seed: 'test-seed',
+    campaign_seed: 'test-seed',
+    heightmap_resolution: 10,
+    world_depth: 'standard',
+    library_access_unlocked: false,
     narration_mode: 'balanced',
     api_provider: 'ollama',
     api_key_blob: null,
@@ -278,4 +281,50 @@ function agendaEventDefaults(campaignId: string) {
 /** Build a minimal valid agenda_event row linked to campaignId. */
 export function agendaEventFactory(campaignId: string, overrides: Partial<ReturnType<typeof agendaEventDefaults>> = {}) {
   return { ...agendaEventDefaults(campaignId), ...overrides }
+}
+
+// ── World objects ─────────────────────────────────────────────────────────────
+
+function worldObjectDefaults(campaignId: string) {
+  return {
+    id: randomUUID(),
+    campaign_id: campaignId,
+    zone_q: 0,
+    zone_r: 0,
+    name: 'The Old Mill',
+    object_type: 'structure',
+    status: 'intact',
+    position: { x: 0, y: 0, z: 0 },
+    owner_type: null,
+    owner_id: null,
+    properties: null,
+    created_at: new Date(),
+    updated_at: new Date(),
+  }
+}
+
+/** Build a minimal valid world_object row linked to campaignId. */
+export function worldObjectFactory(campaignId: string, overrides: Partial<ReturnType<typeof worldObjectDefaults>> = {}) {
+  return { ...worldObjectDefaults(campaignId), ...overrides }
+}
+
+// ── Lore entries ──────────────────────────────────────────────────────────────
+
+function loreEntryDefaults(campaignId: string) {
+  return {
+    id: randomUUID(),
+    campaign_id: campaignId,
+    title: 'The Fall of the Ember Throne',
+    content: 'A test lore entry.',
+    embedding: Array.from({ length: 768 }, () => 0) as number[],
+    category: 'world_history',
+    source_id: null,
+    source_type: null,
+    created_at: new Date(),
+  }
+}
+
+/** Build a minimal valid lore_entry row linked to campaignId. Epic campaigns only. */
+export function loreEntryFactory(campaignId: string, overrides: Partial<ReturnType<typeof loreEntryDefaults>> = {}) {
+  return { ...loreEntryDefaults(campaignId), ...overrides }
 }

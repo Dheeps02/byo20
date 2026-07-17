@@ -34,5 +34,5 @@ export { setupTestDb, teardownTestDb, withRollback } from './testing/setup'
 export {
   campaignFactory, characterFactory, characterCampaignStateFactory,
   npcFactory, factionFactory, encounterFactory, sessionFactory, questFactory,
-  worldZoneFactory, agendaEventFactory,
+  worldZoneFactory, agendaEventFactory, worldObjectFactory, loreEntryFactory,
 } from './testing/factories'
