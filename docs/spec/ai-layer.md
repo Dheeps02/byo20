@@ -219,7 +219,7 @@ When `world_depth = 'epic'`, the Orchestrator runs a similarity search on `lore_
 - **DM Specialist** — receives lore relevant to the current zone and active quests. Ensures quest gen and encounter framing stays consistent with authored world history.
 - **Narration Specialist** — receives lore for scene-setting. A ruined city narration can reference its fall. A forest path can reference the old kingdom's road markers.
 
-`unlocked_at_clock` on `lore_entries` tracks party discovery — not access control for the AI. All lore is available to all specialists at all times. The `npc-dialogue.md` skill file governs how NPCs handle undiscovered lore (allude, don't dump).
+All lore is available to all specialists at all times — discovery status is not tracked at the AI layer. The `npc-dialogue.md` skill file governs how NPCs handle lore the party hasn't yet encountered in-world (allude, don't dump).
 
 ---
 
@@ -518,7 +518,7 @@ Stage 1: Terrain
   → Procedural heightmap generated (terrain data only — visual rendering is renderer concern)
   → Hex grid overlaid at 6-mile scale
   → Terrain data (peaks, valleys, coastlines, water threshold) structured as JSON
-  → Stored as terrain_seed on campaigns table
+  → Stored as campaign_seed on campaigns table
   → Loading screen: "Generating terrain..."
 
 Stage 2: World Structure
@@ -574,14 +574,26 @@ campaigns.world_gen_status = 'complete'
 
 **Epic world gen — additional passes (Epic only)**
 
-Triggered after the standard 7-pass pipeline completes when `world_depth = 'epic'`.
+Triggered automatically after the standard 7-pass pipeline completes when `world_depth = 'epic'`. Runs once at campaign creation. One-time token cost — no additional per-event cost during play.
 
-- **Lore authoring pass** — DM Specialist generates `lore_entries` rows for faction histories, world history, key location lore, and any named NPC backstories. Chunked into sections per book. Embeddings generated and stored.
-- **Prophecy pass** — DM Specialist generates one campaign prophecy grounded in `campaign_milestones`. Stored for Narration Specialist to reference at milestone events.
-- **Rumor seeding pass** — DM Specialist generates a pool of true and false rumors seeded from `campaign_agenda` and faction relationships. (Requires rumor system — see `docs/future-features.md`. Deferred until that system is specced.)
-- **Found document pass** — DM Specialist pre-authors found documents for key locations. (Deferred — see `docs/future-features.md`.)
+**Lore authoring pass**
+DM Specialist generates `lore_entries` rows using `world-gen-epic.md` skill file:
+- Faction histories (one entry per faction)
+- World history (key era summaries)
+- Key location lore (villain lair, major dungeons, faction HQs)
+- Named NPC backstories (significant NPCs only)
 
-Epic world gen consumes significantly more tokens than Standard. This cost is one-time at campaign creation and does not recur during play.
+Each entry stored with the appropriate `category` field. Embeddings generated and stored via Ollama.
+Loading screen: "Authoring the world's history..."
+
+**Prophecy pass**
+DM Specialist generates one campaign prophecy grounded in `campaign_milestones`.
+Stored as a `lore_entries` row with `category = 'prophecy'`.
+Loading screen: "Writing the prophecy..."
+
+**Rumor seeding pass** — Deferred. Requires rumor system — see `docs/future-features.md`.
+
+**Found document pass** — Deferred. See `docs/future-features.md`.
 
 ### Terrain Awareness
 
