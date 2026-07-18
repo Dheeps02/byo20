@@ -113,7 +113,12 @@ function transformMonster(m: Record<string, unknown>) {
   }
 }
 
-/** Map a raw API species/race object to our srd.species column shape. */
+/**
+ * Map a raw API species object to our srd.species column shape.
+ * NOTE: Fetched from dnd5eapi.co/api/2024/species (not 2024/races — renamed).
+ * Verify field names against a live response if fields appear null after seeding.
+ * Key fields to check: speed (may be object vs integer), traits (may be refs not inline).
+ */
 function transformSpecies(s: Record<string, unknown>) {
   return {
     id: s.index,
