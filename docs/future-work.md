@@ -7,22 +7,19 @@ Update this file as items are resolved or new ones are found.
 
 ## `@byo20/storage`
 
-### Replace `Row` placeholder with concrete domain types
+### ~~Replace `Row` placeholder with concrete domain types~~ **Resolved in feat/shared-domain-types**
 **Where:** `src/postgres/game-state-store.ts`, `src/postgres/vector-store.ts`, `@byo20/shared` interfaces
 
-**What:** `IGameStateStore` and `IVectorStore` currently use `Row = Record<string, unknown>` as method parameter/return types because the concrete domain types (`Campaign`, `NPC`, `Faction`, etc.) don't exist yet. The `as typeof table.$inferInsert` casts in `game-state-store.ts` are load-bearing but temporary.
+**What:** `IGameStateStore` and `IVectorStore` now use concrete domain types from `@byo20/shared/types/domain`.
+All `Row = Record<string, unknown>` aliases and `as typeof table.$inferInsert` casts have been removed.
+Row-to-domain mapping functions handle the translation between flat Drizzle rows and nested domain types.
 
-**When to fix:** After `@byo20/engine` is scaffolded and domain types are moved into `@byo20/shared`. Steps:
-1. Define concrete types (`Campaign`, `Character`, `NPC`, etc.) in `@byo20/shared`
-2. Update `IGameStateStore` and `IVectorStore` in `@byo20/shared` to use them
-3. Remove `Row` alias and `as typeof` casts in `game-state-store.ts`
-
-### Return typed `ActionResources` from `getTurnResources`
+### ~~Return typed `ActionResources` from `getTurnResources`~~ **Resolved in feat/shared-domain-types**
 **Where:** `src/redis/client.ts`, `@byo20/shared`
 
-**What:** `getTurnResources` currently returns `Record<string, string>` — raw Redis strings. Once `ActionResources` is defined in `@byo20/shared`, update `getTurnResources` to parse and return that type directly so the engine receives clean typed data instead of raw strings.
-
-**When to fix:** When `ActionResources` lands in `@byo20/shared`.
+**What:** `getTurnResources` now returns `Promise<ActionResources>`, parsing the raw Redis HASH strings
+into the typed shape from `@byo20/shared`. `setTurnResourcesTyped` is the new typed write helper.
+The raw `setTurnResources` is kept for the rebuild-from-Postgres path.
 
 ### Make agenda poll + remove atomic (Lua script)
 **Where:** `src/redis/client.ts`
@@ -90,10 +87,13 @@ return events
 
 ## `@byo20/shared`
 
-### Update `IGameStateStore` / `IVectorStore` method signatures
-**Where:** `src/types/stores.ts` (or wherever the interfaces live in shared)
+### ~~Update `IGameStateStore` / `IVectorStore` method signatures~~ **Resolved in feat/shared-domain-types**
+**Where:** `packages/shared/src/types/interfaces.ts`
 
-**What:** Both interfaces currently use `Record<string, unknown>` in all method signatures. Once concrete domain types exist in `@byo20/shared`, update the signatures to use them. This is the same work as the storage item above — they're done together.
+**What:** Both interfaces now use concrete domain types throughout. `IGameStateStore` also gains
+`getCharacterIdentity`, `saveCharacterIdentity`, `getContainer`, and `saveContainer` methods.
+`IVectorStore.queryMemories` and `queryFactionEvents` now accept `context: string` instead of
+a pre-computed embedding — the implementation is responsible for generating embeddings.
 
 ---
 
