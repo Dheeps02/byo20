@@ -132,3 +132,26 @@ Only use `removeFiredAgendaEvents` (bulk) when you can guarantee the entire batc
 **Where:** `apps/server` startup sequence
 
 **What:** After Redis connects and the server DB is ready, call `rebuildAgendaFromDb` for every active campaign to restore the agenda ZSET from Postgres. Otherwise the game clock timer events are lost across restarts.
+
+---
+
+## `@byo20/ai`
+
+### Rollback-aware semantic recall — exclude ghost events from Specialist context
+**Where:** All semantic recall query call sites in `@byo20/ai` (`queryMemories`, `queryFactionEvents`, and any future recall helpers)
+
+**What:** After a DM rollback, `event_log` contains rows from the rewound timeline. The Orchestrator's semantic recall queries surface these "ghost" events and inject them into Specialist context — an NPC can reference a battle the party technically never fought, breaking narrative coherence.
+
+The fix has two parts:
+
+**Storage side** (tracked in `@byo20/storage` above, repeated here for cross-reference):
+- Add `rolled_back_at TIMESTAMPTZ` (nullable) to `event_log`
+- Add `invalidated BOOLEAN DEFAULT false` to `npc_memories` and `faction_events` (these reference `event_log.id` — they must also be marked when their source event is rolled back)
+- `rollbackToSnapshot` sets `rolled_back_at = now()` on all `event_log` rows with `timestamp > snapshot.created_at`, and sets `invalidated = true` on all `npc_memories` / `faction_events` rows whose source `event_id` is now rolled back
+
+**AI side** (this entry):
+- Every semantic recall query that reads from `event_log` must add `WHERE rolled_back_at IS NULL`
+- Every query that reads from `npc_memories` or `faction_events` must add `WHERE invalidated = false`
+- This includes the pgvector similarity searches — the embedding index must only surface canon events
+
+**When to fix:** Before `@byo20/ai` semantic recall is wired for the first time. Retrofitting after Specialists are in use means auditing every recall call site and risking missed spots that silently pass ghost context to the LLM.
