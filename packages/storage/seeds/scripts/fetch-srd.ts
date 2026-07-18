@@ -205,8 +205,8 @@ function transformFeat(f: Record<string, unknown>) {
   return {
     id: f.index,
     name: f.name,
-    description: (f.desc as string[] | undefined)?.join('\n') ?? null,
-    category: (f.feat_category as Record<string, unknown>)?.index ?? (f.category as string) ?? 'general',
+    description: (f.description as string) ?? null,
+    category: ((f.type as string) ?? 'general').replace(/-/g, '_'),
     prerequisite: f.prerequisites ?? null,
     ability_score_increase: f.ability_score_bonuses ?? null,
     benefits: null,
