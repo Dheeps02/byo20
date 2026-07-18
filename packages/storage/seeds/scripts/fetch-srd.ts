@@ -249,6 +249,8 @@ async function main() {
     fetchAll(BASE_2024, 'equipment'),
     fetchAll(BASE_2024, 'magic-items'),
     fetchAll(BASE_2024, 'conditions'),
+    // Fetches 8 of 9 PHB masteries. 'flex' is PHB-only, not in SRD 5.2 (CC-BY-4.0) —
+    // absent from the API by design. Do not add it manually.
     fetchAll(BASE_2024, 'weapon-mastery-properties'),
   ])
 
