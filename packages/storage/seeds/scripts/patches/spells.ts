@@ -16,21 +16,29 @@ type SpellRow = Record<string, unknown>
 
 /**
  * Spells that use Emanation AoE in 2024 (centered on caster, moves with them).
- * The 2014 API returns these as 'sphere' — we patch them to 'emanation'.
+ * The 2014 API either returns these as 'sphere' or omits area_of_effect entirely.
+ * We set the type to 'emanation'; radius is sourced from EMANATION_SIZES when absent.
  */
 const EMANATION_SPELLS = new Set([
   'blade-ward',
-  'death-ward',
   'antimagic-field',
   'aura-of-life',
   'aura-of-purity',
   'aura-of-vitality',
   'crusaders-mantle',
-  'mass-cure-wounds',
   'spirit-guardians',
-  'thunder-step',
-  'warding-bond',
+  'thunderclap',
 ])
+
+/**
+ * Radius in feet for each emanation spell that the 2014 API returns with no
+ * area_of_effect at all. Only spells absent from the API shape need an entry here;
+ * spells that have an existing AoE just get their type changed to 'emanation'.
+ */
+const EMANATION_SIZES: Record<string, number> = {
+  'blade-ward': 5,
+  'thunderclap': 5,
+}
 
 /**
  * Conjure spells redesigned in 2024 — new description replaces the old
@@ -72,6 +80,7 @@ const CONJURE_PATCHES: Record<string, Partial<SpellRow>> = {
       'Choose one of the following options for what appears: one elemental of challenge rating 2 or lower, or two elementals of challenge rating 1 or lower, or four elementals of challenge rating 1/2 or lower, or eight elementals of challenge rating 1/4 or lower.',
       'An elemental summoned by this spell disappears when it drops to 0 hit points or when the spell ends.',
     ].join('\n'),
+    area_of_effect: { type: 'emanation', size: 15 },
   },
 }
 
@@ -87,8 +96,15 @@ export function applySpellPatches(spells: SpellRow[]): SpellRow[] {
     // Patch 1: Emanation AoE
     if (EMANATION_SPELLS.has(id)) {
       const aoe = patched.area_of_effect as Record<string, unknown> | null
-      if (aoe && aoe.type === 'sphere') {
+      if (aoe) {
+        // API returned some AoE — just update the type
         patched = { ...patched, area_of_effect: { ...aoe, type: 'emanation' } }
+      } else {
+        // API returned no AoE — create one from the sizes map
+        const size = EMANATION_SIZES[id]
+        if (size !== undefined) {
+          patched = { ...patched, area_of_effect: { type: 'emanation', size } }
+        }
       }
     }
 
