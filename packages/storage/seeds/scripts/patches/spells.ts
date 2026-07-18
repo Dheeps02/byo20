@@ -31,13 +31,23 @@ const EMANATION_SPELLS = new Set([
 ])
 
 /**
- * Radius in feet for each emanation spell that the 2014 API returns with no
- * area_of_effect at all. Only spells absent from the API shape need an entry here;
- * spells that have an existing AoE just get their type changed to 'emanation'.
+ * Radius in feet for emanation spells that the 2014 API returns with NO
+ * area_of_effect object at all (Self-range auras, cantrips).
+ * Spells that DO have an existing AoE in 2014 (e.g. antimagic-field as sphere)
+ * take the first branch in the patch and just get their type changed — no entry
+ * needed here for those.
  */
 const EMANATION_SIZES: Record<string, number> = {
   'blade-ward': 5,
   'thunderclap': 5,
+  // Self-range auras — no AoE in 2014 data, sizes from PHB
+  'spirit-guardians': 15,
+  'aura-of-life': 30,
+  'aura-of-purity': 30,
+  'aura-of-vitality': 30,
+  'crusaders-mantle': 30,
+  // antimagic-field has a sphere AoE in 2014 (size 10) so it takes the first branch
+  // and just gets its type changed — no entry needed here
 }
 
 /**
