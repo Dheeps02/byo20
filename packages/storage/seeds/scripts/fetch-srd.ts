@@ -21,6 +21,7 @@
 import { writeFile } from 'fs/promises'
 import { resolve } from 'path'
 import { applySpellPatches } from './patches/spells'
+import { applyMonsterPatches } from './patches/monsters'
 
 const OUT_DIR = resolve(import.meta.dir, '../srd')
 const BASE_2024 = 'https://www.dnd5eapi.co/api/2024'
@@ -255,7 +256,7 @@ async function main() {
   ])
 
   await Promise.all([
-    write('monsters.json', monsters.map(m => transformMonster(m as Record<string, unknown>))),
+    write('monsters.json', applyMonsterPatches(monsters.map(m => transformMonster(m as Record<string, unknown>)))),
     write('species.json', species.map(s => transformSpecies(s as Record<string, unknown>))),
     write('backgrounds.json', backgrounds.map(b => transformBackground(b as Record<string, unknown>))),
     write('classes.json', classes.map(c => transformClass(c as Record<string, unknown>))),
