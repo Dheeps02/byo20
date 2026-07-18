@@ -10,10 +10,12 @@
  * API notes:
  *   - Most entities: https://www.dnd5eapi.co/api/2024/{entity}
  *   - Spells: https://www.dnd5eapi.co/api/2014/spells (2024 endpoint incomplete)
+ *   - Class levels: https://www.dnd5eapi.co/api/2014/classes/{id}/levels (2024 endpoint incomplete)
  *   - After fetching, manual patches in seeds/scripts/patches/ are applied
  *
  * Manual patches needed (see patches/ directory):
- *   - spells.ts:  Emanation AoE tags, Conjure reworks, 2024 spell delta
+ *   - spells.ts:   Emanation AoE tags, Conjure reworks, 2024 spell delta
+ *   - monsters.ts: treasure_type corrections for hoard/no-treasure creatures
  *
  * Hand-written files (never fetched, don't overwrite):
  *   - xp_thresholds.json, loot_tables.json, ruleset_version.json
@@ -124,21 +126,52 @@ function transformSpecies(s: Record<string, unknown>) {
 
 /** Map a raw API background object to our srd.backgrounds column shape. */
 function transformBackground(b: Record<string, unknown>) {
+  const profs = (b.starting_proficiencies as Array<Record<string, unknown>>) ?? []
+  const toolProfs = profs.filter(p => (p.type as string | undefined) === 'tools')
+  const featEntry = (b.feature as Record<string, unknown>) ?? null
+  const langFrom = (b.language_options as Record<string, unknown>)?.from as Array<Record<string, unknown>> | null
   return {
     id: b.index,
     name: b.name,
     description: null,
     ability_scores: b.ability_bonuses ?? null,
-    skill_profs: b.starting_proficiencies ?? null,
-    tool_profs: null,
-    feat: null,
-    languages: [],
+    skill_profs: profs.filter(p => (p.type as string | undefined) !== 'tools'),
+    tool_profs: toolProfs.length > 0 ? toolProfs : null,
+    feat: (featEntry?.index as string) ?? null,
+    languages: Array.isArray(langFrom) ? langFrom.map(l => l.index as string) : [],
     equipment: b.starting_equipment ?? null,
   }
 }
 
-/** Map a raw API class object to our srd.classes column shape. */
-function transformClass(c: Record<string, unknown>) {
+/**
+ * Map a raw API class object to our srd.classes column shape.
+ * Async because it fetches per-class level data to build features_table
+ * and spell_slot_table — those fields are absent from the base class endpoint.
+ */
+async function transformClass(c: Record<string, unknown>) {
+  const levels = await fetch(`${BASE_2014}/classes/${c.index}/levels`).then(r => r.json()) as Array<Record<string, unknown>>
+
+  const features_table: Record<number, string[]> = {}
+  for (const lvl of levels) {
+    const feats = (lvl.features as Array<Record<string, unknown>> ?? []).map(f => f.index as string)
+    if (feats.length > 0) {
+      features_table[lvl.level as number] = feats
+    }
+  }
+
+  const hasSpells = levels.some(lvl => lvl.spellcasting)
+  const spell_slot_table = hasSpells
+    ? Object.fromEntries(
+        levels
+          .filter(lvl => lvl.spellcasting)
+          .map(lvl => {
+            const sc = lvl.spellcasting as Record<string, unknown>
+            const slots = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (sc[`spell_slots_level_${n}`] as number) ?? 0)
+            return [lvl.level as number, slots]
+          }),
+      )
+    : null
+
   return {
     id: c.index,
     name: c.name,
@@ -149,8 +182,8 @@ function transformClass(c: Record<string, unknown>) {
     armor_profs: null,
     weapon_profs: null,
     skill_choices: c.proficiency_choices ?? null,
-    spell_slot_table: null,
-    features_table: null,
+    spell_slot_table,
+    features_table: Object.keys(features_table).length > 0 ? features_table : null,
   }
 }
 
@@ -172,7 +205,7 @@ function transformFeat(f: Record<string, unknown>) {
     id: f.index,
     name: f.name,
     description: (f.desc as string[] | undefined)?.join('\n') ?? null,
-    category: 'general',
+    category: (f.feat_category as Record<string, unknown>)?.index ?? (f.category as string) ?? 'general',
     prerequisite: f.prerequisites ?? null,
     ability_score_increase: f.ability_score_bonuses ?? null,
     benefits: null,
@@ -181,12 +214,19 @@ function transformFeat(f: Record<string, unknown>) {
 
 /** Map a raw API equipment object to our srd.items column shape. */
 function transformItem(i: Record<string, unknown>) {
+  const cost = i.cost as Record<string, unknown> | null
+  let costInCopper: number | null = null
+  if (cost) {
+    const qty = cost.quantity as number
+    const unit = cost.unit as string
+    costInCopper = unit === 'gp' ? qty * 100 : unit === 'sp' ? qty * 10 : qty
+  }
   return {
     id: i.index,
     name: i.name,
     description: (i.desc as string[] | undefined)?.join('\n') ?? null,
     item_type: (i.equipment_category as Record<string, unknown>)?.index ?? 'gear',
-    cost: (i.cost as Record<string, unknown>)?.quantity ?? null,
+    cost: costInCopper,
     weight: i.weight ?? null,
     properties: i.properties ?? null,
   }
@@ -198,12 +238,12 @@ function transformMagicItem(i: Record<string, unknown>) {
     id: i.index,
     name: i.name,
     description: (i.desc as string[] | undefined)?.join('\n') ?? null,
-    rarity: (i.rarity as Record<string, unknown>)?.name?.toLowerCase().replace(' ', '_') ?? 'common',
+    rarity: (i.rarity as Record<string, unknown>)?.name?.toLowerCase().replace(/\s+/g, '_') ?? 'common',
     item_type: (i.equipment_category as Record<string, unknown>)?.index ?? 'wondrous',
     attunement: String(i.desc ?? '').toLowerCase().includes('requires attunement'),
-    charges_max: null,
-    recharge: null,
-    properties: null,
+    charges_max: (i.charges as number) ?? null,
+    recharge: (i.recharge as string) ?? null,
+    properties: i.properties ?? null,
   }
 }
 
@@ -217,7 +257,7 @@ function transformCondition(c: Record<string, unknown>) {
   }
 }
 
-/** Map a raw API weapon-property object to our srd.weapon_masteries column shape. */
+/** Map a raw API weapon-mastery-property object to our srd.weapon_masteries column shape. */
 function transformWeaponMastery(w: Record<string, unknown>) {
   return {
     id: w.index,
@@ -240,26 +280,31 @@ async function main() {
   spells = applySpellPatches(spells)
   await write('spells.json', spells)
 
-  const [monsters, species, backgrounds, classes, subclasses, feats, srdItems, magicItems, conditions, weaponMasteries] = await Promise.all([
+  // Classes: fetched separately because transformClass is async (fetches per-class level data)
+  const rawClasses = await fetchAll(BASE_2024, 'classes')
+  const classes = await Promise.all(rawClasses.map(c => transformClass(c as Record<string, unknown>)))
+  await write('classes.json', classes)
+
+  // Everything else is independent — fetch in parallel
+  const [monsters, species, backgrounds, subclasses, feats, srdItems, magicItems, conditions] = await Promise.all([
     fetchAll(BASE_2024, 'monsters'),
     fetchAll(BASE_2024, 'races'),          // 2024 API uses 'races' for species
     fetchAll(BASE_2024, 'backgrounds'),
-    fetchAll(BASE_2024, 'classes'),
     fetchAll(BASE_2024, 'subclasses'),
     fetchAll(BASE_2024, 'feats'),
     fetchAll(BASE_2024, 'equipment'),
     fetchAll(BASE_2024, 'magic-items'),
     fetchAll(BASE_2024, 'conditions'),
-    // Fetches 8 of 9 PHB masteries. 'flex' is PHB-only, not in SRD 5.2 (CC-BY-4.0) —
-    // absent from the API by design. Do not add it manually.
-    fetchAll(BASE_2024, 'weapon-mastery-properties'),
   ])
+
+  // Fetches 8 of 9 PHB masteries. 'flex' is PHB-only, not in SRD 5.2 (CC-BY-4.0) —
+  // absent from the API by design. Do not add it manually.
+  const weaponMasteries = await fetchAll(BASE_2024, 'weapon-mastery-properties')
 
   await Promise.all([
     write('monsters.json', applyMonsterPatches(monsters.map(m => transformMonster(m as Record<string, unknown>)))),
     write('species.json', species.map(s => transformSpecies(s as Record<string, unknown>))),
     write('backgrounds.json', backgrounds.map(b => transformBackground(b as Record<string, unknown>))),
-    write('classes.json', classes.map(c => transformClass(c as Record<string, unknown>))),
     write('subclasses.json', subclasses.map(s => transformSubclass(s as Record<string, unknown>))),
     write('feats.json', feats.map(f => transformFeat(f as Record<string, unknown>))),
     write('items.json', srdItems.map(i => transformItem(i as Record<string, unknown>))),
