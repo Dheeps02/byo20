@@ -433,6 +433,42 @@ Sits over the canvas at a fixed position. Text appears as it streams. Fades or d
 
 ---
 
+#### Codex
+
+Player-facing reference panel. HTML/CSS modal overlay — not a Babylon.js scene element. Sits above the canvas via z-index, consistent with all other UI panels.
+
+**Visual design:** bookshelf with distinct books per category. Clicking a book opens it with a CSS 3D page-flip animation to a table of contents. Selecting a ToC entry page-flips to that content. Animations use `perspective`, `transform-style: preserve-3d`, `rotateY` transitions.
+
+**Trigger:** book icon overlay on canvas (always visible during play) or `#mention` chip clicks in chat (`#spell`, `#item`, `#npc`, `#quest`). Also openable via hotkey.
+
+**Size:** centered modal, ~90% viewport. Not full screen. Clicking outside or pressing Escape closes it.
+
+**Books / tab structure:**
+
+| Book | Contents | Campaigns |
+|---|---|---|
+| Rules | Conditions, actions, action economy, rests, general mechanics | Both |
+| Spells | Full SRD spell list with descriptions, components, ranges | Both |
+| Bestiary | Monster stat blocks from SRD | Both |
+| Conditions | Quick-reference condition cards | Both |
+| Lore | Campaign history, faction records, world knowledge, NPC entries | **Epic only** |
+
+**Lore tome (Epic only):**
+
+- Only renders when `campaigns.world_depth = 'epic'`. Does not render in Standard campaigns — the bookshelf simply has one fewer book.
+- Starts empty and locked at campaign start.
+- **Physical library visit** — party visits the Grand Library (placed during Epic world gen). Visit event populates the Lore tome and enables it.
+- **Remote access** — per-party quest reward. Completing the qualifying quest flips `campaigns.library_access_unlocked = true`. Lore tome then accessible from anywhere without returning to the library.
+- Remote access is per-party. One player completing the quest unlocks it for everyone.
+
+**Lore framing:** the Codex is narratively the Grand Library's catalogue. No tutorial needed — players understand the link once they visit in-world.
+
+**Content sources:**
+- Rules, Spells, Bestiary, Conditions: SRD data from `srd.*` tables
+- Lore: `lore_entries` rows for this campaign, grouped by `category`
+
+---
+
 ### TODO — Design in Session 2
 
 - Initiative tracker (right sidebar)
@@ -442,7 +478,7 @@ Sits over the canvas at a fixed position. Text appears as it streams. Fades or d
 - Dice roll feedback
 - Toast / notification system
 - Death save tracker
-- Codex (v1 component — `#mention` chips open here)
+- ~~Codex~~ (designed — see Locked above)
 - Modals: level up choices, loot survey, voting UI
 - Input handling (canvas raycasting → React, keyboard shortcuts)
 - Admin panel (host-only overlay)
@@ -490,4 +526,9 @@ Changes introduced by this layer and applied to storage-layer.md:
 | Rendering backend | WebGPU via WebGPUEngine. Post-processing pipeline for cell shading + god rays + emissive bloom. |
 | Physics | Havok (via Babylon.js native integration). Dice only in v1. Seed-driven determinism — server sends seed, client feeds it to Havok RNG. |
 | Action economy placement | TODO — Claude Design |
-| Codex | v1 component, not yet designed |
+| Codex implementation | HTML/CSS modal — not Babylon.js |
+| Codex animation | CSS 3D transforms (`perspective`, `rotateY`) for bookshelf + page flip |
+| Codex utility books | Always accessible in all campaigns — no gate |
+| Codex Lore tome | Epic only — does not render in Standard |
+| Lore gate | Physical library visit populates; quest reward unlocks remote access |
+| Library remote access scope | Per-party (campaign-scoped flag), not per-player |

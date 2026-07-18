@@ -94,7 +94,7 @@ The game server runs as a Bun subprocess spawned by the Electron main process on
 The Electron app has two processes:
 
 **Main process** — owns all OS-level concerns:
-- Spawning `byo20_server` + `byo20_local` Postgres sidecars (and Redis + game server when hosting)
+- Spawning four sidecars on host launch: Postgres (port `5433`), Redis (`6380`), BYO20 Ollama (`11435`), and the Bun game server. Postgres and Ollama also spawn in join-only mode.
 - Starting Cloudflare Tunnel on host launch
 - `safeStorage` for API key encryption/decryption
 - `electron-updater` for silent background app updates
@@ -169,3 +169,18 @@ Orchestrator
 ```
 
 MCP tools give specialists deterministic read/write access to game state mid-generation. All reasoning and generation is LLM work; all reads/writes to Postgres go through MCP tools, not direct calls.
+
+---
+
+## Port Reference
+
+BYO20 sidecars use non-default ports to avoid conflicting with anything the user already has running.
+
+| Process | Port | Notes |
+|---|---|---|
+| System Postgres | 5432 | Never touched — BYO20 avoids this port |
+| BYO20 Postgres | 5433 | Single instance hosting both `byo20_server` and `byo20_local` databases |
+| System Redis | 6379 | Never touched |
+| BYO20 Redis | 6380 | Session state and agenda timers |
+| System Ollama | 11434 | Never touched |
+| BYO20 Ollama | 11435 | Dedicated instance under `~/.byo20/ollama/`, embeddings only |

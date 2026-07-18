@@ -1,0 +1,92 @@
+[
+  {
+    "id": "individual-cr-0-4",
+    "treasure_type": "individual",
+    "theme": null,
+    "cr_band": "0-4",
+    "coin_range": { "min": 5, "max": 100 },
+    "item_pool": [],
+    "item_count_range": { "min": 0, "max": 1 }
+  },
+  {
+    "id": "individual-cr-5-10",
+    "treasure_type": "individual",
+    "theme": null,
+    "cr_band": "5-10",
+    "coin_range": { "min": 100, "max": 1000 },
+    "item_pool": [],
+    "item_count_range": { "min": 0, "max": 2 }
+  },
+  {
+    "id": "individual-cr-11-16",
+    "treasure_type": "individual",
+    "theme": null,
+    "cr_band": "11-16",
+    "coin_range": { "min": 500, "max": 5000 },
+    "item_pool": [],
+    "item_count_range": { "min": 1, "max": 3 }
+  },
+  {
+    "id": "individual-cr-17-20",
+    "treasure_type": "individual",
+    "theme": null,
+    "cr_band": "17-20",
+    "coin_range": { "min": 2000, "max": 20000 },
+    "item_pool": [],
+    "item_count_range": { "min": 2, "max": 4 }
+  },
+  {
+    "id": "hoard-arcana-cr-0-4",
+    "treasure_type": "hoard",
+    "theme": "arcana",
+    "cr_band": "0-4",
+    "coin_range": { "min": 200, "max": 600 },
+    "item_pool": [],
+    "item_count_range": { "min": 1, "max": 3 }
+  },
+  {
+    "id": "hoard-arcana-cr-5-10",
+    "treasure_type": "hoard",
+    "theme": "arcana",
+    "cr_band": "5-10",
+    "coin_range": { "min": 1000, "max": 4000 },
+    "item_pool": [],
+    "item_count_range": { "min": 2, "max": 5 }
+  },
+  {
+    "id": "hoard-armaments-cr-0-4",
+    "treasure_type": "hoard",
+    "theme": "armaments",
+    "cr_band": "0-4",
+    "coin_range": { "min": 200, "max": 600 },
+    "item_pool": [],
+    "item_count_range": { "min": 1, "max": 3 }
+  },
+  {
+    "id": "hoard-armaments-cr-5-10",
+    "treasure_type": "hoard",
+    "theme": "armaments",
+    "cr_band": "5-10",
+    "coin_range": { "min": 1000, "max": 4000 },
+    "item_pool": [],
+    "item_count_range": { "min": 2, "max": 5 }
+  },
+  {
+    "id": "hoard-implements-cr-0-4",
+    "treasure_type": "hoard",
+    "theme": "implements",
+    "cr_band": "0-4",
+    "coin_range": { "min": 200, "max": 600 },
+    "item_pool": [],
+    "item_count_range": { "min": 1, "max": 3 }
+  },
+  {
+    "id": "hoard-relics-cr-0-4",
+    "treasure_type": "hoard",
+    "theme": "relics",
+    "cr_band": "0-4",
+    "coin_range": { "min": 300, "max": 800 },
+    "item_pool": [],
+    "item_count_range": { "min": 1, "max": 2 }
+  }
+]

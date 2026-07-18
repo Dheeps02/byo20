@@ -21,6 +21,10 @@ Player opens app → "Join Game"
   → Enters URL + invite code
   → App opens WebSocket connection
   → Server validates invite code
+  → Server checks app version:
+      client >= DM version → proceed
+      client < DM version  → reject: "Your app is out of date. Please restart to update."
+      client > DM version  → reject: "The host's app is out of date. Ask them to restart."
   → Server issues a campaign-scoped player token (stored in Postgres)
   → Server pushes full STATE_SNAPSHOT
   → Player is in
@@ -188,6 +192,7 @@ Every message — in both directions — uses the same JSON envelope:
 | `LOOT_GRANTED` | Items awarded |
 | `LEVEL_UP` | Character levelled up |
 | `REST_RESULT` | HP recovered, spell slots restored |
+| `NPC_LOCATION_UPDATE` | NPC position update during active-scene movement (World Sim tick) |
 
 ### Server → Client — Narrative
 
@@ -360,3 +365,4 @@ AI players have no network connection. They are internal to the server process. 
 | Mid-combat disconnect | Configurable: auto_skip (default) / ai_takeover / freeze |
 | Host vs DM | Separated — host retains admin in AI DM mode |
 | Campaign portability | Full Postgres dump, host handoff supported |
+| Version enforcement | Client app version must match host version, checked on WS handshake after invite code validation. Mismatch rejects connection with a human-readable message. |
