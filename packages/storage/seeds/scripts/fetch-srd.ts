@@ -11,6 +11,7 @@
  *   - Most entities: https://www.dnd5eapi.co/api/2024/{entity}
  *   - Spells: https://www.dnd5eapi.co/api/2014/spells (2024 endpoint incomplete)
  *   - Class levels: https://www.dnd5eapi.co/api/2014/classes/{id}/levels (2024 endpoint incomplete)
+ *   - Monsters: https://www.dnd5eapi.co/api/2014/monsters (2024 SRD only licenses 3 monsters)
  *   - After fetching, manual patches in seeds/scripts/patches/ are applied
  *
  * Manual patches needed (see patches/ directory):
@@ -287,8 +288,9 @@ async function main() {
 
   // Everything else is independent — fetch in parallel
   const [monsters, species, backgrounds, subclasses, feats, srdItems, magicItems, conditions] = await Promise.all([
-    fetchAll(BASE_2024, 'monsters'),
-    fetchAll(BASE_2024, 'races'),          // 2024 API uses 'races' for species
+    // 2024 SRD only licenses 3 monsters — fall back to 2014 for full bestiary (still CC-BY-4.0)
+    fetchAll(BASE_2014, 'monsters'),
+    fetchAll(BASE_2024, 'species'),        // 2024 API endpoint is 'species', not 'races'
     fetchAll(BASE_2024, 'backgrounds'),
     fetchAll(BASE_2024, 'subclasses'),
     fetchAll(BASE_2024, 'feats'),
