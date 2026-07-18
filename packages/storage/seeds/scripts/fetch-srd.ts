@@ -215,7 +215,7 @@ function transformFeat(f: Record<string, unknown>) {
     description: (f.description as string) ?? null,
     category: ((f.type as string) ?? 'general').replace(/-/g, '_'),
     prerequisite: f.prerequisites ?? null,
-    ability_score_increase: f.ability_score_bonuses ?? null,
+    ability_score_increase: null, // 2024 API has no structured ability score data — in description text only
     benefits: null,
   }
 }
