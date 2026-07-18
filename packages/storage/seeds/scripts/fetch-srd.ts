@@ -115,9 +115,8 @@ function transformMonster(m: Record<string, unknown>) {
 
 /**
  * Map a raw API species object to our srd.species column shape.
- * NOTE: Fetched from dnd5eapi.co/api/2024/species (not 2024/races — renamed).
- * Verify field names against a live response if fields appear null after seeding.
- * Key fields to check: speed (may be object vs integer), traits (may be refs not inline).
+ * Fetched from dnd5eapi.co/api/2024/species (not 2024/races — renamed in 2024 API).
+ * NOTE: traits may be refs not inline objects — verify after seeding if traits are null.
  */
 function transformSpecies(s: Record<string, unknown>) {
   return {
@@ -125,7 +124,7 @@ function transformSpecies(s: Record<string, unknown>) {
     name: s.name,
     description: (s.desc as string[] | undefined)?.join('\n') ?? null,
     size: s.size ?? null,
-    speed: (s.speed as Record<string, unknown>)?.walk ?? null,
+    speed: (s.speed as number) ?? null, // 2024 API returns a plain integer, not {walk: n}
     traits: s.traits ?? null,
   }
 }
