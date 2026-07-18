@@ -253,7 +253,7 @@ function transformCondition(c: Record<string, unknown>) {
   return {
     id: c.index,
     name: c.name,
-    description: (c.desc as string[] | undefined)?.join('\n') ?? null,
+    description: (c.description as string) ?? null,
     effects: null,
   }
 }
