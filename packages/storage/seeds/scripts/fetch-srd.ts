@@ -227,8 +227,10 @@ function transformItem(i: Record<string, unknown>) {
   return {
     id: i.index,
     name: i.name,
-    description: (i.desc as string[] | undefined)?.join('\n') ?? null,
-    item_type: (i.equipment_category as Record<string, unknown>)?.index ?? 'gear',
+    description: Array.isArray(i.description) && (i.description as string[]).length > 0
+      ? (i.description as string[]).join('\n')
+      : null,
+    item_type: (i.equipment_categories as Array<Record<string, unknown>>)?.[0]?.index ?? 'gear',
     cost: costInCopper,
     weight: i.weight ?? null,
     properties: i.properties ?? null,
