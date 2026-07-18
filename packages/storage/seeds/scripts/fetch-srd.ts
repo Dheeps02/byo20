@@ -263,7 +263,7 @@ function transformWeaponMastery(w: Record<string, unknown>) {
   return {
     id: w.index,
     name: w.name,
-    description: (w.desc as string[] | undefined)?.join('\n') ?? null,
+    description: (w.description as string) ?? null,
     applicable_weapons: null,
     effect: null,
   }
