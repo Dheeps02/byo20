@@ -246,7 +246,7 @@ function transformMagicItem(i: Record<string, unknown>) {
   return {
     id: i.index,
     name: i.name,
-    description: (i.desc as string[] | undefined)?.join('\n') ?? null,
+    description: (i.desc as string) ?? null,
     rarity: (i.rarity as Record<string, unknown>)?.name?.toString().toLowerCase().replaceAll(' ', '_') ?? 'common',
     item_type: (i.equipment_category as Record<string, unknown>)?.index ?? 'wondrous',
     attunement: (i.attunement as boolean) ?? false,
