@@ -200,10 +200,10 @@ function transformSubclass(s: Record<string, unknown>) {
   return {
     id: s.index,
     name: s.name,
-    description: (s.desc as string[] | undefined)?.join('\n') ?? null,
+    description: (s.description as string) ?? null,
     class_id: (s.class as Record<string, unknown>)?.index ?? null,
     level_gained: 3,
-    features: null,
+    features: (s.features as unknown[]) ?? null,
   }
 }
 
