@@ -127,20 +127,22 @@ function transformSpecies(s: Record<string, unknown>) {
 
 /** Map a raw API background object to our srd.backgrounds column shape. */
 function transformBackground(b: Record<string, unknown>) {
-  const profs = (b.starting_proficiencies as Array<Record<string, unknown>>) ?? []
-  const toolProfs = profs.filter(p => (p.type as string | undefined) === 'tools')
-  const featEntry = (b.feature as Record<string, unknown>) ?? null
-  const langFrom = (b.language_options as Record<string, unknown>)?.from as Array<Record<string, unknown>> | null
+  const profs = (b.proficiencies as Array<Record<string, unknown>>) ?? []
+  const skillProfs = profs.filter(p => (p.index as string)?.startsWith('skill-'))
+  const fixedToolProfs = profs.filter(p => (p.index as string)?.startsWith('tool-'))
+  const choiceToolProfs = (b.proficiency_choices as Array<Record<string, unknown>>) ?? []
   return {
     id: b.index,
     name: b.name,
     description: null,
-    ability_scores: b.ability_bonuses ?? null,
-    skill_profs: profs.filter(p => (p.type as string | undefined) !== 'tools'),
-    tool_profs: toolProfs.length > 0 ? toolProfs : null,
-    feat: (featEntry?.index as string) ?? null,
-    languages: Array.isArray(langFrom) ? langFrom.map(l => l.index as string) : [],
-    equipment: b.starting_equipment ?? null,
+    ability_scores: b.ability_scores ?? null,
+    skill_profs: skillProfs.length > 0 ? skillProfs : null,
+    tool_profs: fixedToolProfs.length > 0 || choiceToolProfs.length > 0
+      ? { fixed: fixedToolProfs, choices: choiceToolProfs }
+      : null,
+    feat: (b.feat as Record<string, unknown>)?.index as string ?? null,
+    languages: [], // 2024 backgrounds API has no language field
+    equipment: b.equipment_options ?? null,
   }
 }
 
