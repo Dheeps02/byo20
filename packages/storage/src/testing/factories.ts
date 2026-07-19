@@ -18,7 +18,7 @@
  * Note: character class is in the separate `character_classes` table, not on
  * `characters`. Use a `characterClassesFactory` insert alongside `characterFactory`.
  */
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 // ── Campaigns ─────────────────────────────────────────────────────────────────
 

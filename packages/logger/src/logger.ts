@@ -1,7 +1,8 @@
-import { homedir } from "os";
-import path from "path";
-import { Writable } from "stream";
-import { mkdir } from "fs/promises";
+/// <reference path="./pino-roll.d.ts" />
+import { mkdir } from "node:fs/promises";
+import { homedir } from "node:os";
+import path from "node:path";
+import { Writable } from "node:stream";
 /**
  * Logging factory for @byo20 packages.
  *
@@ -13,7 +14,6 @@ import { mkdir } from "fs/promises";
  *  - Production (NODE_ENV=production or BYO20_LOG_PRETTY unset): raw JSON to file only.
  *  - Development (BYO20_LOG_PRETTY set + not production): pino-pretty on stdout + JSON to file.
  */
-/// <reference path="./pino-roll.d.ts" />
 import pino, { type Logger, type Level } from "pino";
 import roll from "pino-roll";
 
@@ -73,7 +73,7 @@ class RingBufferStream extends Writable {
 
         try {
             const entry = JSON.parse(line) as Record<string, unknown>;
-            const l = entry["level"];
+            const l = entry.level;
             if (typeof l === "number" || typeof l === "string") level = l;
         } catch {
             // Malformed JSON (shouldn't happen from Pino) — write through.

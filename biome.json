@@ -23,5 +23,16 @@
     },
     "files": {
         "ignore": ["node_modules", "dist", "seeds/srd", "docs"]
-    }
+    },
+    "overrides": [
+        {
+            "include": ["tsconfig*.json", "**/tsconfig*.json"],
+            "json": {
+                "parser": {
+                    "allowComments": true,
+                    "allowTrailingCommas": true
+                }
+            }
+        }
+    ]
 }

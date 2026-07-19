@@ -1,4 +1,3 @@
-import { resolve } from "path";
 /**
  * One-time dev script — fetch SRD 5.2 data from dnd5eapi.co and write
  * to seeds/srd/*.json. Run this once when the SRD content changes.
@@ -22,7 +21,8 @@ import { resolve } from "path";
  * Hand-written files (never fetched, don't overwrite):
  *   - xp_thresholds.json, loot_tables.json, ruleset_version.json
  */
-import { writeFile } from "fs/promises";
+import { writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { applyMonsterPatches } from "./patches/monsters";
 import { applySpellPatches } from "./patches/spells";
 

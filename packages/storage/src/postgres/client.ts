@@ -1,4 +1,4 @@
-import { resolve } from "path";
+import { resolve } from "node:path";
 /**
  * Postgres client factory — byo20_server and byo20_local.
  *

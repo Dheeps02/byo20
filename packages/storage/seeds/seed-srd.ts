@@ -1,4 +1,3 @@
-import { resolve } from "path";
 /**
  * SRD seed script — inserts all seeds/srd/*.json into byo20_local.
  *
@@ -10,7 +9,8 @@ import { resolve } from "path";
  * All inserts use ON CONFLICT DO NOTHING so the script is safe to re-run.
  * Append-only tables are never touched here.
  */
-import { readFile } from "fs/promises";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { createLocalDb } from "../src/postgres/client";
 import {
     backgrounds,

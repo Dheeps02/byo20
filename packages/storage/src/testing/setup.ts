@@ -1,4 +1,4 @@
-import { rmSync } from "fs";
+import { rmSync } from "node:fs";
 /**
  * Test database setup using embedded-postgres.
  *
@@ -15,8 +15,8 @@ import { rmSync } from "fs";
  * Linux only. This test suite doesn't run on macOS or Windows because
  * /dev/shm isn't available there. CI runs on Linux.
  */
-import { createServer } from "net";
-import type { AddressInfo } from "net";
+import { createServer } from "node:net";
+import type { AddressInfo } from "node:net";
 import EmbeddedPostgres from "embedded-postgres";
 import { Client } from "pg";
 import { createLocalDb, createServerDb } from "../postgres/client";
@@ -127,15 +127,15 @@ export async function withRollback<T>(
     db: ServerDb["db"] | LocalDb["db"],
     fn: (tx: Parameters<Parameters<typeof db.transaction>[0]>[0]) => Promise<T>,
 ): Promise<T> {
-    let result: T;
+    let result: T | undefined;
     try {
         await db.transaction(async (tx) => {
             result = await fn(tx);
             throw ROLLBACK;
         });
     } catch (e) {
-        if (e === ROLLBACK) return result!;
+        if (e === ROLLBACK) return result as T;
         throw e;
     }
-    return result!;
+    throw new Error("unreachable: transaction must throw ROLLBACK or propagate an error");
 }
