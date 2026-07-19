@@ -40,7 +40,8 @@ import type {
   QuestNodeResult,
   RankedMemoryResult,
 } from '../interfaces/rules-engine'
-import type { Character, NPC, Encounter, WorldMutationInstruction } from '@byo20/shared'
+import type { Character, NPC, Encounter, WorldMutationInstruction, Result, GameRejection, IGameStateStore } from '@byo20/shared'
+import type { Logger } from '@byo20/logger'
 
 import * as combat from './dnd-5.5e/combat'
 import * as conditions from './dnd-5.5e/conditions'
@@ -57,7 +58,12 @@ import * as quests from './dnd-5.5e/quests'
 export class DnD5eRulesEngine implements IRulesEngine {
   readonly RULESET_ID = 'dnd-5.5e-2024'
 
-  resolveAttack(context: AttackContext): AttackResult {
+  constructor(
+    private readonly store: IGameStateStore,
+    private readonly logger: Logger,
+  ) {}
+
+  resolveAttack(context: AttackContext): Result<AttackResult, GameRejection> {
     return combat.resolveAttack(context)
   }
 
@@ -108,7 +114,7 @@ export class DnD5eRulesEngine implements IRulesEngine {
     return aoe.resolveAoE(context)
   }
 
-  castSpell(context: SpellCastContext): Promise<SpellCastResult> {
+  castSpell(context: SpellCastContext): Promise<Result<SpellCastResult, GameRejection>> {
     return spells.castSpell(context)
   }
 

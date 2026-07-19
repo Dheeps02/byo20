@@ -9,6 +9,7 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@byo20/shared": "workspace:*"
+    "@byo20/shared": "workspace:*",
+    "@byo20/logger": "workspace:*"
   }
 }

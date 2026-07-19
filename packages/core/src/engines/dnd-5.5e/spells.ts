@@ -1,5 +1,5 @@
 /** Spell casting, effect resolution, and concentration stubs. */
-import type { Character, NPC } from '@byo20/shared'
+import type { Character, NPC, Result, GameRejection } from '@byo20/shared'
 import type {
   SpellCastContext,
   SpellCastResult,
@@ -14,7 +14,9 @@ import { NotImplementedError } from '../../errors'
  * Attempt to cast a spell: validate slot availability, end previous concentration
  * if needed, and apply all effect primitives listed in the SRD spell definition.
  */
-export async function castSpell(context: SpellCastContext): Promise<SpellCastResult> {
+export async function castSpell(
+  context: SpellCastContext,
+): Promise<Result<SpellCastResult, GameRejection>> {
   throw new NotImplementedError('castSpell')
 }
 
