@@ -45,6 +45,21 @@ Update this file as items are resolved or new ones are found.
 **Remaining:** `apps/server` startup must call `checkRulesetVersion(localDb.db, engine.RULESET_ID)`
 before accepting connections. Tracked here for when apps/server is implemented.
 
+### Store injection strategy for condition side-effects
+**Where:** `src/engines/dnd-5.5e/conditions.ts` — `applyCondition` and `removeCondition`
+
+**What:** Both functions write condition state but currently accept no store parameter.
+When implemented, they will need access to `IGameStateStore`. Two options:
+- Constructor injection: `DnD5eRulesEngine` accepts `IGameStateStore` in its constructor
+  and passes it down to subsystems that need it.
+- Call-site injection: each function that needs the store accepts it as an explicit parameter.
+
+Constructor injection is the likely right call — the engine already lives inside `apps/server`
+which owns the store instance. Decide and document in an ADR when the conditions subsystem
+is implemented.
+
+**When to fix:** Before implementing `applyCondition` / `removeCondition`.
+
 ---
 
 ## Phase: `apps/server`
