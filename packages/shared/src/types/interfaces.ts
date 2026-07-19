@@ -1,16 +1,23 @@
 /**
  * Storage interface contracts — implemented by @byo20/storage, consumed by @byo20/engine.
  *
- * Return types use `Row` (a plain record) as a temporary alias. Each will be replaced
- * with a concrete domain type during the schema implementation step, once Drizzle
- * infers the column shapes. TypeScript's structural typing means the implementation
- * will satisfy these interfaces as long as the shapes match — no explicit mapping needed.
- *
- * IDs are always `string` (UUID) — that part is typed correctly now.
+ * All `Row = Record<string, unknown>` placeholders have been replaced with the concrete
+ * domain types from `./domain`. The storage layer is responsible for mapping between
+ * flat Drizzle row shapes and these nested domain types.
  */
-
-/** Temporary alias for a fully-typed DB row. Replaced with concrete domain types once Drizzle column shapes are inferred. */
-type Row = Record<string, unknown>
+import type {
+  Campaign,
+  Character, CharacterIdentity, CharacterCampaignState, CharacterClass,
+  Encounter, InitiativeEntry,
+  NPC,
+  Faction, FactionReputation,
+  Item, Container,
+  Quest,
+  WorldZone, WorldObject,
+  Session, Snapshot, SnapshotTrigger,
+  EventLogEntry, CombatLogEntry, NPCDialogueEntry, PartyChatEntry,
+} from './domain'
+import type { NPCMemory, FactionEvent } from './domain'
 
 // ── IGameStateStore ────────────────────────────────────────────────────────────
 
@@ -20,109 +27,135 @@ type Row = Record<string, unknown>
  * any WS events — no state change reaches clients without a committed DB write.
  */
 export interface IGameStateStore {
-  // Campaigns
-  /** Fetch a campaign row by UUID. Throws if not found. */
-  getCampaign(id: string): Promise<Row>
-  /** Upsert a campaign row. INSERT … ON CONFLICT DO UPDATE — no need to distinguish create vs. update. */
-  saveCampaign(campaign: Row): Promise<void>
+  // ── Campaigns ─────────────────────────────────────────────────────────────
+  /** Fetch a campaign by UUID. Throws if not found. */
+  getCampaign(id: string): Promise<Campaign>
+  /** Upsert a campaign. INSERT … ON CONFLICT DO UPDATE. */
+  saveCampaign(campaign: Campaign): Promise<void>
 
-  // Characters
-  /** Fetch a character row by UUID. Throws if not found. */
-  getCharacter(id: string): Promise<Row>
-  /** Upsert a character row. */
-  saveCharacter(character: Row): Promise<void>
+  // ── Characters — engine-facing merged view ────────────────────────────────
+  /**
+   * Fetch a character by UUID + campaign, returning the merged engine-facing type.
+   * JOINs `characters` + `character_campaign_state` + `character_classes`.
+   */
+  getCharacter(id: string, campaignId: string): Promise<Character>
+  /**
+   * Upsert a character.
+   * Splits the merged `Character` back into the three underlying tables and upserts each.
+   */
+  saveCharacter(character: Character): Promise<void>
 
-  // Character campaign state
-  /** Fetch a character's campaign state by its own UUID. Throws if not found. */
-  getCharacterCampaignState(id: string): Promise<Row>
+  // ── Character identity (portable, pre-campaign) ───────────────────────────
+  /** Fetch a character's portable identity by UUID. Throws if not found. */
+  getCharacterIdentity(id: string): Promise<CharacterIdentity>
+  /** Upsert a character identity row. */
+  saveCharacterIdentity(identity: CharacterIdentity): Promise<void>
+
+  // ── Character campaign state (standalone) ─────────────────────────────────
+  /** Fetch a character campaign state by its own UUID. Throws if not found. */
+  getCharacterCampaignState(id: string): Promise<CharacterCampaignState>
   /** Upsert a character campaign state row. */
-  saveCharacterCampaignState(state: Row): Promise<void>
+  saveCharacterCampaignState(state: CharacterCampaignState): Promise<void>
 
-  // Character classes (one row per class the character has levels in)
-  /** Fetch all class rows for a given character_campaign_state UUID. */
-  getCharacterClasses(characterCampaignStateId: string): Promise<Row[]>
+  // ── Character classes ─────────────────────────────────────────────────────
+  /** Fetch all class rows for a character_campaign_state UUID. */
+  getCharacterClasses(characterCampaignStateId: string): Promise<CharacterClass[]>
   /** Upsert a character class row. */
-  saveCharacterClass(cls: Row): Promise<void>
+  saveCharacterClass(cls: CharacterClass): Promise<void>
 
-  // Encounters
-  /** Fetch an encounter row by UUID. Throws if not found. */
-  getEncounter(id: string): Promise<Row>
-  /** Upsert an encounter row. */
-  saveEncounter(encounter: Row): Promise<void>
-  /** Fetch the single active encounter for a campaign, or null if not in combat. */
-  getActiveEncounter(campaignId: string): Promise<Row | null>
+  // ── Encounters ────────────────────────────────────────────────────────────
+  /** Fetch an encounter by UUID. Throws if not found. */
+  getEncounter(id: string): Promise<Encounter>
+  /** Upsert an encounter. */
+  saveEncounter(encounter: Encounter): Promise<void>
+  /** Fetch the active encounter for a campaign, or null if not in combat. */
+  getActiveEncounter(campaignId: string): Promise<Encounter | null>
 
-  // Initiative entries (one row per combatant)
-  /** Fetch all initiative entries for an encounter, ordered by position. */
-  getInitiativeEntries(encounterId: string): Promise<Row[]>
-  /** Upsert an initiative entry row. */
-  saveInitiativeEntry(entry: Row): Promise<void>
+  // ── Initiative ────────────────────────────────────────────────────────────
+  /** Fetch all initiative entries for an encounter. */
+  getInitiativeEntries(encounterId: string): Promise<InitiativeEntry[]>
+  /** Upsert an initiative entry. */
+  saveInitiativeEntry(entry: InitiativeEntry): Promise<void>
 
-  // NPCs
-  /** Fetch an NPC row by UUID. Throws if not found. */
-  getNPC(id: string): Promise<Row>
-  /** Upsert an NPC row. */
-  saveNPC(npc: Row): Promise<void>
+  // ── NPCs ──────────────────────────────────────────────────────────────────
+  /** Fetch an NPC by UUID. Throws if not found. */
+  getNPC(id: string): Promise<NPC>
+  /** Upsert an NPC. */
+  saveNPC(npc: NPC): Promise<void>
   /** Fetch all NPCs whose JSONB location->>'zone_id' matches zoneId within a campaign. */
-  getNPCsInZone(campaignId: string, zoneId: string): Promise<Row[]>
+  getNPCsInZone(campaignId: string, zoneId: string): Promise<NPC[]>
 
-  // Factions
-  /** Fetch a faction row by UUID. Throws if not found. */
-  getFaction(id: string): Promise<Row>
+  // ── Factions ──────────────────────────────────────────────────────────────
+  /** Fetch a faction by UUID. Throws if not found. */
+  getFaction(id: string): Promise<Faction>
+  /** Upsert a faction. Used by world gen and agenda events that mutate faction state. */
+  saveFaction(faction: Faction): Promise<void>
   /** Fetch a character's reputation row with a specific faction. Throws if not found. */
-  getFactionReputation(characterCampaignStateId: string, factionId: string): Promise<Row>
+  getFactionReputation(characterCampaignStateId: string, factionId: string): Promise<FactionReputation>
   /** Upsert a faction reputation row. */
-  saveFactionReputation(rep: Row): Promise<void>
+  saveFactionReputation(rep: FactionReputation): Promise<void>
 
-  // Items
+  // ── Items ─────────────────────────────────────────────────────────────────
   /** Fetch all items owned by an entity within a campaign. */
-  getItems(campaignId: string, ownerId: string): Promise<Row[]>
-  /** Upsert an item row. */
-  saveItem(item: Row): Promise<void>
-  /** Update an item's owner_id and owner_type — used for loot distribution and trades. */
+  getItems(campaignId: string, ownerId: string): Promise<Item[]>
+  /** Upsert an item (base row + stats extension row). */
+  saveItem(item: Item): Promise<void>
+  /** Update an item's owner_id and owner_type. Used for loot distribution and trades. */
   transferItem(itemId: string, newOwnerId: string, newOwnerType: string): Promise<void>
 
-  // Quests
-  /** Fetch a quest row by UUID. Throws if not found. */
-  getQuest(id: string): Promise<Row>
-  /** Upsert a quest row. */
-  saveQuest(quest: Row): Promise<void>
+  // ── Containers ────────────────────────────────────────────────────────────
+  /** Fetch a container by UUID. Throws if not found. */
+  getContainer(id: string): Promise<Container>
+  /** Upsert a container. */
+  saveContainer(container: Container): Promise<void>
+
+  // ── Quests ────────────────────────────────────────────────────────────────
+  /** Fetch a quest by UUID. Throws if not found. */
+  getQuest(id: string): Promise<Quest>
+  /** Upsert a quest. */
+  saveQuest(quest: Quest): Promise<void>
   /** Fetch all quests with state='active' for a campaign. */
-  getActiveQuests(campaignId: string): Promise<Row[]>
+  getActiveQuests(campaignId: string): Promise<Quest[]>
 
-  // World zones
-  /** Fetch a world zone row by UUID. Throws if not found. */
-  getWorldZone(id: string): Promise<Row>
-  /** Upsert a world zone row. */
-  saveWorldZone(zone: Row): Promise<void>
+  // ── World zones ───────────────────────────────────────────────────────────
+  /** Fetch a world zone by UUID. Throws if not found. */
+  getWorldZone(id: string): Promise<WorldZone>
+  /** Upsert a world zone. */
+  saveWorldZone(zone: WorldZone): Promise<void>
 
-  // World objects
+  // ── World objects ─────────────────────────────────────────────────────────
   /** Fetch all world objects in a hex zone within a campaign. */
-  getWorldObjects(campaignId: string, zoneQ: number, zoneR: number): Promise<Row[]>
-  /** Upsert a world object row. */
-  saveWorldObject(obj: Row): Promise<void>
+  getWorldObjects(campaignId: string, zoneQ: number, zoneR: number): Promise<WorldObject[]>
+  /** Upsert a world object. */
+  saveWorldObject(obj: WorldObject): Promise<void>
 
-  // Append-only logs — these methods INSERT only, never UPDATE or DELETE
+  // ── Append-only logs ──────────────────────────────────────────────────────
   /** Append a row to event_log. Never updated or deleted. */
-  appendEventLog(entry: Row): Promise<void>
+  appendEventLog(entry: EventLogEntry): Promise<void>
   /** Append a row to combat_log. Never updated or deleted. */
-  appendCombatLog(entry: Row): Promise<void>
+  appendCombatLog(entry: CombatLogEntry): Promise<void>
   /** Append a row to npc_dialogue_log. Never updated or deleted. */
-  appendNPCDialogue(entry: Row): Promise<void>
+  appendNPCDialogue(entry: NPCDialogueEntry): Promise<void>
   /** Append a row to party_chat_log. Never updated or deleted. */
-  appendPartyChat(entry: Row): Promise<void>
+  appendPartyChat(entry: PartyChatEntry): Promise<void>
 
-  // Campaign snapshots (rolling window of 10, used for DM rollback)
-  /** Snapshot the full mutable campaign state. Evicts the oldest if the rolling window of 10 is full. */
-  createSnapshot(campaignId: string, triggerType: string, triggerRef: string | null, label: string): Promise<void>
+  // ── Snapshots ─────────────────────────────────────────────────────────────
+  /**
+   * Snapshot the full mutable campaign state.
+   * Maintains a rolling window of 10 — evicts the oldest if at capacity.
+   */
+  createSnapshot(campaignId: string, trigger: SnapshotTrigger, triggerRef: string | null, label: string): Promise<void>
   /** Fetch all snapshots for a campaign, oldest first. */
-  getSnapshots(campaignId: string): Promise<Row[]>
-  /** Restore campaign state from a snapshot. Deletes all current mutable state then re-inserts snapshot rows in FK order. */
+  getSnapshots(campaignId: string): Promise<Snapshot[]>
+  /**
+   * Restore campaign state from a snapshot.
+   * Deletes all current mutable state then re-inserts snapshot rows in FK order.
+   */
   rollbackToSnapshot(snapshotId: string): Promise<void>
 
-  // Sessions
+  // ── Sessions ──────────────────────────────────────────────────────────────
   /** Insert a new session row and return it. */
-  createSession(campaignId: string): Promise<Row>
+  createSession(campaignId: string): Promise<Session>
   /** Set ended_at and summary on a session row. */
   endSession(sessionId: string, summary: string): Promise<void>
 }
@@ -131,25 +164,22 @@ export interface IGameStateStore {
 
 /**
  * Vector similarity search interface over pgvector columns.
- * All embeddings are 768-dimensional — generated by BYO20's bundled Ollama
- * instance using nomic-embed-text. The implementation never calls an LLM provider.
+ * All embeddings are 768-dimensional (nomic-embed-text via bundled Ollama).
+ *
+ * Query methods accept a `context` string rather than a pre-computed embedding —
+ * the implementation is responsible for generating the embedding via Ollama before
+ * running the cosine search. This keeps embedding logic out of callers.
  */
 export interface IVectorStore {
-  // NPC memory — semantic recall for the NPC Specialist
+  // ── NPC memory ─────────────────────────────────────────────────────────────
   /** Upsert an NPC memory row including its 768-dim embedding. */
-  upsertMemory(memory: Row): Promise<void>
+  upsertMemory(memory: NPCMemory): Promise<void>
   /** Return the topK most semantically similar NPC memories by cosine distance. */
-  queryMemories(npcId: string, queryEmbedding: number[], topK: number): Promise<Row[]>
+  queryMemories(npcId: string, context: string, topK: number): Promise<NPCMemory[]>
 
-  // Faction event memory — semantic recall for faction context
+  // ── Faction event memory ───────────────────────────────────────────────────
   /** Upsert a faction event row including its 768-dim embedding. */
-  upsertFactionEvent(event: Row): Promise<void>
+  upsertFactionEvent(event: FactionEvent): Promise<void>
   /** Return the topK most semantically similar faction events by cosine distance. */
-  queryFactionEvents(factionId: string, queryEmbedding: number[], topK: number): Promise<Row[]>
-
-  // Lore entries — Epic campaigns only; queried by the Orchestrator for Specialist context
-  /** Upsert a lore entry row including its 768-dim embedding. */
-  upsertLoreEntry(entry: Row): Promise<void>
-  /** Return the topK most semantically relevant lore entries for a campaign by cosine distance. */
-  queryLoreEntries(campaignId: string, queryEmbedding: number[], topK: number): Promise<Row[]>
+  queryFactionEvents(factionId: string, context: string, topK: number): Promise<FactionEvent[]>
 }

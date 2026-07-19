@@ -26,7 +26,7 @@ export {
   getWorldClock, setWorldClock,
   scheduleAgendaEvent, pollDueAgendaEvents, removeAgendaEvent, removeFiredAgendaEvents, rebuildAgendaFromDb,
   getEntityEffects, setEntityEffects, clearEncounterEffects,
-  getTurnResources, setTurnResources, clearTurnResources,
+  getTurnResources, setTurnResources, setTurnResourcesTyped, clearTurnResources,
 } from './redis/client'
 
 // Test utilities (not imported in production — tree-shakeable)

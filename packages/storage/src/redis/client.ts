@@ -14,6 +14,7 @@
  * Agenda timers use ZRANGEBYSCORE on the game clock value, not wall time.
  */
 import Redis from 'ioredis'
+import type { ActionResources } from '@byo20/shared'
 
 /** Safety-net TTL for combat keys. If an encounter or turn ends without the server
  * calling the clear* helpers (e.g. crash mid-combat), these keys auto-expire rather
@@ -156,12 +157,38 @@ export async function clearEncounterEffects(redis: Redis, encounterId: string): 
 
 // ── Turn resources (per character) ────────────────────────────────────────────
 
-/** Fetch a character's current-turn action resource hash. Returns {} if not set.
- * An empty object means all resources are available — the engine treats a missing
- * key as "at maximum". clearTurnResources deletes the hash rather than resetting
- * fields, which is equivalent to a full refresh by this convention. */
-export async function getTurnResources(redis: Redis, characterId: string): Promise<Record<string, string>> {
-  return redis.hgetall(turnResourcesKey(characterId))
+/**
+ * Fetch a character's current-turn action resource hash and parse it into `ActionResources`.
+ * Redis stores all hash values as strings; this function coerces them to the typed shape.
+ * Returns max-budget defaults when the key is absent (cleared between turns).
+ */
+export async function getTurnResources(redis: Redis, characterId: string): Promise<ActionResources> {
+  const raw = await redis.hgetall(turnResourcesKey(characterId))
+  return {
+    movement_remaining: raw.movement_remaining !== undefined ? Number(raw.movement_remaining) : 0,
+    actions_remaining: raw.actions_remaining !== undefined ? Number(raw.actions_remaining) : 1,
+    bonus_action_used: raw.bonus_action_used === 'true',
+    reaction_used: raw.reaction_used === 'true',
+    free_interaction_used: raw.free_interaction_used === 'true',
+    attacks_remaining: raw.attacks_remaining !== undefined ? Number(raw.attacks_remaining) : 0,
+  }
+}
+
+/** Write a character's current-turn action resources. Stringifies all values for Redis HSET. */
+export async function setTurnResourcesTyped(
+  redis: Redis,
+  characterId: string,
+  resources: ActionResources,
+): Promise<void> {
+  const stringified: Record<string, string> = {
+    movement_remaining: String(resources.movement_remaining),
+    actions_remaining: String(resources.actions_remaining),
+    bonus_action_used: String(resources.bonus_action_used),
+    reaction_used: String(resources.reaction_used),
+    free_interaction_used: String(resources.free_interaction_used),
+    attacks_remaining: String(resources.attacks_remaining),
+  }
+  await setTurnResources(redis, characterId, stringified)
 }
 
 /** Write a character's current-turn action resources. Overwrites the previous value. */
