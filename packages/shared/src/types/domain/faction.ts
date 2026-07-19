@@ -11,16 +11,16 @@ export type FactionAttitude = 'friendly' | 'indifferent' | 'hostile'
 /** The nature of a faction-to-faction relationship. */
 export type FactionRelationshipType = 'ally' | 'rival' | 'enemy' | 'neutral'
 
-/** Maps to `world.factions`. `goals` is JSONB (array of goal strings). */
+/** Maps to `world.factions`. */
 export interface Faction {
   id: string
   campaignId: string
   name: string
   description: string | null
-  /** JSONB array of goal strings, e.g. ["control the trade routes", ...]. */
-  goals: unknown
+  /** Array of faction goal strings, e.g. ["control the trade routes", ...]. */
+  goals: string[]
   leaderNpcId: string | null
-  /** JSONB — zones or location references the faction controls. */
+  /** JSONB — zones or location references the faction controls. Shape is variable. */
   territory: unknown
   updatedAt: Date
 }
