@@ -1,0 +1,18 @@
+{
+  "name": "@byo20/logger",
+  "version": "0.0.1",
+  "private": true,
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pino": "latest",
+    "pino-roll": "latest"
+  },
+  "devDependencies": {
+    "pino-pretty": "latest"
+  }
+}
