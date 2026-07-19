@@ -12,8 +12,6 @@ import type {
   NPC,
   Encounter,
   Quest,
-  Item,
-  ActiveEffect,
   WorldMutationInstruction,
   PendingLevelup,
   NPCMemory,
