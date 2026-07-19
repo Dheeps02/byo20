@@ -1,4 +1,4 @@
-import { defineConfig } from 'drizzle-kit'
+import { defineConfig } from "drizzle-kit";
 
 /**
  * Drizzle Kit config for byo20_local (always-active local DB).
@@ -6,10 +6,10 @@ import { defineConfig } from 'drizzle-kit'
  * At runtime the app connects via createLocalDb() in src/postgres/client.ts.
  */
 export default defineConfig({
-  schema: './src/postgres/schema/local',
-  out: './migrations/local',
-  dialect: 'postgresql',
-  dbCredentials: {
-    url: process.env.DATABASE_LOCAL_URL ?? 'postgresql://byo20:byo20@localhost:5433/byo20_local',
-  },
-})
+    schema: "./src/postgres/schema/local",
+    out: "./migrations/local",
+    dialect: "postgresql",
+    dbCredentials: {
+        url: process.env.DATABASE_LOCAL_URL ?? "postgresql://byo20:byo20@localhost:5433/byo20_local",
+    },
+});

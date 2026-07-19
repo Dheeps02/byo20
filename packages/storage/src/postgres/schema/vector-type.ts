@@ -1,4 +1,4 @@
-import { customType } from 'drizzle-orm/pg-core'
+import { customType } from "drizzle-orm/pg-core";
 
 /**
  * Custom Drizzle column type for Postgres BYTEA.
@@ -10,9 +10,11 @@ import { customType } from 'drizzle-orm/pg-core'
  *   heightmap_chunk: bytea('heightmap_chunk')
  */
 export const bytea = (name: string) =>
-  customType<{ data: Buffer; driverData: Buffer }>({
-    dataType() { return 'bytea' },
-  })(name)
+    customType<{ data: Buffer; driverData: Buffer }>({
+        dataType() {
+            return "bytea";
+        },
+    })(name);
 
 /**
  * Custom Drizzle column type for pgvector's vector(N) column.
@@ -32,14 +34,14 @@ export const bytea = (name: string) =>
  * All vectors in BYO20 are 768-dimensional (nomic-embed-text via bundled Ollama).
  */
 export const vector = (name: string, dimensions: number) =>
-  customType<{ data: number[]; driverData: string }>({
-    dataType() {
-      return `vector(${dimensions})`
-    },
-    fromDriver(value: string): number[] {
-      return value.slice(1, -1).split(',').map(Number)
-    },
-    toDriver(value: number[]): string {
-      return `[${value.join(',')}]`
-    },
-  })(name)
+    customType<{ data: number[]; driverData: string }>({
+        dataType() {
+            return `vector(${dimensions})`;
+        },
+        fromDriver(value: string): number[] {
+            return value.slice(1, -1).split(",").map(Number);
+        },
+        toDriver(value: number[]): string {
+            return `[${value.join(",")}]`;
+        },
+    })(name);

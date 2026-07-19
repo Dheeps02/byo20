@@ -7,44 +7,52 @@
  * Queried with cosine similarity: <=> operator in raw SQL, or via
  * PostgresVectorStore which wraps the queries.
  */
-import { boolean, integer, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core'
-import { npcs, factions, quests } from './world'
-import { campaigns } from './game'
-import { event_log } from './log'
-import { vector } from '../vector-type'
+import { boolean, integer, pgSchema, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { vector } from "../vector-type";
+import { campaigns } from "./game";
+import { event_log } from "./log";
+import { factions, npcs, quests } from "./world";
 
 /** Drizzle schema handle for the `memory` Postgres schema. */
-export const memory = pgSchema('memory')
+export const memory = pgSchema("memory");
 
 /**
  * NPC semantic memory — injected into NPC specialist context.
  * Decay is computed using created_at_clock vs. current world_clock.
  * Significance = true skips decay entirely (major plot beats, betrayals).
  */
-export const npc_memories = memory.table('npc_memories', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  npc_id: uuid('npc_id').notNull().references(() => npcs.id),
-  event_log_id: uuid('event_log_id').notNull().references(() => event_log.id),
-  quest_id: uuid('quest_id').references(() => quests.id), // nullable — quest-originated memories
-  embedding: vector('embedding', 768).notNull(),
-  sentiment: text('sentiment').notNull(),                  // positive | negative | neutral
-  significance: boolean('significance').notNull().default(false),
-  created_at_clock: integer('created_at_clock').notNull(), // world-clock minutes at creation
-})
+export const npc_memories = memory.table("npc_memories", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    npc_id: uuid("npc_id")
+        .notNull()
+        .references(() => npcs.id),
+    event_log_id: uuid("event_log_id")
+        .notNull()
+        .references(() => event_log.id),
+    quest_id: uuid("quest_id").references(() => quests.id), // nullable — quest-originated memories
+    embedding: vector("embedding", 768).notNull(),
+    sentiment: text("sentiment").notNull(), // positive | negative | neutral
+    significance: boolean("significance").notNull().default(false),
+    created_at_clock: integer("created_at_clock").notNull(), // world-clock minutes at creation
+});
 
 /**
  * Faction semantic memory — injected into faction/world context.
  * rep_delta tracks reputation change caused by this event for drift computation.
  */
-export const faction_events = memory.table('faction_events', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  faction_id: uuid('faction_id').notNull().references(() => factions.id),
-  event_log_id: uuid('event_log_id').notNull().references(() => event_log.id),
-  quest_id: uuid('quest_id').references(() => quests.id),  // nullable
-  embedding: vector('embedding', 768).notNull(),
-  rep_delta: integer('rep_delta').notNull().default(0),
-  created_at_clock: integer('created_at_clock').notNull(),
-})
+export const faction_events = memory.table("faction_events", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    faction_id: uuid("faction_id")
+        .notNull()
+        .references(() => factions.id),
+    event_log_id: uuid("event_log_id")
+        .notNull()
+        .references(() => event_log.id),
+    quest_id: uuid("quest_id").references(() => quests.id), // nullable
+    embedding: vector("embedding", 768).notNull(),
+    rep_delta: integer("rep_delta").notNull().default(0),
+    created_at_clock: integer("created_at_clock").notNull(),
+});
 
 /**
  * Chunked lore content authored during Epic world gen — faction histories, world
@@ -52,14 +60,16 @@ export const faction_events = memory.table('faction_events', {
  * similarity search against this table to inject relevant lore into Specialist
  * calls during play. Only populated for world_depth = 'epic' campaigns.
  */
-export const lore_entries = memory.table('lore_entries', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  campaign_id: uuid('campaign_id').notNull().references(() => campaigns.id),
-  title: text('title').notNull(),
-  content: text('content').notNull(),
-  embedding: vector('embedding', 768).notNull(),
-  category: text('category').notNull(),   // faction_history | world_history | location_lore | npc_backstory | prophecy
-  source_id: uuid('source_id'),           // nullable FK to faction / npc / zone
-  source_type: text('source_type'),       // faction | npc | zone — null if no specific source
-  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const lore_entries = memory.table("lore_entries", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    campaign_id: uuid("campaign_id")
+        .notNull()
+        .references(() => campaigns.id),
+    title: text("title").notNull(),
+    content: text("content").notNull(),
+    embedding: vector("embedding", 768).notNull(),
+    category: text("category").notNull(), // faction_history | world_history | location_lore | npc_backstory | prophecy
+    source_id: uuid("source_id"), // nullable FK to faction / npc / zone
+    source_type: text("source_type"), // faction | npc | zone — null if no specific source
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

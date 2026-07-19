@@ -3,9 +3,7 @@
  * Engine methods that can legitimately reject a player action return this
  * instead of throwing. Transport reads the result and emits ACTION_REJECTED.
  */
-export type Result<T, E> =
-  | { ok: true;  value: T }
-  | { ok: false; error: E }
+export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 
 /**
  * Payload carried by a failed Result from the engine.
@@ -13,10 +11,10 @@ export type Result<T, E> =
  * `action_type` mirrors the attempted action primitive.
  */
 export type GameRejection = {
-  reason: string
-  action_type: string
-  context?: Record<string, unknown>
-}
+    reason: string;
+    action_type: string;
+    context?: Record<string, unknown>;
+};
 
 /**
  * Base class for all exceptional (non-game-logic) failures.
@@ -33,19 +31,15 @@ export type GameRejection = {
  * All defined codes live in docs/errors.json.
  */
 export class BYO20Error extends Error {
-  readonly code: string
-  readonly context?: Record<string, unknown>
-  readonly userMessage?: string
+    readonly code: string;
+    readonly context?: Record<string, unknown>;
+    readonly userMessage?: string;
 
-  constructor(
-    code: string,
-    message: string,
-    options?: { context?: Record<string, unknown>; userMessage?: string },
-  ) {
-    super(message)
-    this.name = 'BYO20Error'
-    this.code = code
-    this.context = options?.context
-    this.userMessage = options?.userMessage
-  }
+    constructor(code: string, message: string, options?: { context?: Record<string, unknown>; userMessage?: string }) {
+        super(message);
+        this.name = "BYO20Error";
+        this.code = code;
+        this.context = options?.context;
+        this.userMessage = options?.userMessage;
+    }
 }

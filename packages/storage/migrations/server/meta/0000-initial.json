@@ -1,2859 +1,2695 @@
 {
-  "id": "ba10e89e-5778-4211-9468-af86c7abf540",
-  "prevId": "00000000-0000-0000-0000-000000000000",
-  "version": "7",
-  "dialect": "postgresql",
-  "tables": {
-    "combat.encounters": {
-      "name": "encounters",
-      "schema": "combat",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+    "id": "ba10e89e-5778-4211-9468-af86c7abf540",
+    "prevId": "00000000-0000-0000-0000-000000000000",
+    "version": "7",
+    "dialect": "postgresql",
+    "tables": {
+        "combat.encounters": {
+            "name": "encounters",
+            "schema": "combat",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "status": {
+                    "name": "status",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'active'"
+                },
+                "round": {
+                    "name": "round",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 1
+                },
+                "started_at": {
+                    "name": "started_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "ended_at": {
+                    "name": "ended_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "encounters_campaign_id_campaigns_id_fk": {
+                    "name": "encounters_campaign_id_campaigns_id_fk",
+                    "tableFrom": "encounters",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
         },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
+        "combat.initiative_entries": {
+            "name": "initiative_entries",
+            "schema": "combat",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "encounter_id": {
+                    "name": "encounter_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "entity_id": {
+                    "name": "entity_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "entity_type": {
+                    "name": "entity_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "initiative_roll": {
+                    "name": "initiative_roll",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "position": {
+                    "name": "position",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "is_current_turn": {
+                    "name": "is_current_turn",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "surprised": {
+                    "name": "surprised",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "initiative_entries_encounter_id_encounters_id_fk": {
+                    "name": "initiative_entries_encounter_id_encounters_id_fk",
+                    "tableFrom": "initiative_entries",
+                    "tableTo": "encounters",
+                    "schemaTo": "combat",
+                    "columnsFrom": ["encounter_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
         },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'active'"
+        "game.campaigns": {
+            "name": "campaigns",
+            "schema": "game",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "dm_user_id": {
+                    "name": "dm_user_id",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "status": {
+                    "name": "status",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'active'"
+                },
+                "phase": {
+                    "name": "phase",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'exploration'"
+                },
+                "world_clock": {
+                    "name": "world_clock",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 0
+                },
+                "movement_system": {
+                    "name": "movement_system",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'hex'"
+                },
+                "fog_mode": {
+                    "name": "fog_mode",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'shared'"
+                },
+                "hp_on_levelup": {
+                    "name": "hp_on_levelup",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'fixed'"
+                },
+                "sync_interval_mins": {
+                    "name": "sync_interval_mins",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 5
+                },
+                "premise": {
+                    "name": "premise",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "campaign_length": {
+                    "name": "campaign_length",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "tone": {
+                    "name": "tone",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "world_gen_status": {
+                    "name": "world_gen_status",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'pending'"
+                },
+                "terrain_seed": {
+                    "name": "terrain_seed",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "narration_mode": {
+                    "name": "narration_mode",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'balanced'"
+                },
+                "api_provider": {
+                    "name": "api_provider",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "api_key_blob": {
+                    "name": "api_key_blob",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
         },
-        "round": {
-          "name": "round",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
+        "game.character_campaign_state": {
+            "name": "character_campaign_state",
+            "schema": "game",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "character_id": {
+                    "name": "character_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "level": {
+                    "name": "level",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 1
+                },
+                "xp": {
+                    "name": "xp",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 0
+                },
+                "hp_current": {
+                    "name": "hp_current",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "hp_max": {
+                    "name": "hp_max",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "hit_dice_remaining": {
+                    "name": "hit_dice_remaining",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "spell_slots": {
+                    "name": "spell_slots",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "conditions": {
+                    "name": "conditions",
+                    "type": "text[]",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "death_saves": {
+                    "name": "death_saves",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "position": {
+                    "name": "position",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "is_active": {
+                    "name": "is_active",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "exhaustion_level": {
+                    "name": "exhaustion_level",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 0
+                },
+                "temp_hp": {
+                    "name": "temp_hp",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 0
+                },
+                "heroic_inspiration": {
+                    "name": "heroic_inspiration",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "class_resources": {
+                    "name": "class_resources",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "prepared_spells": {
+                    "name": "prepared_spells",
+                    "type": "text[]",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "weapon_masteries": {
+                    "name": "weapon_masteries",
+                    "type": "text[]",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "languages": {
+                    "name": "languages",
+                    "type": "text[]",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "skill_proficiencies": {
+                    "name": "skill_proficiencies",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "saving_throw_profs": {
+                    "name": "saving_throw_profs",
+                    "type": "text[]",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "feats_taken": {
+                    "name": "feats_taken",
+                    "type": "text[]",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "concentrating_on": {
+                    "name": "concentrating_on",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "tool_proficiencies": {
+                    "name": "tool_proficiencies",
+                    "type": "text[]",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "pending_levelup": {
+                    "name": "pending_levelup",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "character_campaign_state_character_id_characters_id_fk": {
+                    "name": "character_campaign_state_character_id_characters_id_fk",
+                    "tableFrom": "character_campaign_state",
+                    "tableTo": "characters",
+                    "schemaTo": "game",
+                    "columnsFrom": ["character_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "character_campaign_state_campaign_id_campaigns_id_fk": {
+                    "name": "character_campaign_state_campaign_id_campaigns_id_fk",
+                    "tableFrom": "character_campaign_state",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
         },
-        "started_at": {
-          "name": "started_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+        "game.character_classes": {
+            "name": "character_classes",
+            "schema": "game",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "character_campaign_state_id": {
+                    "name": "character_campaign_state_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "class": {
+                    "name": "class",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "subclass": {
+                    "name": "subclass",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "class_level": {
+                    "name": "class_level",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "prepared_spells": {
+                    "name": "prepared_spells",
+                    "type": "text[]",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "character_classes_character_campaign_state_id_character_campaign_state_id_fk": {
+                    "name": "character_classes_character_campaign_state_id_character_campaign_state_id_fk",
+                    "tableFrom": "character_classes",
+                    "tableTo": "character_campaign_state",
+                    "schemaTo": "game",
+                    "columnsFrom": ["character_campaign_state_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
         },
-        "ended_at": {
-          "name": "ended_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
+        "game.characters": {
+            "name": "characters",
+            "schema": "game",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "owner_user_id": {
+                    "name": "owner_user_id",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "species": {
+                    "name": "species",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "background": {
+                    "name": "background",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "backstory": {
+                    "name": "backstory",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "stat_str": {
+                    "name": "stat_str",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "stat_dex": {
+                    "name": "stat_dex",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "stat_con": {
+                    "name": "stat_con",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "stat_int": {
+                    "name": "stat_int",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "stat_wis": {
+                    "name": "stat_wis",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "stat_cha": {
+                    "name": "stat_cha",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "items.armor_stats": {
+            "name": "armor_stats",
+            "schema": "items",
+            "columns": {
+                "item_id": {
+                    "name": "item_id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "ac": {
+                    "name": "ac",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "armor_type": {
+                    "name": "armor_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "stealth_disadvantage": {
+                    "name": "stealth_disadvantage",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "str_requirement": {
+                    "name": "str_requirement",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "armor_stats_item_id_items_id_fk": {
+                    "name": "armor_stats_item_id_items_id_fk",
+                    "tableFrom": "armor_stats",
+                    "tableTo": "items",
+                    "schemaTo": "items",
+                    "columnsFrom": ["item_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "items.consumable_stats": {
+            "name": "consumable_stats",
+            "schema": "items",
+            "columns": {
+                "item_id": {
+                    "name": "item_id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "effect": {
+                    "name": "effect",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "charges_max": {
+                    "name": "charges_max",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "charges_current": {
+                    "name": "charges_current",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "recharge": {
+                    "name": "recharge",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "consumable_stats_item_id_items_id_fk": {
+                    "name": "consumable_stats_item_id_items_id_fk",
+                    "tableFrom": "consumable_stats",
+                    "tableTo": "items",
+                    "schemaTo": "items",
+                    "columnsFrom": ["item_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "items.containers": {
+            "name": "containers",
+            "schema": "items",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "location": {
+                    "name": "location",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "owner_type": {
+                    "name": "owner_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "owner_id": {
+                    "name": "owner_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "containers_campaign_id_campaigns_id_fk": {
+                    "name": "containers_campaign_id_campaigns_id_fk",
+                    "tableFrom": "containers",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "items.items": {
+            "name": "items",
+            "schema": "items",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "item_id": {
+                    "name": "item_id",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "item_type": {
+                    "name": "item_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "description": {
+                    "name": "description",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "base_value": {
+                    "name": "base_value",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "unit": {
+                    "name": "unit",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "owner_type": {
+                    "name": "owner_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "owner_id": {
+                    "name": "owner_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "location_type": {
+                    "name": "location_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "location_id": {
+                    "name": "location_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "quantity": {
+                    "name": "quantity",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 1
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "items_campaign_id_campaigns_id_fk": {
+                    "name": "items_campaign_id_campaigns_id_fk",
+                    "tableFrom": "items",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "items.magic_item_stats": {
+            "name": "magic_item_stats",
+            "schema": "items",
+            "columns": {
+                "item_id": {
+                    "name": "item_id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "custom_name": {
+                    "name": "custom_name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "rarity": {
+                    "name": "rarity",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "attunement": {
+                    "name": "attunement",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "attuned": {
+                    "name": "attuned",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "bonus": {
+                    "name": "bonus",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "charges_max": {
+                    "name": "charges_max",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "charges_current": {
+                    "name": "charges_current",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "recharge": {
+                    "name": "recharge",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "properties": {
+                    "name": "properties",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "magic_item_stats_item_id_items_id_fk": {
+                    "name": "magic_item_stats_item_id_items_id_fk",
+                    "tableFrom": "magic_item_stats",
+                    "tableTo": "items",
+                    "schemaTo": "items",
+                    "columnsFrom": ["item_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "items.melee_item_stats": {
+            "name": "melee_item_stats",
+            "schema": "items",
+            "columns": {
+                "item_id": {
+                    "name": "item_id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "damage_die": {
+                    "name": "damage_die",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "damage_type": {
+                    "name": "damage_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "properties": {
+                    "name": "properties",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "melee_item_stats_item_id_items_id_fk": {
+                    "name": "melee_item_stats_item_id_items_id_fk",
+                    "tableFrom": "melee_item_stats",
+                    "tableTo": "items",
+                    "schemaTo": "items",
+                    "columnsFrom": ["item_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "items.ranged_item_stats": {
+            "name": "ranged_item_stats",
+            "schema": "items",
+            "columns": {
+                "item_id": {
+                    "name": "item_id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "damage_die": {
+                    "name": "damage_die",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "damage_type": {
+                    "name": "damage_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "range_normal": {
+                    "name": "range_normal",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "range_long": {
+                    "name": "range_long",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "ammo_type": {
+                    "name": "ammo_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "ranged_item_stats_item_id_items_id_fk": {
+                    "name": "ranged_item_stats_item_id_items_id_fk",
+                    "tableFrom": "ranged_item_stats",
+                    "tableTo": "items",
+                    "schemaTo": "items",
+                    "columnsFrom": ["item_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "items.spell_focus_stats": {
+            "name": "spell_focus_stats",
+            "schema": "items",
+            "columns": {
+                "item_id": {
+                    "name": "item_id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "focus_type": {
+                    "name": "focus_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "spell_focus_stats_item_id_items_id_fk": {
+                    "name": "spell_focus_stats_item_id_items_id_fk",
+                    "tableFrom": "spell_focus_stats",
+                    "tableTo": "items",
+                    "schemaTo": "items",
+                    "columnsFrom": ["item_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "world.campaign_agenda": {
+            "name": "campaign_agenda",
+            "schema": "world",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "title": {
+                    "name": "title",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "description": {
+                    "name": "description",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "fires_at_clock": {
+                    "name": "fires_at_clock",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "fired": {
+                    "name": "fired",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "fired_at": {
+                    "name": "fired_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "world_mutations": {
+                    "name": "world_mutations",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "campaign_agenda_campaign_id_campaigns_id_fk": {
+                    "name": "campaign_agenda_campaign_id_campaigns_id_fk",
+                    "tableFrom": "campaign_agenda",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "world.campaign_milestones": {
+            "name": "campaign_milestones",
+            "schema": "world",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "title": {
+                    "name": "title",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "description": {
+                    "name": "description",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "required": {
+                    "name": "required",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "completed": {
+                    "name": "completed",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "completed_at": {
+                    "name": "completed_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "triggers_pool_refresh": {
+                    "name": "triggers_pool_refresh",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "order_hint": {
+                    "name": "order_hint",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "campaign_milestones_campaign_id_campaigns_id_fk": {
+                    "name": "campaign_milestones_campaign_id_campaigns_id_fk",
+                    "tableFrom": "campaign_milestones",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "world.campaign_snapshots": {
+            "name": "campaign_snapshots",
+            "schema": "world",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "trigger_type": {
+                    "name": "trigger_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "trigger_ref": {
+                    "name": "trigger_ref",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "label": {
+                    "name": "label",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "state": {
+                    "name": "state",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "campaign_snapshots_campaign_id_campaigns_id_fk": {
+                    "name": "campaign_snapshots_campaign_id_campaigns_id_fk",
+                    "tableFrom": "campaign_snapshots",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "world.character_faction_reputation": {
+            "name": "character_faction_reputation",
+            "schema": "world",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "character_campaign_state_id": {
+                    "name": "character_campaign_state_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "faction_id": {
+                    "name": "faction_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "reputation": {
+                    "name": "reputation",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 0
+                },
+                "attitude": {
+                    "name": "attitude",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'indifferent'"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "character_faction_reputation_faction_id_factions_id_fk": {
+                    "name": "character_faction_reputation_faction_id_factions_id_fk",
+                    "tableFrom": "character_faction_reputation",
+                    "tableTo": "factions",
+                    "schemaTo": "world",
+                    "columnsFrom": ["faction_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "world.faction_relationships": {
+            "name": "faction_relationships",
+            "schema": "world",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "faction_a_id": {
+                    "name": "faction_a_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "faction_b_id": {
+                    "name": "faction_b_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "relationship": {
+                    "name": "relationship",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "faction_relationships_faction_a_id_factions_id_fk": {
+                    "name": "faction_relationships_faction_a_id_factions_id_fk",
+                    "tableFrom": "faction_relationships",
+                    "tableTo": "factions",
+                    "schemaTo": "world",
+                    "columnsFrom": ["faction_a_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "faction_relationships_faction_b_id_factions_id_fk": {
+                    "name": "faction_relationships_faction_b_id_factions_id_fk",
+                    "tableFrom": "faction_relationships",
+                    "tableTo": "factions",
+                    "schemaTo": "world",
+                    "columnsFrom": ["faction_b_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "world.factions": {
+            "name": "factions",
+            "schema": "world",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "description": {
+                    "name": "description",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "goals": {
+                    "name": "goals",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "leader_npc_id": {
+                    "name": "leader_npc_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "territory": {
+                    "name": "territory",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "factions_campaign_id_campaigns_id_fk": {
+                    "name": "factions_campaign_id_campaigns_id_fk",
+                    "tableFrom": "factions",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "factions_leader_npc_id_npcs_id_fk": {
+                    "name": "factions_leader_npc_id_npcs_id_fk",
+                    "tableFrom": "factions",
+                    "tableTo": "npcs",
+                    "schemaTo": "world",
+                    "columnsFrom": ["leader_npc_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "world.narration_pool": {
+            "name": "narration_pool",
+            "schema": "world",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "event_type": {
+                    "name": "event_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "content": {
+                    "name": "content",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "generated_at": {
+                    "name": "generated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "narration_pool_campaign_id_campaigns_id_fk": {
+                    "name": "narration_pool_campaign_id_campaigns_id_fk",
+                    "tableFrom": "narration_pool",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "world.npcs": {
+            "name": "npcs",
+            "schema": "world",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "faction_id": {
+                    "name": "faction_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "location": {
+                    "name": "location",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "status": {
+                    "name": "status",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'alive'"
+                },
+                "schedule": {
+                    "name": "schedule",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "stat_str": {
+                    "name": "stat_str",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "stat_dex": {
+                    "name": "stat_dex",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "stat_con": {
+                    "name": "stat_con",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "stat_int": {
+                    "name": "stat_int",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "stat_wis": {
+                    "name": "stat_wis",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "stat_cha": {
+                    "name": "stat_cha",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "ac": {
+                    "name": "ac",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "speed": {
+                    "name": "speed",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "cr": {
+                    "name": "cr",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "hp_current": {
+                    "name": "hp_current",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "hp_max": {
+                    "name": "hp_max",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "proficiency_bonus": {
+                    "name": "proficiency_bonus",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "traits": {
+                    "name": "traits",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "actions": {
+                    "name": "actions",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "resistances": {
+                    "name": "resistances",
+                    "type": "text[]",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "immunities": {
+                    "name": "immunities",
+                    "type": "text[]",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "spells": {
+                    "name": "spells",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "senses": {
+                    "name": "senses",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "languages": {
+                    "name": "languages",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "legendary_resistances": {
+                    "name": "legendary_resistances",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "treasure_type": {
+                    "name": "treasure_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'none'"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "npcs_campaign_id_campaigns_id_fk": {
+                    "name": "npcs_campaign_id_campaigns_id_fk",
+                    "tableFrom": "npcs",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "world.quests": {
+            "name": "quests",
+            "schema": "world",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "title": {
+                    "name": "title",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "source_type": {
+                    "name": "source_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "state": {
+                    "name": "state",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'available'"
+                },
+                "faction_id": {
+                    "name": "faction_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "nodes": {
+                    "name": "nodes",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "current_node_id": {
+                    "name": "current_node_id",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "quests_campaign_id_campaigns_id_fk": {
+                    "name": "quests_campaign_id_campaigns_id_fk",
+                    "tableFrom": "quests",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "quests_faction_id_factions_id_fk": {
+                    "name": "quests_faction_id_factions_id_fk",
+                    "tableFrom": "quests",
+                    "tableTo": "factions",
+                    "schemaTo": "world",
+                    "columnsFrom": ["faction_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "world.world_zones": {
+            "name": "world_zones",
+            "schema": "world",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "hex_q": {
+                    "name": "hex_q",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "hex_r": {
+                    "name": "hex_r",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "gen_state": {
+                    "name": "gen_state",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'ungenerated'"
+                },
+                "zone_type": {
+                    "name": "zone_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "content": {
+                    "name": "content",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "generated_at": {
+                    "name": "generated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "world_zones_campaign_id_campaigns_id_fk": {
+                    "name": "world_zones_campaign_id_campaigns_id_fk",
+                    "tableFrom": "world_zones",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "log.combat_log": {
+            "name": "combat_log",
+            "schema": "log",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "encounter_id": {
+                    "name": "encounter_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "session_id": {
+                    "name": "session_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "round": {
+                    "name": "round",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "actor_id": {
+                    "name": "actor_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "action_type": {
+                    "name": "action_type",
+                    "type": "combat_action_type",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "payload": {
+                    "name": "payload",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "result": {
+                    "name": "result",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "summary": {
+                    "name": "summary",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "embedding": {
+                    "name": "embedding",
+                    "type": "vector(768)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "timestamp": {
+                    "name": "timestamp",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "combat_log_encounter_id_encounters_id_fk": {
+                    "name": "combat_log_encounter_id_encounters_id_fk",
+                    "tableFrom": "combat_log",
+                    "tableTo": "encounters",
+                    "schemaTo": "combat",
+                    "columnsFrom": ["encounter_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "combat_log_session_id_sessions_id_fk": {
+                    "name": "combat_log_session_id_sessions_id_fk",
+                    "tableFrom": "combat_log",
+                    "tableTo": "sessions",
+                    "schemaTo": "log",
+                    "columnsFrom": ["session_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "log.event_log": {
+            "name": "event_log",
+            "schema": "log",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "session_id": {
+                    "name": "session_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "event_type": {
+                    "name": "event_type",
+                    "type": "event_type",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "payload": {
+                    "name": "payload",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "summary": {
+                    "name": "summary",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "embedding": {
+                    "name": "embedding",
+                    "type": "vector(768)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "timestamp": {
+                    "name": "timestamp",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "event_log_campaign_id_campaigns_id_fk": {
+                    "name": "event_log_campaign_id_campaigns_id_fk",
+                    "tableFrom": "event_log",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "event_log_session_id_sessions_id_fk": {
+                    "name": "event_log_session_id_sessions_id_fk",
+                    "tableFrom": "event_log",
+                    "tableTo": "sessions",
+                    "schemaTo": "log",
+                    "columnsFrom": ["session_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "log.npc_dialogue_log": {
+            "name": "npc_dialogue_log",
+            "schema": "log",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "npc_id": {
+                    "name": "npc_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "session_id": {
+                    "name": "session_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "speaker_type": {
+                    "name": "speaker_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "speaker_id": {
+                    "name": "speaker_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "content": {
+                    "name": "content",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "timestamp": {
+                    "name": "timestamp",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "npc_dialogue_log_campaign_id_campaigns_id_fk": {
+                    "name": "npc_dialogue_log_campaign_id_campaigns_id_fk",
+                    "tableFrom": "npc_dialogue_log",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "npc_dialogue_log_session_id_sessions_id_fk": {
+                    "name": "npc_dialogue_log_session_id_sessions_id_fk",
+                    "tableFrom": "npc_dialogue_log",
+                    "tableTo": "sessions",
+                    "schemaTo": "log",
+                    "columnsFrom": ["session_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "log.party_chat_log": {
+            "name": "party_chat_log",
+            "schema": "log",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "session_id": {
+                    "name": "session_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "speaker_id": {
+                    "name": "speaker_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "content": {
+                    "name": "content",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "timestamp": {
+                    "name": "timestamp",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "party_chat_log_campaign_id_campaigns_id_fk": {
+                    "name": "party_chat_log_campaign_id_campaigns_id_fk",
+                    "tableFrom": "party_chat_log",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "party_chat_log_session_id_sessions_id_fk": {
+                    "name": "party_chat_log_session_id_sessions_id_fk",
+                    "tableFrom": "party_chat_log",
+                    "tableTo": "sessions",
+                    "schemaTo": "log",
+                    "columnsFrom": ["session_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "log.sessions": {
+            "name": "sessions",
+            "schema": "log",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "started_at": {
+                    "name": "started_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "ended_at": {
+                    "name": "ended_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "summary": {
+                    "name": "summary",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "sessions_campaign_id_campaigns_id_fk": {
+                    "name": "sessions_campaign_id_campaigns_id_fk",
+                    "tableFrom": "sessions",
+                    "tableTo": "campaigns",
+                    "schemaTo": "game",
+                    "columnsFrom": ["campaign_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "memory.faction_events": {
+            "name": "faction_events",
+            "schema": "memory",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "faction_id": {
+                    "name": "faction_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "event_log_id": {
+                    "name": "event_log_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "quest_id": {
+                    "name": "quest_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "embedding": {
+                    "name": "embedding",
+                    "type": "vector(768)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "rep_delta": {
+                    "name": "rep_delta",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 0
+                },
+                "created_at_clock": {
+                    "name": "created_at_clock",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "faction_events_faction_id_factions_id_fk": {
+                    "name": "faction_events_faction_id_factions_id_fk",
+                    "tableFrom": "faction_events",
+                    "tableTo": "factions",
+                    "schemaTo": "world",
+                    "columnsFrom": ["faction_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "faction_events_event_log_id_event_log_id_fk": {
+                    "name": "faction_events_event_log_id_event_log_id_fk",
+                    "tableFrom": "faction_events",
+                    "tableTo": "event_log",
+                    "schemaTo": "log",
+                    "columnsFrom": ["event_log_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "faction_events_quest_id_quests_id_fk": {
+                    "name": "faction_events_quest_id_quests_id_fk",
+                    "tableFrom": "faction_events",
+                    "tableTo": "quests",
+                    "schemaTo": "world",
+                    "columnsFrom": ["quest_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "memory.npc_memories": {
+            "name": "npc_memories",
+            "schema": "memory",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "npc_id": {
+                    "name": "npc_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "event_log_id": {
+                    "name": "event_log_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "quest_id": {
+                    "name": "quest_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "embedding": {
+                    "name": "embedding",
+                    "type": "vector(768)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "sentiment": {
+                    "name": "sentiment",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "significance": {
+                    "name": "significance",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "created_at_clock": {
+                    "name": "created_at_clock",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "npc_memories_npc_id_npcs_id_fk": {
+                    "name": "npc_memories_npc_id_npcs_id_fk",
+                    "tableFrom": "npc_memories",
+                    "tableTo": "npcs",
+                    "schemaTo": "world",
+                    "columnsFrom": ["npc_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "npc_memories_event_log_id_event_log_id_fk": {
+                    "name": "npc_memories_event_log_id_event_log_id_fk",
+                    "tableFrom": "npc_memories",
+                    "tableTo": "event_log",
+                    "schemaTo": "log",
+                    "columnsFrom": ["event_log_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "npc_memories_quest_id_quests_id_fk": {
+                    "name": "npc_memories_quest_id_quests_id_fk",
+                    "tableFrom": "npc_memories",
+                    "tableTo": "quests",
+                    "schemaTo": "world",
+                    "columnsFrom": ["quest_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
         }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "encounters_campaign_id_campaigns_id_fk": {
-          "name": "encounters_campaign_id_campaigns_id_fk",
-          "tableFrom": "encounters",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
     },
-    "combat.initiative_entries": {
-      "name": "initiative_entries",
-      "schema": "combat",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+    "enums": {
+        "public.combat_action_type": {
+            "name": "combat_action_type",
+            "schema": "public",
+            "values": [
+                "attack",
+                "cast_spell",
+                "move",
+                "dash",
+                "dodge",
+                "disengage",
+                "help",
+                "hide",
+                "ready",
+                "use_item",
+                "bonus_action",
+                "reaction",
+                "grapple",
+                "shove",
+                "death_save"
+            ]
         },
-        "encounter_id": {
-          "name": "encounter_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "entity_id": {
-          "name": "entity_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "entity_type": {
-          "name": "entity_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "initiative_roll": {
-          "name": "initiative_roll",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "position": {
-          "name": "position",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "is_current_turn": {
-          "name": "is_current_turn",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "surprised": {
-          "name": "surprised",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
+        "public.event_type": {
+            "name": "event_type",
+            "schema": "public",
+            "values": [
+                "encounter_started",
+                "encounter_ended",
+                "trade_transaction",
+                "player_moved",
+                "spell_cast",
+                "item_looted",
+                "npc_dialogue",
+                "level_up",
+                "rest_taken",
+                "world_clock_tick",
+                "faction_rep_changed",
+                "door_unlocked",
+                "fast_travel",
+                "influence_action",
+                "study_action",
+                "search_action",
+                "utilize_action",
+                "grapple_attempt",
+                "shove_attempt",
+                "weapon_mastery_triggered",
+                "heroic_inspiration_used",
+                "heroic_inspiration_gained",
+                "potion_used",
+                "villain_agenda_fired",
+                "milestone_completed",
+                "quest_created",
+                "quest_completed",
+                "quest_failed",
+                "quest_abandoned",
+                "narration_pool_refreshed"
+            ]
         }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "initiative_entries_encounter_id_encounters_id_fk": {
-          "name": "initiative_entries_encounter_id_encounters_id_fk",
-          "tableFrom": "initiative_entries",
-          "tableTo": "encounters",
-          "schemaTo": "combat",
-          "columnsFrom": [
-            "encounter_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
     },
-    "game.campaigns": {
-      "name": "campaigns",
-      "schema": "game",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "dm_user_id": {
-          "name": "dm_user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'active'"
-        },
-        "phase": {
-          "name": "phase",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'exploration'"
-        },
-        "world_clock": {
-          "name": "world_clock",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "movement_system": {
-          "name": "movement_system",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'hex'"
-        },
-        "fog_mode": {
-          "name": "fog_mode",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'shared'"
-        },
-        "hp_on_levelup": {
-          "name": "hp_on_levelup",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'fixed'"
-        },
-        "sync_interval_mins": {
-          "name": "sync_interval_mins",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 5
-        },
-        "premise": {
-          "name": "premise",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "campaign_length": {
-          "name": "campaign_length",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tone": {
-          "name": "tone",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "world_gen_status": {
-          "name": "world_gen_status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pending'"
-        },
-        "terrain_seed": {
-          "name": "terrain_seed",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "narration_mode": {
-          "name": "narration_mode",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'balanced'"
-        },
-        "api_provider": {
-          "name": "api_provider",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "api_key_blob": {
-          "name": "api_key_blob",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
+    "schemas": {
+        "combat": "combat",
+        "game": "game",
+        "items": "items",
+        "world": "world",
+        "log": "log",
+        "memory": "memory"
     },
-    "game.character_campaign_state": {
-      "name": "character_campaign_state",
-      "schema": "game",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "character_id": {
-          "name": "character_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "level": {
-          "name": "level",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "xp": {
-          "name": "xp",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "hp_current": {
-          "name": "hp_current",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "hp_max": {
-          "name": "hp_max",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "hit_dice_remaining": {
-          "name": "hit_dice_remaining",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "spell_slots": {
-          "name": "spell_slots",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "conditions": {
-          "name": "conditions",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "death_saves": {
-          "name": "death_saves",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "position": {
-          "name": "position",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "is_active": {
-          "name": "is_active",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "exhaustion_level": {
-          "name": "exhaustion_level",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "temp_hp": {
-          "name": "temp_hp",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "heroic_inspiration": {
-          "name": "heroic_inspiration",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "class_resources": {
-          "name": "class_resources",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "prepared_spells": {
-          "name": "prepared_spells",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "weapon_masteries": {
-          "name": "weapon_masteries",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "languages": {
-          "name": "languages",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "skill_proficiencies": {
-          "name": "skill_proficiencies",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "saving_throw_profs": {
-          "name": "saving_throw_profs",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "feats_taken": {
-          "name": "feats_taken",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "concentrating_on": {
-          "name": "concentrating_on",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "tool_proficiencies": {
-          "name": "tool_proficiencies",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "pending_levelup": {
-          "name": "pending_levelup",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "character_campaign_state_character_id_characters_id_fk": {
-          "name": "character_campaign_state_character_id_characters_id_fk",
-          "tableFrom": "character_campaign_state",
-          "tableTo": "characters",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "character_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "character_campaign_state_campaign_id_campaigns_id_fk": {
-          "name": "character_campaign_state_campaign_id_campaigns_id_fk",
-          "tableFrom": "character_campaign_state",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "game.character_classes": {
-      "name": "character_classes",
-      "schema": "game",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "character_campaign_state_id": {
-          "name": "character_campaign_state_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "class": {
-          "name": "class",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "subclass": {
-          "name": "subclass",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "class_level": {
-          "name": "class_level",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "prepared_spells": {
-          "name": "prepared_spells",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "character_classes_character_campaign_state_id_character_campaign_state_id_fk": {
-          "name": "character_classes_character_campaign_state_id_character_campaign_state_id_fk",
-          "tableFrom": "character_classes",
-          "tableTo": "character_campaign_state",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "character_campaign_state_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "game.characters": {
-      "name": "characters",
-      "schema": "game",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "owner_user_id": {
-          "name": "owner_user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "species": {
-          "name": "species",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "background": {
-          "name": "background",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "backstory": {
-          "name": "backstory",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "stat_str": {
-          "name": "stat_str",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stat_dex": {
-          "name": "stat_dex",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stat_con": {
-          "name": "stat_con",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stat_int": {
-          "name": "stat_int",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stat_wis": {
-          "name": "stat_wis",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stat_cha": {
-          "name": "stat_cha",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "items.armor_stats": {
-      "name": "armor_stats",
-      "schema": "items",
-      "columns": {
-        "item_id": {
-          "name": "item_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "ac": {
-          "name": "ac",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "armor_type": {
-          "name": "armor_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stealth_disadvantage": {
-          "name": "stealth_disadvantage",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "str_requirement": {
-          "name": "str_requirement",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "armor_stats_item_id_items_id_fk": {
-          "name": "armor_stats_item_id_items_id_fk",
-          "tableFrom": "armor_stats",
-          "tableTo": "items",
-          "schemaTo": "items",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "items.consumable_stats": {
-      "name": "consumable_stats",
-      "schema": "items",
-      "columns": {
-        "item_id": {
-          "name": "item_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "effect": {
-          "name": "effect",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "charges_max": {
-          "name": "charges_max",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "charges_current": {
-          "name": "charges_current",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "recharge": {
-          "name": "recharge",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "consumable_stats_item_id_items_id_fk": {
-          "name": "consumable_stats_item_id_items_id_fk",
-          "tableFrom": "consumable_stats",
-          "tableTo": "items",
-          "schemaTo": "items",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "items.containers": {
-      "name": "containers",
-      "schema": "items",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "location": {
-          "name": "location",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "owner_type": {
-          "name": "owner_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "owner_id": {
-          "name": "owner_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "containers_campaign_id_campaigns_id_fk": {
-          "name": "containers_campaign_id_campaigns_id_fk",
-          "tableFrom": "containers",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "items.items": {
-      "name": "items",
-      "schema": "items",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "item_id": {
-          "name": "item_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "item_type": {
-          "name": "item_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "base_value": {
-          "name": "base_value",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "unit": {
-          "name": "unit",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "owner_type": {
-          "name": "owner_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "owner_id": {
-          "name": "owner_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "location_type": {
-          "name": "location_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "location_id": {
-          "name": "location_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "quantity": {
-          "name": "quantity",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "items_campaign_id_campaigns_id_fk": {
-          "name": "items_campaign_id_campaigns_id_fk",
-          "tableFrom": "items",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "items.magic_item_stats": {
-      "name": "magic_item_stats",
-      "schema": "items",
-      "columns": {
-        "item_id": {
-          "name": "item_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "custom_name": {
-          "name": "custom_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "rarity": {
-          "name": "rarity",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "attunement": {
-          "name": "attunement",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "attuned": {
-          "name": "attuned",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "bonus": {
-          "name": "bonus",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "charges_max": {
-          "name": "charges_max",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "charges_current": {
-          "name": "charges_current",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "recharge": {
-          "name": "recharge",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "properties": {
-          "name": "properties",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "magic_item_stats_item_id_items_id_fk": {
-          "name": "magic_item_stats_item_id_items_id_fk",
-          "tableFrom": "magic_item_stats",
-          "tableTo": "items",
-          "schemaTo": "items",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "items.melee_item_stats": {
-      "name": "melee_item_stats",
-      "schema": "items",
-      "columns": {
-        "item_id": {
-          "name": "item_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "damage_die": {
-          "name": "damage_die",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "damage_type": {
-          "name": "damage_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "properties": {
-          "name": "properties",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "melee_item_stats_item_id_items_id_fk": {
-          "name": "melee_item_stats_item_id_items_id_fk",
-          "tableFrom": "melee_item_stats",
-          "tableTo": "items",
-          "schemaTo": "items",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "items.ranged_item_stats": {
-      "name": "ranged_item_stats",
-      "schema": "items",
-      "columns": {
-        "item_id": {
-          "name": "item_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "damage_die": {
-          "name": "damage_die",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "damage_type": {
-          "name": "damage_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "range_normal": {
-          "name": "range_normal",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "range_long": {
-          "name": "range_long",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ammo_type": {
-          "name": "ammo_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "ranged_item_stats_item_id_items_id_fk": {
-          "name": "ranged_item_stats_item_id_items_id_fk",
-          "tableFrom": "ranged_item_stats",
-          "tableTo": "items",
-          "schemaTo": "items",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "items.spell_focus_stats": {
-      "name": "spell_focus_stats",
-      "schema": "items",
-      "columns": {
-        "item_id": {
-          "name": "item_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "focus_type": {
-          "name": "focus_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "spell_focus_stats_item_id_items_id_fk": {
-          "name": "spell_focus_stats_item_id_items_id_fk",
-          "tableFrom": "spell_focus_stats",
-          "tableTo": "items",
-          "schemaTo": "items",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "world.campaign_agenda": {
-      "name": "campaign_agenda",
-      "schema": "world",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "fires_at_clock": {
-          "name": "fires_at_clock",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "fired": {
-          "name": "fired",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "fired_at": {
-          "name": "fired_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "world_mutations": {
-          "name": "world_mutations",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "campaign_agenda_campaign_id_campaigns_id_fk": {
-          "name": "campaign_agenda_campaign_id_campaigns_id_fk",
-          "tableFrom": "campaign_agenda",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "world.campaign_milestones": {
-      "name": "campaign_milestones",
-      "schema": "world",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "required": {
-          "name": "required",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "completed": {
-          "name": "completed",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "completed_at": {
-          "name": "completed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "triggers_pool_refresh": {
-          "name": "triggers_pool_refresh",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "order_hint": {
-          "name": "order_hint",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "campaign_milestones_campaign_id_campaigns_id_fk": {
-          "name": "campaign_milestones_campaign_id_campaigns_id_fk",
-          "tableFrom": "campaign_milestones",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "world.campaign_snapshots": {
-      "name": "campaign_snapshots",
-      "schema": "world",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "trigger_type": {
-          "name": "trigger_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "trigger_ref": {
-          "name": "trigger_ref",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "label": {
-          "name": "label",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "state": {
-          "name": "state",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "campaign_snapshots_campaign_id_campaigns_id_fk": {
-          "name": "campaign_snapshots_campaign_id_campaigns_id_fk",
-          "tableFrom": "campaign_snapshots",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "world.character_faction_reputation": {
-      "name": "character_faction_reputation",
-      "schema": "world",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "character_campaign_state_id": {
-          "name": "character_campaign_state_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "faction_id": {
-          "name": "faction_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "reputation": {
-          "name": "reputation",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "attitude": {
-          "name": "attitude",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'indifferent'"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "character_faction_reputation_faction_id_factions_id_fk": {
-          "name": "character_faction_reputation_faction_id_factions_id_fk",
-          "tableFrom": "character_faction_reputation",
-          "tableTo": "factions",
-          "schemaTo": "world",
-          "columnsFrom": [
-            "faction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "world.faction_relationships": {
-      "name": "faction_relationships",
-      "schema": "world",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "faction_a_id": {
-          "name": "faction_a_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "faction_b_id": {
-          "name": "faction_b_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "relationship": {
-          "name": "relationship",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "faction_relationships_faction_a_id_factions_id_fk": {
-          "name": "faction_relationships_faction_a_id_factions_id_fk",
-          "tableFrom": "faction_relationships",
-          "tableTo": "factions",
-          "schemaTo": "world",
-          "columnsFrom": [
-            "faction_a_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "faction_relationships_faction_b_id_factions_id_fk": {
-          "name": "faction_relationships_faction_b_id_factions_id_fk",
-          "tableFrom": "faction_relationships",
-          "tableTo": "factions",
-          "schemaTo": "world",
-          "columnsFrom": [
-            "faction_b_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "world.factions": {
-      "name": "factions",
-      "schema": "world",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "goals": {
-          "name": "goals",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "leader_npc_id": {
-          "name": "leader_npc_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "territory": {
-          "name": "territory",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "factions_campaign_id_campaigns_id_fk": {
-          "name": "factions_campaign_id_campaigns_id_fk",
-          "tableFrom": "factions",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "factions_leader_npc_id_npcs_id_fk": {
-          "name": "factions_leader_npc_id_npcs_id_fk",
-          "tableFrom": "factions",
-          "tableTo": "npcs",
-          "schemaTo": "world",
-          "columnsFrom": [
-            "leader_npc_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "world.narration_pool": {
-      "name": "narration_pool",
-      "schema": "world",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "event_type": {
-          "name": "event_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "content": {
-          "name": "content",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "generated_at": {
-          "name": "generated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "narration_pool_campaign_id_campaigns_id_fk": {
-          "name": "narration_pool_campaign_id_campaigns_id_fk",
-          "tableFrom": "narration_pool",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "world.npcs": {
-      "name": "npcs",
-      "schema": "world",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "faction_id": {
-          "name": "faction_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "location": {
-          "name": "location",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'alive'"
-        },
-        "schedule": {
-          "name": "schedule",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "stat_str": {
-          "name": "stat_str",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stat_dex": {
-          "name": "stat_dex",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stat_con": {
-          "name": "stat_con",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stat_int": {
-          "name": "stat_int",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stat_wis": {
-          "name": "stat_wis",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stat_cha": {
-          "name": "stat_cha",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ac": {
-          "name": "ac",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "speed": {
-          "name": "speed",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "cr": {
-          "name": "cr",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "hp_current": {
-          "name": "hp_current",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "hp_max": {
-          "name": "hp_max",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "proficiency_bonus": {
-          "name": "proficiency_bonus",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "traits": {
-          "name": "traits",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "actions": {
-          "name": "actions",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "resistances": {
-          "name": "resistances",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "immunities": {
-          "name": "immunities",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "spells": {
-          "name": "spells",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "senses": {
-          "name": "senses",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "languages": {
-          "name": "languages",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "legendary_resistances": {
-          "name": "legendary_resistances",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "treasure_type": {
-          "name": "treasure_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'none'"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "npcs_campaign_id_campaigns_id_fk": {
-          "name": "npcs_campaign_id_campaigns_id_fk",
-          "tableFrom": "npcs",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "world.quests": {
-      "name": "quests",
-      "schema": "world",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "source_type": {
-          "name": "source_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "state": {
-          "name": "state",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'available'"
-        },
-        "faction_id": {
-          "name": "faction_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "nodes": {
-          "name": "nodes",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "current_node_id": {
-          "name": "current_node_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "quests_campaign_id_campaigns_id_fk": {
-          "name": "quests_campaign_id_campaigns_id_fk",
-          "tableFrom": "quests",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "quests_faction_id_factions_id_fk": {
-          "name": "quests_faction_id_factions_id_fk",
-          "tableFrom": "quests",
-          "tableTo": "factions",
-          "schemaTo": "world",
-          "columnsFrom": [
-            "faction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "world.world_zones": {
-      "name": "world_zones",
-      "schema": "world",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "hex_q": {
-          "name": "hex_q",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "hex_r": {
-          "name": "hex_r",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "gen_state": {
-          "name": "gen_state",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'ungenerated'"
-        },
-        "zone_type": {
-          "name": "zone_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "content": {
-          "name": "content",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "generated_at": {
-          "name": "generated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "world_zones_campaign_id_campaigns_id_fk": {
-          "name": "world_zones_campaign_id_campaigns_id_fk",
-          "tableFrom": "world_zones",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "log.combat_log": {
-      "name": "combat_log",
-      "schema": "log",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "encounter_id": {
-          "name": "encounter_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "session_id": {
-          "name": "session_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "round": {
-          "name": "round",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "actor_id": {
-          "name": "actor_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "action_type": {
-          "name": "action_type",
-          "type": "combat_action_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "payload": {
-          "name": "payload",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "result": {
-          "name": "result",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "summary": {
-          "name": "summary",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "embedding": {
-          "name": "embedding",
-          "type": "vector(768)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "timestamp": {
-          "name": "timestamp",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "combat_log_encounter_id_encounters_id_fk": {
-          "name": "combat_log_encounter_id_encounters_id_fk",
-          "tableFrom": "combat_log",
-          "tableTo": "encounters",
-          "schemaTo": "combat",
-          "columnsFrom": [
-            "encounter_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "combat_log_session_id_sessions_id_fk": {
-          "name": "combat_log_session_id_sessions_id_fk",
-          "tableFrom": "combat_log",
-          "tableTo": "sessions",
-          "schemaTo": "log",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "log.event_log": {
-      "name": "event_log",
-      "schema": "log",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "session_id": {
-          "name": "session_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "event_type": {
-          "name": "event_type",
-          "type": "event_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "payload": {
-          "name": "payload",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "summary": {
-          "name": "summary",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "embedding": {
-          "name": "embedding",
-          "type": "vector(768)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "timestamp": {
-          "name": "timestamp",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "event_log_campaign_id_campaigns_id_fk": {
-          "name": "event_log_campaign_id_campaigns_id_fk",
-          "tableFrom": "event_log",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "event_log_session_id_sessions_id_fk": {
-          "name": "event_log_session_id_sessions_id_fk",
-          "tableFrom": "event_log",
-          "tableTo": "sessions",
-          "schemaTo": "log",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "log.npc_dialogue_log": {
-      "name": "npc_dialogue_log",
-      "schema": "log",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "npc_id": {
-          "name": "npc_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "session_id": {
-          "name": "session_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "speaker_type": {
-          "name": "speaker_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "speaker_id": {
-          "name": "speaker_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "content": {
-          "name": "content",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "timestamp": {
-          "name": "timestamp",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "npc_dialogue_log_campaign_id_campaigns_id_fk": {
-          "name": "npc_dialogue_log_campaign_id_campaigns_id_fk",
-          "tableFrom": "npc_dialogue_log",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "npc_dialogue_log_session_id_sessions_id_fk": {
-          "name": "npc_dialogue_log_session_id_sessions_id_fk",
-          "tableFrom": "npc_dialogue_log",
-          "tableTo": "sessions",
-          "schemaTo": "log",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "log.party_chat_log": {
-      "name": "party_chat_log",
-      "schema": "log",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "session_id": {
-          "name": "session_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "speaker_id": {
-          "name": "speaker_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "content": {
-          "name": "content",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "timestamp": {
-          "name": "timestamp",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "party_chat_log_campaign_id_campaigns_id_fk": {
-          "name": "party_chat_log_campaign_id_campaigns_id_fk",
-          "tableFrom": "party_chat_log",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "party_chat_log_session_id_sessions_id_fk": {
-          "name": "party_chat_log_session_id_sessions_id_fk",
-          "tableFrom": "party_chat_log",
-          "tableTo": "sessions",
-          "schemaTo": "log",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "log.sessions": {
-      "name": "sessions",
-      "schema": "log",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "started_at": {
-          "name": "started_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "ended_at": {
-          "name": "ended_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "summary": {
-          "name": "summary",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "sessions_campaign_id_campaigns_id_fk": {
-          "name": "sessions_campaign_id_campaigns_id_fk",
-          "tableFrom": "sessions",
-          "tableTo": "campaigns",
-          "schemaTo": "game",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "memory.faction_events": {
-      "name": "faction_events",
-      "schema": "memory",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "faction_id": {
-          "name": "faction_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "event_log_id": {
-          "name": "event_log_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "quest_id": {
-          "name": "quest_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "embedding": {
-          "name": "embedding",
-          "type": "vector(768)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "rep_delta": {
-          "name": "rep_delta",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "created_at_clock": {
-          "name": "created_at_clock",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "faction_events_faction_id_factions_id_fk": {
-          "name": "faction_events_faction_id_factions_id_fk",
-          "tableFrom": "faction_events",
-          "tableTo": "factions",
-          "schemaTo": "world",
-          "columnsFrom": [
-            "faction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "faction_events_event_log_id_event_log_id_fk": {
-          "name": "faction_events_event_log_id_event_log_id_fk",
-          "tableFrom": "faction_events",
-          "tableTo": "event_log",
-          "schemaTo": "log",
-          "columnsFrom": [
-            "event_log_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "faction_events_quest_id_quests_id_fk": {
-          "name": "faction_events_quest_id_quests_id_fk",
-          "tableFrom": "faction_events",
-          "tableTo": "quests",
-          "schemaTo": "world",
-          "columnsFrom": [
-            "quest_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "memory.npc_memories": {
-      "name": "npc_memories",
-      "schema": "memory",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "npc_id": {
-          "name": "npc_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "event_log_id": {
-          "name": "event_log_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "quest_id": {
-          "name": "quest_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "embedding": {
-          "name": "embedding",
-          "type": "vector(768)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "sentiment": {
-          "name": "sentiment",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "significance": {
-          "name": "significance",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "created_at_clock": {
-          "name": "created_at_clock",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "npc_memories_npc_id_npcs_id_fk": {
-          "name": "npc_memories_npc_id_npcs_id_fk",
-          "tableFrom": "npc_memories",
-          "tableTo": "npcs",
-          "schemaTo": "world",
-          "columnsFrom": [
-            "npc_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "npc_memories_event_log_id_event_log_id_fk": {
-          "name": "npc_memories_event_log_id_event_log_id_fk",
-          "tableFrom": "npc_memories",
-          "tableTo": "event_log",
-          "schemaTo": "log",
-          "columnsFrom": [
-            "event_log_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "npc_memories_quest_id_quests_id_fk": {
-          "name": "npc_memories_quest_id_quests_id_fk",
-          "tableFrom": "npc_memories",
-          "tableTo": "quests",
-          "schemaTo": "world",
-          "columnsFrom": [
-            "quest_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
+    "sequences": {},
+    "roles": {},
+    "policies": {},
+    "views": {},
+    "_meta": {
+        "columns": {},
+        "schemas": {},
+        "tables": {}
     }
-  },
-  "enums": {
-    "public.combat_action_type": {
-      "name": "combat_action_type",
-      "schema": "public",
-      "values": [
-        "attack",
-        "cast_spell",
-        "move",
-        "dash",
-        "dodge",
-        "disengage",
-        "help",
-        "hide",
-        "ready",
-        "use_item",
-        "bonus_action",
-        "reaction",
-        "grapple",
-        "shove",
-        "death_save"
-      ]
-    },
-    "public.event_type": {
-      "name": "event_type",
-      "schema": "public",
-      "values": [
-        "encounter_started",
-        "encounter_ended",
-        "trade_transaction",
-        "player_moved",
-        "spell_cast",
-        "item_looted",
-        "npc_dialogue",
-        "level_up",
-        "rest_taken",
-        "world_clock_tick",
-        "faction_rep_changed",
-        "door_unlocked",
-        "fast_travel",
-        "influence_action",
-        "study_action",
-        "search_action",
-        "utilize_action",
-        "grapple_attempt",
-        "shove_attempt",
-        "weapon_mastery_triggered",
-        "heroic_inspiration_used",
-        "heroic_inspiration_gained",
-        "potion_used",
-        "villain_agenda_fired",
-        "milestone_completed",
-        "quest_created",
-        "quest_completed",
-        "quest_failed",
-        "quest_abandoned",
-        "narration_pool_refreshed"
-      ]
-    }
-  },
-  "schemas": {
-    "combat": "combat",
-    "game": "game",
-    "items": "items",
-    "world": "world",
-    "log": "log",
-    "memory": "memory"
-  },
-  "sequences": {},
-  "roles": {},
-  "policies": {},
-  "views": {},
-  "_meta": {
-    "columns": {},
-    "schemas": {},
-    "tables": {}
-  }
 }

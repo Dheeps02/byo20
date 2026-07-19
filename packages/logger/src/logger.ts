@@ -1,3 +1,7 @@
+import { homedir } from "os";
+import path from "path";
+import { Writable } from "stream";
+import { mkdir } from "fs/promises";
 /**
  * Logging factory for @byo20 packages.
  *
@@ -10,24 +14,20 @@
  *  - Development (BYO20_LOG_PRETTY set + not production): pino-pretty on stdout + JSON to file.
  */
 /// <reference path="./pino-roll.d.ts" />
-import pino, { type Logger, type Level } from 'pino'
-import roll from 'pino-roll'
-import { mkdir } from 'fs/promises'
-import { homedir } from 'os'
-import path from 'path'
-import { Writable } from 'stream'
+import pino, { type Logger, type Level } from "pino";
+import roll from "pino-roll";
 
 /** All logger instances created by createLogger, used by setGlobalLevel. */
-const loggerRegistry = new Set<Logger>()
+const loggerRegistry = new Set<Logger>();
 
 /** Maximum debug/info entries buffered in memory per logger instance. */
-const RING_BUFFER_SIZE = 500
+const RING_BUFFER_SIZE = 500;
 
 /** Pino internal numeric level for warn. */
-const PINO_WARN = 40
+const PINO_WARN = 40;
 
 /** Default server log path: ~/.byo20/logs/server.log */
-const DEFAULT_LOG_PATH = path.join(homedir(), '.byo20', 'logs', 'server.log')
+const DEFAULT_LOG_PATH = path.join(homedir(), ".byo20", "logs", "server.log");
 
 /**
  * Return true if the level value (numeric or string) is below warn severity.
@@ -35,19 +35,17 @@ const DEFAULT_LOG_PATH = path.join(homedir(), '.byo20', 'logs', 'server.log')
  * the formatters.level override.
  */
 function isDebugOrInfo(level: number | string): boolean {
-  return typeof level === 'number' ? level < PINO_WARN : ['trace', 'debug', 'info'].includes(level)
+    return typeof level === "number" ? level < PINO_WARN : ["trace", "debug", "info"].includes(level);
 }
 
 /** Return true if the level is exactly warn. */
 function isWarn(level: number | string): boolean {
-  return typeof level === 'number' ? level === PINO_WARN : level === 'warn'
+    return typeof level === "number" ? level === PINO_WARN : level === "warn";
 }
 
 /** Return true if the level is error or fatal — triggers a buffer flush. */
 function isFlushTrigger(level: number | string): boolean {
-  return typeof level === 'number'
-    ? level > PINO_WARN
-    : level === 'error' || level === 'fatal'
+    return typeof level === "number" ? level > PINO_WARN : level === "error" || level === "fatal";
 }
 
 /**
@@ -59,64 +57,64 @@ function isFlushTrigger(level: number | string): boolean {
  *  - error/fatal      → buffer flushed to file in order, then entry written; buffer cleared.
  */
 class RingBufferStream extends Writable {
-  private readonly buffer: string[] = []
-  /** The underlying rotating file writer (pino-roll SonicBoom or compatible). */
-  private readonly file: { write: (data: string | Buffer) => unknown }
+    private readonly buffer: string[] = [];
+    /** The underlying rotating file writer (pino-roll SonicBoom or compatible). */
+    private readonly file: { write: (data: string | Buffer) => unknown };
 
-  constructor(file: { write: (data: string | Buffer) => unknown }) {
-    super()
-    this.file = file
-  }
-
-  /** Called by the Writable machinery for each Pino log line. */
-  _write(chunk: Buffer, _enc: BufferEncoding, done: (err?: Error | null) => void): void {
-    const line = chunk.toString()
-    let level: number | string = 0
-
-    try {
-      const entry = JSON.parse(line) as Record<string, unknown>
-      const l = entry['level']
-      if (typeof l === 'number' || typeof l === 'string') level = l
-    } catch {
-      // Malformed JSON (shouldn't happen from Pino) — write through.
-      this.file.write(line)
-      done()
-      return
+    constructor(file: { write: (data: string | Buffer) => unknown }) {
+        super();
+        this.file = file;
     }
 
-    if (isDebugOrInfo(level)) {
-      this.addToBuffer(line)
-    } else if (isWarn(level)) {
-      this.addToBuffer(line)
-      this.file.write(line)
-    } else if (isFlushTrigger(level)) {
-      this.flushBuffer()
-      this.file.write(line)
-    } else {
-      // Unknown level — write through without buffering.
-      this.file.write(line)
+    /** Called by the Writable machinery for each Pino log line. */
+    _write(chunk: Buffer, _enc: BufferEncoding, done: (err?: Error | null) => void): void {
+        const line = chunk.toString();
+        let level: number | string = 0;
+
+        try {
+            const entry = JSON.parse(line) as Record<string, unknown>;
+            const l = entry["level"];
+            if (typeof l === "number" || typeof l === "string") level = l;
+        } catch {
+            // Malformed JSON (shouldn't happen from Pino) — write through.
+            this.file.write(line);
+            done();
+            return;
+        }
+
+        if (isDebugOrInfo(level)) {
+            this.addToBuffer(line);
+        } else if (isWarn(level)) {
+            this.addToBuffer(line);
+            this.file.write(line);
+        } else if (isFlushTrigger(level)) {
+            this.flushBuffer();
+            this.file.write(line);
+        } else {
+            // Unknown level — write through without buffering.
+            this.file.write(line);
+        }
+
+        done();
     }
 
-    done()
-  }
+    /** Push one line onto the circular buffer, evicting the oldest if at capacity. */
+    private addToBuffer(line: string): void {
+        if (this.buffer.length >= RING_BUFFER_SIZE) this.buffer.shift();
+        this.buffer.push(line);
+    }
 
-  /** Push one line onto the circular buffer, evicting the oldest if at capacity. */
-  private addToBuffer(line: string): void {
-    if (this.buffer.length >= RING_BUFFER_SIZE) this.buffer.shift()
-    this.buffer.push(line)
-  }
-
-  /** Write all buffered entries to the file in insertion order, then clear the buffer. */
-  private flushBuffer(): void {
-    for (const entry of this.buffer) this.file.write(entry)
-    this.buffer.length = 0
-  }
+    /** Write all buffered entries to the file in insertion order, then clear the buffer. */
+    private flushBuffer(): void {
+        for (const entry of this.buffer) this.file.write(entry);
+        this.buffer.length = 0;
+    }
 }
 
 /** Options accepted by createLogger. */
 export interface CreateLoggerOptions {
-  /** Absolute path to the log file. Defaults to ~/.byo20/logs/server.log. */
-  logPath?: string
+    /** Absolute path to the log file. Defaults to ~/.byo20/logs/server.log. */
+    logPath?: string;
 }
 
 /**
@@ -131,63 +129,59 @@ export interface CreateLoggerOptions {
  * @param name    Identifier for this subsystem, written as `module` in log entries.
  * @param options Optional overrides (e.g. a custom log file path).
  */
-export async function createLogger(
-  name: string,
-  options: CreateLoggerOptions = {},
-): Promise<Logger> {
-  const logPath = options.logPath ?? DEFAULT_LOG_PATH
-  await mkdir(path.dirname(logPath), { recursive: true })
+export async function createLogger(name: string, options: CreateLoggerOptions = {}): Promise<Logger> {
+    const logPath = options.logPath ?? DEFAULT_LOG_PATH;
+    await mkdir(path.dirname(logPath), { recursive: true });
 
-  // pino-roll returns a SonicBoom-compatible writable stream with 2 MB rotation.
-  // size: 2 means 2 MB — pino-roll treats bare numbers as megabytes.
-  const fileWriter = await roll({
-    file: logPath,
-    size: 2,
-    limit: { count: 5 },
-  })
+    // pino-roll returns a SonicBoom-compatible writable stream with 2 MB rotation.
+    // size: 2 means 2 MB — pino-roll treats bare numbers as megabytes.
+    const fileWriter = await roll({
+        file: logPath,
+        size: 2,
+        limit: { count: 5 },
+    });
 
-  const ringBuffer = new RingBufferStream(fileWriter)
+    const ringBuffer = new RingBufferStream(fileWriter);
 
-  const isDev =
-    process.env.NODE_ENV !== 'production' && Boolean(process.env.BYO20_LOG_PRETTY)
+    const isDev = process.env.NODE_ENV !== "production" && Boolean(process.env.BYO20_LOG_PRETTY);
 
-  let destination: Writable
+    let destination: Writable;
 
-  if (isDev) {
-    // Dynamic import keeps pino-pretty out of the production bundle.
-    const { default: pinoPretty } = await import('pino-pretty')
-    const prettyStream = pinoPretty({ colorize: true, sync: true })
-    // multistream fans each entry to both streams (stdout pretty + file ring buffer).
-    destination = pino.multistream([
-      { stream: prettyStream as unknown as NodeJS.WritableStream },
-      { stream: ringBuffer as unknown as NodeJS.WritableStream },
-    ]) as unknown as Writable
-  } else {
-    destination = ringBuffer
-  }
+    if (isDev) {
+        // Dynamic import keeps pino-pretty out of the production bundle.
+        const { default: pinoPretty } = await import("pino-pretty");
+        const prettyStream = pinoPretty({ colorize: true, sync: true });
+        // multistream fans each entry to both streams (stdout pretty + file ring buffer).
+        destination = pino.multistream([
+            { stream: prettyStream as unknown as NodeJS.WritableStream },
+            { stream: ringBuffer as unknown as NodeJS.WritableStream },
+        ]) as unknown as Writable;
+    } else {
+        destination = ringBuffer;
+    }
 
-  const logger = pino(
-    {
-      // base: { module: name } replaces the default pid/hostname base fields
-      // with just the module name, matching the desired log entry shape.
-      base: { module: name },
-      // Emit "timestamp" instead of Pino's default "time" key.
-      timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
-      formatters: {
-        // Convert Pino's internal numeric level to a human-readable string.
-        level(label: string) {
-          return { level: label }
+    const logger = pino(
+        {
+            // base: { module: name } replaces the default pid/hostname base fields
+            // with just the module name, matching the desired log entry shape.
+            base: { module: name },
+            // Emit "timestamp" instead of Pino's default "time" key.
+            timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
+            formatters: {
+                // Convert Pino's internal numeric level to a human-readable string.
+                level(label: string) {
+                    return { level: label };
+                },
+            },
+            // In dev, start at debug so ring buffer can capture context. In prod, warn
+            // means debug/info calls are no-ops until the admin panel lowers the level.
+            level: isDev ? "debug" : "warn",
         },
-      },
-      // In dev, start at debug so ring buffer can capture context. In prod, warn
-      // means debug/info calls are no-ops until the admin panel lowers the level.
-      level: isDev ? 'debug' : 'warn',
-    },
-    destination,
-  )
+        destination,
+    );
 
-  loggerRegistry.add(logger)
-  return logger
+    loggerRegistry.add(logger);
+    return logger;
 }
 
 /**
@@ -197,7 +191,7 @@ export async function createLogger(
  * changes with no restart required.
  */
 export function setGlobalLevel(level: string): void {
-  for (const instance of loggerRegistry) {
-    instance.level = level as Level
-  }
+    for (const instance of loggerRegistry) {
+        instance.level = level as Level;
+    }
 }

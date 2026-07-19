@@ -22,11 +22,6 @@
         }
     },
     "files": {
-        "ignore": [
-            "node_modules",
-            "dist",
-            "seeds/srd",
-            "docs"
-        ]
+        "ignore": ["node_modules", "dist", "seeds/srd", "docs"]
     }
 }
