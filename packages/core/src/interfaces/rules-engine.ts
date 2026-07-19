@@ -12,12 +12,12 @@ import type {
   NPC,
   Encounter,
   Quest,
-  Item,
-  ActiveEffect,
   WorldMutationInstruction,
   PendingLevelup,
   NPCMemory,
   QuestSourceType,
+  Result,
+  GameRejection,
 } from '@byo20/shared'
 
 // ─── Dice ────────────────────────────────────────────────────────────────────
@@ -421,7 +421,7 @@ export interface IRulesEngine {
   readonly RULESET_ID: string
 
   // ── Combat ────────────────────────────────────────────────────────────────
-  resolveAttack(context: AttackContext): AttackResult
+  resolveAttack(context: AttackContext): Result<AttackResult, GameRejection>
   resolveSavingThrow(context: SavingThrowContext): SaveResult
   calculateDamage(context: DamageContext): DamageResult
 
@@ -449,7 +449,7 @@ export interface IRulesEngine {
   resolveAoE(context: AoEContext): AoEResult
 
   // ── Spells ────────────────────────────────────────────────────────────────
-  castSpell(context: SpellCastContext): Promise<SpellCastResult>
+  castSpell(context: SpellCastContext): Promise<Result<SpellCastResult, GameRejection>>
   resolveSpellEffect(effect: SpellEffectPrimitive, context: EffectContext): EffectResult
   checkConcentration(caster: Character | NPC, damage: number): ConcentrationResult
 

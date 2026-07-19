@@ -1,9 +1,10 @@
 /** Combat resolution stubs — attack rolls, saving throws, and damage calculation. */
 import type { AttackContext, AttackResult, SavingThrowContext, SaveResult, DamageContext, DamageResult } from '../../interfaces/rules-engine'
+import type { Result, GameRejection } from '@byo20/shared'
 import { NotImplementedError } from '../../errors'
 
 /** Resolve whether an attack hits and whether it crits. */
-export function resolveAttack(context: AttackContext): AttackResult {
+export function resolveAttack(context: AttackContext): Result<AttackResult, GameRejection> {
   throw new NotImplementedError('resolveAttack')
 }
 

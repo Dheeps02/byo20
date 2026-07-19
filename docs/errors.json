@@ -1,0 +1,172 @@
+[
+  {
+    "code": "BYO-1101",
+    "title": "Rules Resolution Failed",
+    "description": "The engine encountered an unrecoverable error while resolving a game rule.",
+    "steps": [
+      "Check server.log for the full stack trace and context.",
+      "Report the issue with the log snippet using the bug report flow."
+    ]
+  },
+  {
+    "code": "BYO-1201",
+    "title": "Invalid Game State",
+    "description": "The game state is internally inconsistent and cannot be safely continued.",
+    "steps": [
+      "Roll back to the most recent snapshot from the admin panel.",
+      "If rollback fails, check server.log for the cause."
+    ]
+  },
+  {
+    "code": "BYO-2101",
+    "title": "Database Connection Failed",
+    "description": "The server Postgres instance could not be reached or rejected the connection.",
+    "steps": [
+      "Check that the Postgres sidecar is running.",
+      "Restart the app — sidecars are respawned on launch.",
+      "Check server.log for the connection error detail."
+    ]
+  },
+  {
+    "code": "BYO-2201",
+    "title": "Migration Failed",
+    "description": "A database migration could not be applied at startup.",
+    "steps": [
+      "Check server.log for the migration error.",
+      "Do not manually edit the database schema.",
+      "If the error persists after restart, report it as a bug."
+    ]
+  },
+  {
+    "code": "BYO-2301",
+    "title": "Ruleset Version Mismatch",
+    "description": "The app's SRD ruleset version does not match the version in the database.",
+    "steps": [
+      "Ensure all players and the host are on the same app version.",
+      "Update the app if a newer version is available."
+    ]
+  },
+  {
+    "code": "BYO-2302",
+    "title": "Snapshot Rollback Failed",
+    "description": "The game state could not be restored from the selected snapshot.",
+    "steps": [
+      "Try a different snapshot from the admin panel.",
+      "Check server.log for the rollback error detail."
+    ]
+  },
+  {
+    "code": "BYO-3101",
+    "title": "WebSocket Auth Failed",
+    "description": "A client connection was rejected due to an invalid or expired token.",
+    "steps": [
+      "Have the player rejoin using the host's invite code.",
+      "Check that the host's session is still active."
+    ]
+  },
+  {
+    "code": "BYO-3201",
+    "title": "Tunnel Init Failed",
+    "description": "The Cloudflare Tunnel could not be established for remote player connections.",
+    "steps": [
+      "Check your internet connection.",
+      "Restart the app to retry tunnel initialisation.",
+      "Local network play (same LAN) is unaffected by tunnel failures."
+    ]
+  },
+  {
+    "code": "BYO-3301",
+    "title": "Invite Code Invalid",
+    "description": "The invite code provided by a joining player was not recognised.",
+    "steps": [
+      "Ensure the player is using the current session's invite code.",
+      "Generate a new invite code from the admin panel if needed."
+    ]
+  },
+  {
+    "code": "BYO-4101",
+    "title": "LLM Provider Unavailable",
+    "description": "The configured AI provider returned an error or could not be reached after retries.",
+    "steps": [
+      "Check your API key is valid and has available credits.",
+      "Verify your internet connection if using a cloud provider.",
+      "Switch to a different provider in campaign settings.",
+      "If using Ollama, ensure the local server is running on port 11435."
+    ]
+  },
+  {
+    "code": "BYO-4201",
+    "title": "LLM Output Validation Failed",
+    "description": "The AI returned a response that did not pass schema validation after retries.",
+    "steps": [
+      "The DM AI will pause and notify the host.",
+      "Resume the session — the AI will retry on the next event.",
+      "If failures persist, check server.log and report as a bug."
+    ]
+  },
+  {
+    "code": "BYO-4301",
+    "title": "Context Overflow",
+    "description": "The AI Specialist's context window was exceeded and could not be trimmed further.",
+    "steps": [
+      "This may occur in very long sessions. Start a new session to reset context.",
+      "Report the issue if it occurs consistently early in a session."
+    ]
+  },
+  {
+    "code": "BYO-5101",
+    "title": "Terrain Gen Failed",
+    "description": "Procedural terrain generation encountered an unrecoverable error.",
+    "steps": [
+      "Retry world generation from the campaign setup screen.",
+      "Check server.log for the generation error detail."
+    ]
+  },
+  {
+    "code": "BYO-5201",
+    "title": "Placement Validation Failed",
+    "description": "The AI DM placed an entity or object at an invalid location during world gen.",
+    "steps": [
+      "Retry world generation — placement is seeded and may succeed on retry.",
+      "Report if it fails consistently with the same campaign seed."
+    ]
+  },
+  {
+    "code": "BYO-5301",
+    "title": "World Gen Timeout",
+    "description": "World generation did not complete within the allowed time window.",
+    "steps": [
+      "Retry world generation from the campaign setup screen.",
+      "If using a cloud LLM provider, check for rate limiting in server.log."
+    ]
+  },
+  {
+    "code": "BYO-6101",
+    "title": "Sidecar Crash",
+    "description": "A required background process (Postgres or Redis) exited unexpectedly.",
+    "steps": [
+      "Restart the app — sidecars are respawned automatically on launch.",
+      "Check server.log for the crash reason.",
+      "If Postgres crashed mid-session, the most recent snapshot is recoverable."
+    ]
+  },
+  {
+    "code": "BYO-6201",
+    "title": "Electron IPC Failure",
+    "description": "Communication between the renderer and the Electron main process failed.",
+    "steps": [
+      "Restart the app.",
+      "Check client.log for the IPC error detail."
+    ]
+  },
+  {
+    "code": "BYO-6301",
+    "title": "Safe Storage Failure",
+    "description": "The API key could not be read from or written to Electron's encrypted storage.",
+    "steps": [
+      "Re-enter your API key in campaign settings.",
+      "On macOS, check Keychain Access for BYO20 entries if the issue persists.",
+      "Check client.log for the storage error detail."
+    ]
+  }
+]

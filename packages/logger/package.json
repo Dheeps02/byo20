@@ -1,5 +1,5 @@
 {
-  "name": "@byo20/engine",
+  "name": "@byo20/logger",
   "version": "0.0.1",
   "private": true,
   "module": "./src/index.ts",
@@ -9,7 +9,10 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@byo20/shared": "workspace:*",
-    "@byo20/logger": "workspace:*"
+    "pino": "latest",
+    "pino-roll": "latest"
+  },
+  "devDependencies": {
+    "pino-pretty": "latest"
   }
 }

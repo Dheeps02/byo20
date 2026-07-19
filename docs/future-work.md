@@ -56,7 +56,10 @@ When implemented, they will need access to `IGameStateStore`. Two options:
 
 Constructor injection is the likely right call — the engine already lives inside `apps/server`
 which owns the store instance. Decide and document in an ADR when the conditions subsystem
-is implemented.
+is implemented. The constructor shape is now locked as `constructor(store: IGameStateStore, logger: Logger)`
+— both injected by `apps/server`. The `store` param is not yet wired to any subsystem
+(stubs don't call it), but the shape is final. The only remaining decision is which
+subsystem files need direct access to the store vs receiving it as a call-site parameter.
 
 **When to fix:** Before implementing `applyCondition` / `removeCondition`.
 
@@ -197,3 +200,8 @@ Both interfaces now use concrete domain types throughout. `IGameStateStore` gain
 
 ### ~~Type `Faction.goals` as `string[]`~~ — `feat/shared-domain-types`
 Was `unknown` (raw JSONB). Fixed to `string[]` with a narrowing cast in `rowToFaction`.
+
+### ~~Engine constructor shape~~ — `feat/errors-and-logging`
+`DnD5eRulesEngine` constructor is now `constructor(store: IGameStateStore, logger: Logger)`.
+Both are injected by `apps/server`. Stubs do not yet use either — wiring happens per
+subsystem during Phase 2 implementation.

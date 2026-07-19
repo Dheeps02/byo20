@@ -59,6 +59,38 @@ Both `Result` and `BYO20Error` are defined in `@byo20/shared` — all packages i
 
 ---
 
+### Subcategory Grouping
+
+Error codes are further grouped by subcategory within each namespace using the hundreds digit:
+
+| Range | Subcategory |
+|---|---|
+| **BYO-1xxx — Engine** | |
+| `BYO-11xx` | Rules resolution |
+| `BYO-12xx` | Invalid game state |
+| **BYO-2xxx — Storage** | |
+| `BYO-21xx` | Database |
+| `BYO-22xx` | Migrations |
+| `BYO-23xx` | Snapshots |
+| **BYO-3xxx — Transport** | |
+| `BYO-31xx` | WebSocket auth |
+| `BYO-32xx` | Tunnel |
+| `BYO-33xx` | Invite / session |
+| **BYO-4xxx — AI** | |
+| `BYO-41xx` | LLM provider |
+| `BYO-42xx` | Output validation |
+| `BYO-43xx` | Context / memory |
+| **BYO-5xxx — World Gen** | |
+| `BYO-51xx` | Terrain |
+| `BYO-52xx` | Placement / validation |
+| `BYO-53xx` | Timeouts |
+| **BYO-6xxx — Desktop** | |
+| `BYO-61xx` | Sidecars |
+| `BYO-62xx` | Electron IPC |
+| `BYO-63xx` | safeStorage |
+
+---
+
 ## Error Code Registry
 
 `docs/errors.json` is the source of truth for all defined error codes. Hand-authored. The docs error code page renders from this file.
