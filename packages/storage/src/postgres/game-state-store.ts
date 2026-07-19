@@ -503,7 +503,7 @@ function worldZoneToRow(zone: WorldZone): typeof world_zones.$inferInsert {
     hex_r: zone.hexR,
     gen_state: zone.genState,
     zone_type: zone.zoneType ?? undefined,
-    heightmap_chunk: zone.heightmapChunk as Buffer | undefined ?? undefined,
+    heightmap_chunk: (zone.heightmapChunk as Buffer) ?? undefined,
     content: zone.content ?? undefined,
     generated_at: zone.generatedAt ?? undefined,
     updated_at: zone.updatedAt,
