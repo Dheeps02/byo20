@@ -40,10 +40,10 @@ Update this file as items are resolved or new ones are found.
 
 ## Phase: `@byo20/engine`
 
-### Declare `RULESET_ID` constant
-**Where:** `@byo20/engine` entry point
-
-**What:** `apps/server` calls `checkRulesetVersion(localDb, engine.RULESET_ID)`. The engine needs to export a constant like `export const RULESET_ID = 'dnd-5.5e-2024'` so `apps/server` can pass it down without hardcoding the string.
+### RULESET_ID constant — pending wiring in apps/server
+**Where:** `@byo20/engine` — already declared as `DnD5eRulesEngine.RULESET_ID = 'dnd-5.5e-2024'`
+**Remaining:** `apps/server` startup must call `checkRulesetVersion(localDb.db, engine.RULESET_ID)`
+before accepting connections. Tracked here for when apps/server is implemented.
 
 ---
 
