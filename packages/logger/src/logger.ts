@@ -139,9 +139,10 @@ export async function createLogger(
   await mkdir(path.dirname(logPath), { recursive: true })
 
   // pino-roll returns a SonicBoom-compatible writable stream with 2 MB rotation.
+  // size: 2 means 2 MB — pino-roll treats bare numbers as megabytes.
   const fileWriter = await roll({
     file: logPath,
-    size: 2 * 1024 * 1024,
+    size: 2,
     limit: { count: 5 },
   })
 
