@@ -411,10 +411,24 @@ function rowToFaction(row: typeof factions.$inferSelect): Faction {
     campaignId: row.campaign_id,
     name: row.name,
     description: row.description ?? null,
-    goals: row.goals,
+    goals: (row.goals ?? []) as string[],
     leaderNpcId: row.leader_npc_id ?? null,
     territory: row.territory,
     updatedAt: row.updated_at,
+  }
+}
+
+/** `Faction` → `world.factions` insert shape. */
+function factionToRow(faction: Faction): typeof factions.$inferInsert {
+  return {
+    id: faction.id,
+    campaign_id: faction.campaignId,
+    name: faction.name,
+    description: faction.description ?? undefined,
+    goals: faction.goals as typeof factions.$inferInsert['goals'],
+    leader_npc_id: faction.leaderNpcId ?? undefined,
+    territory: faction.territory ?? undefined,
+    updated_at: faction.updatedAt,
   }
 }
 
@@ -936,6 +950,14 @@ export class PostgresGameStateStore implements IGameStateStore {
     const rows = await this.db.select().from(factions).where(eq(factions.id, id)).limit(1)
     if (!rows[0]) throw new Error(`Faction not found: ${id}`)
     return rowToFaction(rows[0])
+  }
+
+  /** Upsert a faction. Used by world gen and agenda events that mutate faction state. */
+  async saveFaction(faction: Faction): Promise<void> {
+    const row = factionToRow(faction)
+    const { id: _id, ...rest } = row
+    await this.db.insert(factions).values(row)
+      .onConflictDoUpdate({ target: factions.id, set: rest })
   }
 
   /** Fetch a character's reputation with a specific faction. Throws if not found. */

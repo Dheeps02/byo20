@@ -88,6 +88,8 @@ export interface IGameStateStore {
   // ── Factions ──────────────────────────────────────────────────────────────
   /** Fetch a faction by UUID. Throws if not found. */
   getFaction(id: string): Promise<Faction>
+  /** Upsert a faction. Used by world gen and agenda events that mutate faction state. */
+  saveFaction(faction: Faction): Promise<void>
   /** Fetch a character's reputation row with a specific faction. Throws if not found. */
   getFactionReputation(characterCampaignStateId: string, factionId: string): Promise<FactionReputation>
   /** Upsert a faction reputation row. */
