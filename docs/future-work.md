@@ -92,6 +92,13 @@ Only use `removeFiredAgendaEvents` (bulk) when you can guarantee the entire batc
 
 **What:** After Redis connects and the server DB is ready, call `rebuildAgendaFromDb` for every active campaign to restore the agenda ZSET from Postgres. Otherwise game clock timer events are lost across restarts.
 
+### Wire `flushAll()` on graceful shutdown
+**Where:** `apps/server` shutdown handler
+
+**What:** Call `flushAll()` from `@byo20/logger` before process exit. The ring buffer holds the most recent debug/info context in memory — without an explicit flush, a fatal crash exits without writing that context to disk, defeating the buffer's purpose.
+
+**When to fix:** When the graceful shutdown sequence is implemented in `apps/server`.
+
 ### Populate SRD JSON stubs before first launch
 **Where:** `seeds/srd/*.json` — all API-fetched files currently contain `[]`
 
