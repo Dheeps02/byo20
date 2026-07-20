@@ -1,12 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import {
-    parseDiceNotation,
-    roll,
-    rollAdvantage,
-    rollDice,
-    rollDisadvantage,
-    rollNotation,
-} from "../../utils/dice";
+import { parseDiceNotation, roll, rollAdvantage, rollDice, rollDisadvantage, rollNotation } from "../../utils/dice";
 
 describe("rollDice", () => {
     it("returns exactly n results", () => {
