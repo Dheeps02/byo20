@@ -16,7 +16,7 @@ function entity(id: string, x: number, y: number, z: number, r = 0.5): BoundedEn
 }
 
 const ORIGIN = { x: 0, y: 0, z: 0 };
-const NORTH = { x: 0, y: 0, z: -1 };  // -Z is north in world space
+const NORTH = { x: 0, y: 0, z: -1 }; // -Z is north in world space
 
 // ── Sphere ───────────────────────────────────────────────────────────────────
 
@@ -62,11 +62,7 @@ describe("computeEmanation", () => {
     });
 
     it("includes entities within radius excluding source", () => {
-        const entities = [
-            entity("source", 0, 0, 0),
-            entity("a", 0, 0, 1),
-            entity("b", 100, 0, 0),
-        ];
+        const entities = [entity("source", 0, 0, 0), entity("a", 0, 0, 1), entity("b", 100, 0, 0)];
         const result = computeEmanation(ORIGIN, "source", 10, entities);
         expect(result).toContain("a");
         expect(result).not.toContain("b");

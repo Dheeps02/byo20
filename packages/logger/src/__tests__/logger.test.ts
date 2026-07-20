@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { existsSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { extname, basename, dirname, join } from "node:path";
+import { basename, dirname, extname, join } from "node:path";
 import { createLogger, flushAll, setGlobalLevel } from "../logger";
 
 // Use a unique temp dir per test run to avoid cross-test pollution
@@ -21,7 +21,7 @@ function readLog(logPath: string): string {
     if (!existsSync(dir)) return "";
     const base = basename(logPath, extname(logPath));
     const files = readdirSync(dir)
-        .filter((f) => f.startsWith(base + ".") || f === basename(logPath))
+        .filter((f) => f.startsWith(`${base}.`) || f === basename(logPath))
         .sort();
     if (files.length === 0) return "";
     return files.map((f) => readFileSync(join(dir, f), "utf-8")).join("");
