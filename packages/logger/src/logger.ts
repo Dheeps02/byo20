@@ -15,10 +15,13 @@ import { Writable } from "node:stream";
  *  - Development (BYO20_LOG_PRETTY set + not production): pino-pretty on stdout + JSON to file.
  */
 import pino, { type Logger, type Level } from "pino";
-import roll from "pino-roll";
+import roll, { type RollDestination } from "pino-roll";
 
 /** All logger instances created by createLogger, used by setGlobalLevel. */
 const loggerRegistry = new Set<Logger>();
+
+/** All file writers created by createLogger, used by flushAll. */
+const fileWriterRegistry = new Set<RollDestination>();
 
 /** Maximum debug/info entries buffered in memory per logger instance. */
 const RING_BUFFER_SIZE = 500;
@@ -180,6 +183,7 @@ export async function createLogger(name: string, options: CreateLoggerOptions = 
         destination,
     );
 
+    fileWriterRegistry.add(fileWriter);
     loggerRegistry.add(logger);
     return logger;
 }
@@ -194,4 +198,27 @@ export function setGlobalLevel(level: string): void {
     for (const instance of loggerRegistry) {
         instance.level = level as Level;
     }
+}
+
+/**
+ * Flush all registered file writers to disk.
+ *
+ * Waits for each SonicBoom destination to reach its 'ready' state before calling
+ * flushSync(). Intended for test teardown and graceful shutdown.
+ */
+export async function flushAll(): Promise<void> {
+    const flush = (fw: RollDestination) =>
+        new Promise<void>((resolve) => {
+            const doFlush = () => {
+                try {
+                    fw.flushSync();
+                } catch {
+                    /* stream may be closed — ignore */
+                }
+                resolve();
+            };
+            if (fw.fd >= 0) doFlush();
+            else fw.on("ready", doFlush);
+        });
+    await Promise.all([...fileWriterRegistry].map(flush));
 }

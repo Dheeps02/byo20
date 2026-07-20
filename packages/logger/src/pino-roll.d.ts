@@ -5,6 +5,10 @@ declare module "pino-roll" {
         write(data: string | Buffer): boolean;
         end(): void;
         on(event: string, listener: (...args: unknown[]) => void): this;
+        /** Synchronously flush buffered data to disk. Only valid after the 'ready' event. */
+        flushSync(): void;
+        /** Internal SonicBoom file descriptor — negative until the 'ready' event fires. */
+        readonly fd: number;
     }
 
     /** Options for the pino-roll rotating file destination. */
