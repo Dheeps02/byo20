@@ -1,5 +1,14 @@
 [
   {
+    "code": "BYO-1301",
+    "title": "Invalid Input",
+    "description": "An action contained input that could not be validated at any layer and reached the transport handler uncaught. This should be essentially unreachable in normal operation.",
+    "steps": [
+      "This is likely a bug. Check server.log for the [invariant] log entry.",
+      "Report with the full log snippet."
+    ]
+  },
+  {
     "code": "BYO-1101",
     "title": "Rules Resolution Failed",
     "description": "The engine encountered an unrecoverable error while resolving a game rule.",
