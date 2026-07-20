@@ -1,11 +1,13 @@
 {
-  "name": "byo20",
-  "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "devDependencies": {
-    "bun-types": "latest"
-  }
+    "name": "byo20",
+    "private": true,
+    "workspaces": ["apps/*", "packages/*"],
+    "scripts": {
+        "check": "biome ci .",
+        "check:fix": "biome check --write ."
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^1.9.0",
+        "bun-types": "latest"
+    }
 }

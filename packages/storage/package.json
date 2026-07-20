@@ -1,26 +1,27 @@
 {
-  "name": "@byo20/storage",
-  "version": "0.0.1",
-  "private": true,
-  "module": "./src/index.ts",
-  "types": "./src/index.ts",
-  "scripts": {
-    "db:generate:server": "drizzle-kit generate --config=drizzle.server.config.ts",
-    "db:generate:local": "drizzle-kit generate --config=drizzle.local.config.ts",
-    "db:migrate:server": "drizzle-kit migrate --config=drizzle.server.config.ts",
-    "db:migrate:local": "drizzle-kit migrate --config=drizzle.local.config.ts",
-    "seed:srd": "bun run seeds/seed-srd.ts",
-    "seed:dev": "bun run seeds/seed-dev.ts"
-  },
-  "dependencies": {
-    "@byo20/shared": "workspace:*",
-    "drizzle-orm": "^0.44.0",
-    "ioredis": "^5.6.1",
-    "postgres": "^3.4.7"
-  },
-  "devDependencies": {
-    "@types/pg": "^8.11.14",
-    "drizzle-kit": "^0.31.0",
-    "embedded-postgres": "17.10.0-beta.17"
-  }
+    "name": "@byo20/storage",
+    "version": "0.0.1",
+    "private": true,
+    "module": "./src/index.ts",
+    "types": "./src/index.ts",
+    "scripts": {
+        "typecheck": "tsc --noEmit",
+        "db:generate:server": "drizzle-kit generate --config=drizzle.server.config.ts",
+        "db:generate:local": "drizzle-kit generate --config=drizzle.local.config.ts",
+        "db:migrate:server": "drizzle-kit migrate --config=drizzle.server.config.ts",
+        "db:migrate:local": "drizzle-kit migrate --config=drizzle.local.config.ts",
+        "seed:srd": "bun run seeds/seed-srd.ts",
+        "seed:dev": "bun run seeds/seed-dev.ts"
+    },
+    "dependencies": {
+        "@byo20/shared": "workspace:*",
+        "drizzle-orm": "^0.44.0",
+        "ioredis": "^5.6.1",
+        "postgres": "^3.4.7"
+    },
+    "devDependencies": {
+        "@types/pg": "^8.11.14",
+        "drizzle-kit": "^0.31.0",
+        "embedded-postgres": "17.10.0-beta.17"
+    }
 }

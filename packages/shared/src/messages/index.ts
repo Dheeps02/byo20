@@ -7,5 +7,5 @@
  *   client.ClientMessageSchema.parse(raw)
  *   server.ServerMessageSchema.parse(raw)
  */
-export * as client from './client'
-export * as server from './server'
+export * as client from "./client";
+export * as server from "./server";

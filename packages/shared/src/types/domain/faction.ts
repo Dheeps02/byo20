@@ -6,33 +6,33 @@
  */
 
 /** How a character currently stands with a faction. */
-export type FactionAttitude = 'friendly' | 'indifferent' | 'hostile'
+export type FactionAttitude = "friendly" | "indifferent" | "hostile";
 
 /** The nature of a faction-to-faction relationship. */
-export type FactionRelationshipType = 'ally' | 'rival' | 'enemy' | 'neutral'
+export type FactionRelationshipType = "ally" | "rival" | "enemy" | "neutral";
 
 /** Maps to `world.factions`. */
 export interface Faction {
-  id: string
-  campaignId: string
-  name: string
-  description: string | null
-  /** Array of faction goal strings, e.g. ["control the trade routes", ...]. */
-  goals: string[]
-  leaderNpcId: string | null
-  /** JSONB — zones or location references the faction controls. Shape is variable. */
-  territory: unknown
-  updatedAt: Date
+    id: string;
+    campaignId: string;
+    name: string;
+    description: string | null;
+    /** Array of faction goal strings, e.g. ["control the trade routes", ...]. */
+    goals: string[];
+    leaderNpcId: string | null;
+    /** JSONB — zones or location references the faction controls. Shape is variable. */
+    territory: unknown;
+    updatedAt: Date;
 }
 
 /** Maps to `world.character_faction_reputation`. Reputation ranges -100 to 100. */
 export interface FactionReputation {
-  id: string
-  characterCampaignStateId: string
-  factionId: string
-  reputation: number
-  attitude: FactionAttitude
-  updatedAt: Date
+    id: string;
+    characterCampaignStateId: string;
+    factionId: string;
+    reputation: number;
+    attitude: FactionAttitude;
+    updatedAt: Date;
 }
 
 /**
@@ -40,9 +40,9 @@ export interface FactionReputation {
  * Invariant: `factionAId < factionBId` (enforced at app layer).
  */
 export interface FactionRelationship {
-  id: string
-  factionAId: string
-  factionBId: string
-  relationship: FactionRelationshipType
-  updatedAt: Date
+    id: string;
+    factionAId: string;
+    factionBId: string;
+    relationship: FactionRelationshipType;
+    updatedAt: Date;
 }

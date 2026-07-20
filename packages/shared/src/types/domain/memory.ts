@@ -7,15 +7,10 @@
  */
 
 /** Sentiment polarity attached to an NPC memory. */
-export type MemorySentiment = 'positive' | 'negative' | 'neutral'
+export type MemorySentiment = "positive" | "negative" | "neutral";
 
 /** Category of a lore entry — drives which AI context slot it fills. */
-export type LoreCategory =
-  | 'faction_history'
-  | 'world_history'
-  | 'location_lore'
-  | 'npc_backstory'
-  | 'prophecy'
+export type LoreCategory = "faction_history" | "world_history" | "location_lore" | "npc_backstory" | "prophecy";
 
 /**
  * Maps to `memory.npc_memories`.
@@ -23,16 +18,16 @@ export type LoreCategory =
  * `createdAtClock` is the in-game world clock (minutes) at creation, used for decay.
  */
 export interface NPCMemory {
-  id: string
-  npcId: string
-  eventLogId: string
-  questId: string | null
-  /** 768-dim embedding (nomic-embed-text). Deserialized to number[] by the vector custom type. */
-  embedding: number[]
-  sentiment: MemorySentiment
-  /** true = pin; skips temporal decay in recall queries. */
-  significance: boolean
-  createdAtClock: number
+    id: string;
+    npcId: string;
+    eventLogId: string;
+    questId: string | null;
+    /** 768-dim embedding (nomic-embed-text). Deserialized to number[] by the vector custom type. */
+    embedding: number[];
+    sentiment: MemorySentiment;
+    /** true = pin; skips temporal decay in recall queries. */
+    significance: boolean;
+    createdAtClock: number;
 }
 
 /**
@@ -40,14 +35,14 @@ export interface NPCMemory {
  * `repDelta` tracks reputation change caused by this event — used by the drift computation.
  */
 export interface FactionEvent {
-  id: string
-  factionId: string
-  eventLogId: string
-  questId: string | null
-  /** 768-dim embedding. */
-  embedding: number[]
-  repDelta: number
-  createdAtClock: number
+    id: string;
+    factionId: string;
+    eventLogId: string;
+    questId: string | null;
+    /** 768-dim embedding. */
+    embedding: number[];
+    repDelta: number;
+    createdAtClock: number;
 }
 
 /**
@@ -56,14 +51,14 @@ export interface FactionEvent {
  * The Orchestrator queries this table to inject relevant lore into Specialist calls.
  */
 export interface LoreEntry {
-  id: string
-  campaignId: string
-  title: string
-  content: string
-  /** 768-dim embedding. */
-  embedding: number[]
-  category: LoreCategory
-  sourceId: string | null
-  sourceType: 'faction' | 'npc' | 'zone' | null
-  createdAt: Date
+    id: string;
+    campaignId: string;
+    title: string;
+    content: string;
+    /** 768-dim embedding. */
+    embedding: number[];
+    category: LoreCategory;
+    sourceId: string | null;
+    sourceType: "faction" | "npc" | "zone" | null;
+    createdAt: Date;
 }

@@ -14,12 +14,12 @@
 
 /** The six D&D ability scores as a nested object (mapped from flat stat_* DB columns). */
 export interface AbilityScores {
-  strength: number
-  dexterity: number
-  constitution: number
-  intelligence: number
-  wisdom: number
-  charisma: number
+    strength: number;
+    dexterity: number;
+    constitution: number;
+    intelligence: number;
+    wisdom: number;
+    charisma: number;
 }
 
 /**
@@ -28,12 +28,12 @@ export interface AbilityScores {
  * Shape may grow as new class/feat options are added — kept open-ish intentionally.
  */
 export interface PendingLevelup {
-  multiclassPick?: string
-  featOrAsi?: 'feat' | 'asi'
-  featId?: string
-  abilityScoreIncreases?: Partial<AbilityScores>
-  subclassPick?: string
-  spellsToLearn?: string[]
+    multiclassPick?: string;
+    featOrAsi?: "feat" | "asi";
+    featId?: string;
+    abilityScoreIncreases?: Partial<AbilityScores>;
+    subclassPick?: string;
+    spellsToLearn?: string[];
 }
 
 /**
@@ -44,16 +44,16 @@ export interface PendingLevelup {
  * not foreign key UUIDs.
  */
 export interface CharacterIdentity {
-  id: string
-  ownerUserId: string
-  name: string
-  /** Text string — supports homebrew. NOT a FK into an SRD species table. */
-  species: string
-  /** Text string — supports homebrew. NOT a FK into an SRD background table. */
-  background: string
-  backstory: string | null
-  stats: AbilityScores
-  createdAt: Date
+    id: string;
+    ownerUserId: string;
+    name: string;
+    /** Text string — supports homebrew. NOT a FK into an SRD species table. */
+    species: string;
+    /** Text string — supports homebrew. NOT a FK into an SRD background table. */
+    background: string;
+    backstory: string | null;
+    stats: AbilityScores;
+    createdAt: Date;
 }
 
 /**
@@ -64,41 +64,41 @@ export interface CharacterIdentity {
  * `spellSlots` is the full JSONB slot map (null for non-spellcasters).
  */
 export interface CharacterCampaignState {
-  id: string
-  characterId: string
-  campaignId: string
-  level: number
-  xp: number
-  hp: { current: number; max: number }
-  hitDiceRemaining: number
-  /** JSONB slot map from DB. Shape is class-dependent; null for non-spellcasters. */
-  spellSlots: unknown | null
-  /** Active conditions, e.g. ['poisoned', 'prone']. Empty array when none. */
-  conditions: string[]
-  /** Death save state: { success: number; failure: number }. */
-  deathSaves: unknown | null
-  /** Current 3D position on the map. Null when not placed. */
-  position: { x: number; y: number; z: number } | null
-  isActive: boolean
-  exhaustionLevel: number
-  tempHp: number
-  heroicInspiration: boolean
-  /** Class-specific resource pools (rage uses, bardic inspiration, etc.). */
-  classResources: unknown | null
-  /** Prepared spells for this class; null for non-spellcasters. */
-  preparedSpells: string[] | null
-  /** Weapon mastery choices; null if no martial class and no Weapon Master feat. */
-  weaponMasteries: string[] | null
-  languages: string[]
-  /** Proficiency map: `{ "athletics": "proficient" | "expertise" }`. */
-  skillProficiencies: Record<string, string> | null
-  savingThrowProfs: string[]
-  featsTaken: string[]
-  /** Spell ID the character is concentrating on; null if not concentrating. */
-  concentratingOn: string | null
-  toolProficiencies: string[]
-  pendingLevelup: PendingLevelup | null
-  updatedAt: Date
+    id: string;
+    characterId: string;
+    campaignId: string;
+    level: number;
+    xp: number;
+    hp: { current: number; max: number };
+    hitDiceRemaining: number;
+    /** JSONB slot map from DB. Shape is class-dependent; null for non-spellcasters. */
+    spellSlots: unknown | null;
+    /** Active conditions, e.g. ['poisoned', 'prone']. Empty array when none. */
+    conditions: string[];
+    /** Death save state: { success: number; failure: number }. */
+    deathSaves: unknown | null;
+    /** Current 3D position on the map. Null when not placed. */
+    position: { x: number; y: number; z: number } | null;
+    isActive: boolean;
+    exhaustionLevel: number;
+    tempHp: number;
+    heroicInspiration: boolean;
+    /** Class-specific resource pools (rage uses, bardic inspiration, etc.). */
+    classResources: unknown | null;
+    /** Prepared spells for this class; null for non-spellcasters. */
+    preparedSpells: string[] | null;
+    /** Weapon mastery choices; null if no martial class and no Weapon Master feat. */
+    weaponMasteries: string[] | null;
+    languages: string[];
+    /** Proficiency map: `{ "athletics": "proficient" | "expertise" }`. */
+    skillProficiencies: Record<string, string> | null;
+    savingThrowProfs: string[];
+    featsTaken: string[];
+    /** Spell ID the character is concentrating on; null if not concentrating. */
+    concentratingOn: string | null;
+    toolProficiencies: string[];
+    pendingLevelup: PendingLevelup | null;
+    updatedAt: Date;
 }
 
 /**
@@ -106,15 +106,15 @@ export interface CharacterCampaignState {
  * A Fighter 3 / Wizard 2 multiclass character has two rows.
  */
 export interface CharacterClass {
-  id: string
-  characterCampaignStateId: string
-  /** Text string — supports homebrew class names. */
-  class: string
-  /** null until level 3 when the subclass choice is made. */
-  subclass: string | null
-  classLevel: number
-  /** Per-class prepared spell list; null for non-spellcasting classes. */
-  preparedSpells: string[] | null
+    id: string;
+    characterCampaignStateId: string;
+    /** Text string — supports homebrew class names. */
+    class: string;
+    /** null until level 3 when the subclass choice is made. */
+    subclass: string | null;
+    classLevel: number;
+    /** Per-class prepared spell list; null for non-spellcasting classes. */
+    preparedSpells: string[] | null;
 }
 
 /**
@@ -126,42 +126,42 @@ export interface CharacterClass {
  * needed when splitting back out for writes.
  */
 export interface Character {
-  // ── from game.characters ────────────────────────────────────────────────
-  id: string
-  ownerUserId: string
-  name: string
-  species: string
-  background: string
-  backstory: string | null
-  stats: AbilityScores
+    // ── from game.characters ────────────────────────────────────────────────
+    id: string;
+    ownerUserId: string;
+    name: string;
+    species: string;
+    background: string;
+    backstory: string | null;
+    stats: AbilityScores;
 
-  // ── from game.character_campaign_state ──────────────────────────────────
-  campaignStateId: string
-  campaignId: string
-  level: number
-  xp: number
-  hp: { current: number; max: number }
-  hitDiceRemaining: number
-  spellSlots: unknown | null
-  conditions: string[]
-  deathSaves: unknown | null
-  position: { x: number; y: number; z: number } | null
-  isActive: boolean
-  exhaustionLevel: number
-  tempHp: number
-  heroicInspiration: boolean
-  classResources: unknown | null
-  preparedSpells: string[] | null
-  weaponMasteries: string[] | null
-  languages: string[]
-  skillProficiencies: Record<string, string> | null
-  savingThrowProfs: string[]
-  featsTaken: string[]
-  concentratingOn: string | null
-  toolProficiencies: string[]
-  pendingLevelup: PendingLevelup | null
-  updatedAt: Date
+    // ── from game.character_campaign_state ──────────────────────────────────
+    campaignStateId: string;
+    campaignId: string;
+    level: number;
+    xp: number;
+    hp: { current: number; max: number };
+    hitDiceRemaining: number;
+    spellSlots: unknown | null;
+    conditions: string[];
+    deathSaves: unknown | null;
+    position: { x: number; y: number; z: number } | null;
+    isActive: boolean;
+    exhaustionLevel: number;
+    tempHp: number;
+    heroicInspiration: boolean;
+    classResources: unknown | null;
+    preparedSpells: string[] | null;
+    weaponMasteries: string[] | null;
+    languages: string[];
+    skillProficiencies: Record<string, string> | null;
+    savingThrowProfs: string[];
+    featsTaken: string[];
+    concentratingOn: string | null;
+    toolProficiencies: string[];
+    pendingLevelup: PendingLevelup | null;
+    updatedAt: Date;
 
-  // ── from game.character_classes ─────────────────────────────────────────
-  classes: CharacterClass[]
+    // ── from game.character_classes ─────────────────────────────────────────
+    classes: CharacterClass[];
 }

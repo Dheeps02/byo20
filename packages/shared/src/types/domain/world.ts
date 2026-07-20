@@ -8,30 +8,30 @@
  */
 
 /** How much of the world gen pipeline has run for this zone. */
-export type GenState = 'ungenerated' | 'partial' | 'full'
+export type GenState = "ungenerated" | "partial" | "full";
 
 /** What kind of terrain this hex contains. Null until partial gen. */
-export type ZoneType = 'wilderness' | 'town' | 'dungeon' | 'coastal' | 'mountain' | 'forest'
+export type ZoneType = "wilderness" | "town" | "dungeon" | "coastal" | "mountain" | "forest";
 
 /** What kind of persistent world entity this is. */
-export type WorldObjectType = 'building' | 'structure' | 'landmark' | 'siege_equipment' | 'vehicle'
+export type WorldObjectType = "building" | "structure" | "landmark" | "siege_equipment" | "vehicle";
 
 /** Current mechanical state of a world object. */
-export type WorldObjectStatus = 'intact' | 'damaged' | 'destroyed' | 'locked' | 'sealed'
+export type WorldObjectStatus = "intact" | "damaged" | "destroyed" | "locked" | "sealed";
 
 /** Who owns a world object, or null if unowned. */
-export type WorldObjectOwnerType = 'world' | 'faction' | 'npc'
+export type WorldObjectOwnerType = "world" | "faction" | "npc";
 
 /**
  * The generated content of a fully-generated zone.
  * Stored as JSONB in `world_zones.content`; null until full gen runs.
  */
 export interface WorldZoneContent {
-  locationRefs: string[]
-  npcRefs: string[]
-  worldObjectIds: string[]
-  encounterZones: unknown[]
-  questHooks: string[]
+    locationRefs: string[];
+    npcRefs: string[];
+    worldObjectIds: string[];
+    encounterZones: unknown[];
+    questHooks: string[];
 }
 
 /**
@@ -41,20 +41,20 @@ export interface WorldZoneContent {
  * `content` is null until full world gen has run.
  */
 export interface WorldZone {
-  id: string
-  campaignId: string
-  hexQ: number
-  hexR: number
-  genState: GenState
-  zoneType: ZoneType | null
-  /**
-   * LZ4-compressed Float32Array. The pg driver returns this as a `Buffer` (Node.js subclass
-   * of Uint8Array). Typed as `Uint8Array` here to keep @byo20/shared dependency-free.
-   */
-  heightmapChunk: Uint8Array | null
-  content: WorldZoneContent | null
-  generatedAt: Date | null
-  updatedAt: Date
+    id: string;
+    campaignId: string;
+    hexQ: number;
+    hexR: number;
+    genState: GenState;
+    zoneType: ZoneType | null;
+    /**
+     * LZ4-compressed Float32Array. The pg driver returns this as a `Buffer` (Node.js subclass
+     * of Uint8Array). Typed as `Uint8Array` here to keep @byo20/shared dependency-free.
+     */
+    heightmapChunk: Uint8Array | null;
+    content: WorldZoneContent | null;
+    generatedAt: Date | null;
+    updatedAt: Date;
 }
 
 /**
@@ -64,18 +64,18 @@ export interface WorldZone {
  * `properties` is JSONB with object-specific mechanical state.
  */
 export interface WorldObject {
-  id: string
-  campaignId: string
-  zoneQ: number
-  zoneR: number
-  name: string
-  objectType: WorldObjectType
-  status: WorldObjectStatus
-  position: { x: number; y: number; z: number }
-  ownerType: WorldObjectOwnerType | null
-  ownerId: string | null
-  /** JSONB — mechanical state specific to this object type. */
-  properties: unknown
-  createdAt: Date
-  updatedAt: Date
+    id: string;
+    campaignId: string;
+    zoneQ: number;
+    zoneR: number;
+    name: string;
+    objectType: WorldObjectType;
+    status: WorldObjectStatus;
+    position: { x: number; y: number; z: number };
+    ownerType: WorldObjectOwnerType | null;
+    ownerId: string | null;
+    /** JSONB — mechanical state specific to this object type. */
+    properties: unknown;
+    createdAt: Date;
+    updatedAt: Date;
 }
