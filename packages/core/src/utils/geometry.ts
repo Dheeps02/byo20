@@ -6,6 +6,7 @@
  * decision (the 3D mesh would need a ray-cast budget that isn't worth it for
  * a self-hosted game). Bounding sphere intersection is used for entity detection.
  */
+import { getLogger } from "../logger";
 
 /** A point in 3D world space. */
 export interface Vec3 {
@@ -51,6 +52,10 @@ function distance(a: Vec3, b: Vec3): number {
  * centered on origin. Origin is the explosion point, not a creature's position.
  */
 export function computeSphere(origin: Vec3, radiusFt: number, candidates: BoundedEntity[]): string[] {
+    if (radiusFt <= 0) {
+        getLogger().error({ radiusFt }, "[invariant] computeSphere: radiusFt must be > 0");
+        throw new Error("[invariant] computeSphere: radiusFt must be > 0");
+    }
     const r = radiusFt / 5;
     return candidates.filter((e) => distance(origin, e.position) - e.boundingRadius <= r).map((e) => e.id);
 }
@@ -77,6 +82,10 @@ export function computeEmanation(
  * Entities whose bounding sphere overlaps the box are included.
  */
 export function computeCube(origin: Vec3, sizeFt: number, candidates: BoundedEntity[]): string[] {
+    if (sizeFt <= 0) {
+        getLogger().error({ sizeFt }, "[invariant] computeCube: sizeFt must be > 0");
+        throw new Error("[invariant] computeCube: sizeFt must be > 0");
+    }
     const s = sizeFt / 5;
     return candidates
         .filter((e) => {
@@ -98,6 +107,14 @@ export function computeCube(origin: Vec3, sizeFt: number, candidates: BoundedEnt
  * 2024 rule: the cone width at any point equals the distance from the tip.
  */
 export function computeCone(origin: Vec3, direction: Vec3, lengthFt: number, candidates: BoundedEntity[]): string[] {
+    if (lengthFt <= 0) {
+        getLogger().error({ lengthFt }, "[invariant] computeCone: lengthFt must be > 0");
+        throw new Error("[invariant] computeCone: lengthFt must be > 0");
+    }
+    if (vecLength(direction) === 0) {
+        getLogger().error({ direction }, "[invariant] computeCone: direction vector has zero length");
+        throw new Error("[invariant] computeCone: direction vector has zero length");
+    }
     const len = lengthFt / 5;
     const dirNorm = normalise(direction);
     // Half-angle of a 60° cone is 30°.
@@ -129,6 +146,18 @@ export function computeLine(
     widthFt: number,
     candidates: BoundedEntity[],
 ): string[] {
+    if (lengthFt <= 0) {
+        getLogger().error({ lengthFt }, "[invariant] computeLine: lengthFt must be > 0");
+        throw new Error("[invariant] computeLine: lengthFt must be > 0");
+    }
+    if (widthFt <= 0) {
+        getLogger().error({ widthFt }, "[invariant] computeLine: widthFt must be > 0");
+        throw new Error("[invariant] computeLine: widthFt must be > 0");
+    }
+    if (vecLength(direction) === 0) {
+        getLogger().error({ direction }, "[invariant] computeLine: direction vector has zero length");
+        throw new Error("[invariant] computeLine: direction vector has zero length");
+    }
     const len = lengthFt / 5;
     const wid = widthFt / 5;
     const dirNorm = normalise(direction);
@@ -163,6 +192,14 @@ export function computeCylinder(
     heightFt: number,
     candidates: BoundedEntity[],
 ): string[] {
+    if (radiusFt <= 0) {
+        getLogger().error({ radiusFt }, "[invariant] computeCylinder: radiusFt must be > 0");
+        throw new Error("[invariant] computeCylinder: radiusFt must be > 0");
+    }
+    if (heightFt <= 0) {
+        getLogger().error({ heightFt }, "[invariant] computeCylinder: heightFt must be > 0");
+        throw new Error("[invariant] computeCylinder: heightFt must be > 0");
+    }
     const r = radiusFt / 5;
     const h = heightFt / 5;
 
