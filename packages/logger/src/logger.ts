@@ -14,14 +14,9 @@ import { Writable } from "node:stream";
  *  - Production (NODE_ENV=production or BYO20_LOG_PRETTY unset): raw JSON to file only.
  *  - Development (BYO20_LOG_PRETTY set + not production): pino-pretty on stdout + JSON to file.
  */
-import pino, { type Logger, type Level } from "pino";
-import roll, { type RollDestination } from "pino-roll";
+import pino, { type Level, type Logger } from "pino";
+import roll from "pino-roll";
 
-/** All logger instances created by createLogger, used by setGlobalLevel. */
-const loggerRegistry = new Set<Logger>();
-
-/** All file writers created by createLogger, used by flushAll. */
-const fileWriterRegistry = new Set<RollDestination>();
 
 /** Maximum debug/info entries buffered in memory per logger instance. */
 const RING_BUFFER_SIZE = 500;
@@ -31,6 +26,12 @@ const PINO_WARN = 40;
 
 /** Default server log path: ~/.byo20/logs/server.log */
 const DEFAULT_LOG_PATH = path.join(homedir(), ".byo20", "logs", "server.log");
+
+/** Module-level root logger, set by initLogger. */
+let rootLogger: Logger | null = null;
+
+/** The file writer held by the root logger, used by flushAll. */
+let fileWriter: { write: (data: string | Buffer) => unknown; end: () => void } | null = null;
 
 /**
  * Return true if the level value (numeric or string) is below warn severity.
@@ -108,43 +109,45 @@ class RingBufferStream extends Writable {
     }
 
     /** Write all buffered entries to the file in insertion order, then clear the buffer. */
-    private flushBuffer(): void {
+    flushBuffer(): void {
         for (const entry of this.buffer) this.file.write(entry);
         this.buffer.length = 0;
     }
 }
 
-/** Options accepted by createLogger. */
-export interface CreateLoggerOptions {
-    /** Absolute path to the log file. Defaults to ~/.byo20/logs/server.log. */
-    logPath?: string;
+/** Module-level reference to the ring buffer, used by flushAll. */
+let ringBufferStream: RingBufferStream | null = null;
+
+/** Options accepted by initLogger. */
+export interface InitLoggerOptions {
+    /** Absolute path to the log file. */
+    logPath: string;
+    /** Initial log level. Defaults to 'warn' in prod, 'debug' in dev. */
+    level?: string;
 }
 
 /**
- * Create a named Pino logger backed by a ring buffer and a rotating log file.
- *
- * The `name` parameter is written as the `module` field on every log entry.
- * The log directory is created if it does not exist.
- *
- * Every created instance is registered in a module-level Set so setGlobalLevel
- * can change all levels simultaneously.
- *
- * @param name    Identifier for this subsystem, written as `module` in log entries.
- * @param options Optional overrides (e.g. a custom log file path).
+ * Initialise the root logger. Must be called once at server startup before
+ * any package calls createLogger. Calling it a second time is a no-op.
  */
-export async function createLogger(name: string, options: CreateLoggerOptions = {}): Promise<Logger> {
-    const logPath = options.logPath ?? DEFAULT_LOG_PATH;
+export async function initLogger(options: InitLoggerOptions): Promise<void> {
+    if (rootLogger !== null) {
+        rootLogger.warn("[logger] initLogger called more than once — ignoring");
+        return;
+    }
+
+    const { logPath } = options;
     await mkdir(path.dirname(logPath), { recursive: true });
 
     // pino-roll returns a SonicBoom-compatible writable stream with 2 MB rotation.
     // size: 2 means 2 MB — pino-roll treats bare numbers as megabytes.
-    const fileWriter = await roll({
+    fileWriter = await roll({
         file: logPath,
         size: 2,
         limit: { count: 5 },
     });
 
-    const ringBuffer = new RingBufferStream(fileWriter);
+    ringBufferStream = new RingBufferStream(fileWriter);
 
     const isDev = process.env.NODE_ENV !== "production" && Boolean(process.env.BYO20_LOG_PRETTY);
 
@@ -157,46 +160,68 @@ export async function createLogger(name: string, options: CreateLoggerOptions = 
         // multistream fans each entry to both streams (stdout pretty + file ring buffer).
         destination = pino.multistream([
             { stream: prettyStream as unknown as NodeJS.WritableStream },
-            { stream: ringBuffer as unknown as NodeJS.WritableStream },
+            { stream: ringBufferStream as unknown as NodeJS.WritableStream },
         ]) as unknown as Writable;
     } else {
-        destination = ringBuffer;
+        destination = ringBufferStream;
     }
 
-    const logger = pino(
+    const defaultLevel = options.level ?? (isDev ? "debug" : "warn");
+
+    rootLogger = pino(
         {
-            // base: { module: name } replaces the default pid/hostname base fields
-            // with just the module name, matching the desired log entry shape.
-            base: { module: name },
-            // Emit "timestamp" instead of Pino's default "time" key.
+            // base: null removes the default pid/hostname base fields entirely;
+            // child loggers will add their own module field via child({ module: name }).
+            base: null,
             timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
             formatters: {
-                // Convert Pino's internal numeric level to a human-readable string.
                 level(label: string) {
                     return { level: label };
                 },
             },
-            // In dev, start at debug so ring buffer can capture context. In prod, warn
-            // means debug/info calls are no-ops until the admin panel lowers the level.
-            level: isDev ? "debug" : "warn",
+            level: defaultLevel,
         },
         destination,
     );
-
-    fileWriterRegistry.add(fileWriter);
-    loggerRegistry.add(logger);
-    return logger;
 }
 
 /**
- * Set the log level on every logger instance created by createLogger.
+ * Return a child logger bound to `name` as the `module` field.
  *
- * Called by the admin panel Debug Logging toggle. Pino supports runtime level
- * changes with no restart required.
+ * Sync — must be called after initLogger. In test environments (NODE_ENV === 'test')
+ * a stdout-only fallback is returned if initLogger was not called.
+ */
+export function createLogger(name: string): Logger {
+    if (rootLogger === null) {
+        if (process.env.NODE_ENV === "test") {
+            // Silent fallback for tests that don't call initLogger.
+            return pino({ level: "silent" });
+        }
+        throw new Error("[logger] createLogger called before initLogger");
+    }
+    return rootLogger.child({ module: name });
+}
+
+/**
+ * Set the log level on the root logger. All child loggers inherit the change
+ * automatically — no registry needed.
  */
 export function setGlobalLevel(level: string): void {
-    for (const instance of loggerRegistry) {
-        instance.level = level as Level;
+    if (rootLogger !== null) {
+        rootLogger.level = level as Level;
+    }
+}
+
+/**
+ * Flush the ring buffer and underlying file writer to disk.
+ * Call during graceful shutdown to ensure buffered entries are persisted.
+ */
+export function flushAll(): void {
+    if (ringBufferStream !== null) {
+        ringBufferStream.flushBuffer();
+    }
+    if (fileWriter !== null && "end" in fileWriter) {
+        fileWriter.end();
     }
 }
 
