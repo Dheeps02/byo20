@@ -213,14 +213,24 @@ export function setGlobalLevel(level: string): void {
 }
 
 /**
- * Flush the ring buffer and underlying file writer to disk.
- * Call during graceful shutdown to ensure buffered entries are persisted.
+ * Flush buffered ring-buffer entries to the file writer without closing the stream.
+ * Safe to call at any crash point — further log writes remain possible afterward.
  */
 export function flushAll(): void {
     if (ringBufferStream !== null) {
         ringBufferStream.flushBuffer();
     }
-    if (fileWriter !== null && "end" in fileWriter) {
+}
+
+/**
+ * Flush the ring buffer then permanently close the underlying file stream.
+ * Call only at final graceful shutdown — any log writes after this are silently dropped.
+ */
+export function closeLogger(): void {
+    if (ringBufferStream !== null) {
+        ringBufferStream.flushBuffer();
+    }
+    if (fileWriter !== null) {
         fileWriter.end();
     }
 }

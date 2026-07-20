@@ -1,2 +1,2 @@
-export { initLogger, createLogger, setGlobalLevel, flushAll } from "./logger";
+export { initLogger, createLogger, setGlobalLevel, flushAll, closeLogger } from "./logger";
 export type { Logger } from "pino";
