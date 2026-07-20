@@ -43,6 +43,7 @@ import type {
  * party_chat_log) only ever receive INSERTs — no updates, no deletes.
  */
 import { and, eq, inArray, sql } from "drizzle-orm";
+import { getLogger } from "../logger";
 import type { ServerDb } from "./client";
 import { encounters, initiative_entries } from "./schema/server/combat";
 import { campaigns, character_campaign_state, character_classes, characters } from "./schema/server/game";
@@ -801,7 +802,11 @@ export class PostgresGameStateStore implements IGameStateStore {
     /** Fetch a campaign by UUID. Throws if not found. */
     async getCampaign(id: string): Promise<Campaign> {
         const rows = await this.db.select().from(campaigns).where(eq(campaigns.id, id)).limit(1);
-        if (!rows[0]) throw new Error(`Campaign not found: ${id}`);
+        if (!rows[0]) {
+            getLogger().error({ entity: "campaign", id }, "campaign not found");
+            throw new Error(`Campaign not found: ${id}`);
+        }
+        getLogger().debug({ entity: "campaign", id }, "getCampaign");
         return rowToCampaign(rows[0]);
     }
 
@@ -810,6 +815,7 @@ export class PostgresGameStateStore implements IGameStateStore {
         const row = campaignToRow(campaign);
         const { id: _id, ...rest } = row;
         await this.db.insert(campaigns).values(row).onConflictDoUpdate({ target: campaigns.id, set: rest });
+        getLogger().debug({ entity: "campaign", id: campaign.id }, "saveCampaign");
     }
 
     // ── Characters — engine-facing merged view ─────────────────────────────────
@@ -832,14 +838,24 @@ export class PostgresGameStateStore implements IGameStateStore {
                 )
                 .limit(1),
         ]);
-        if (!charRows[0]) throw new Error(`Character not found: ${id}`);
-        if (!ccsRows[0]) throw new Error(`CharacterCampaignState not found: char=${id} campaign=${campaignId}`);
+        if (!charRows[0]) {
+            getLogger().error({ entity: "character", id, campaignId }, "character not found");
+            throw new Error(`Character not found: ${id}`);
+        }
+        if (!ccsRows[0]) {
+            getLogger().error(
+                { entity: "character_campaign_state", id, campaignId },
+                "character campaign state not found",
+            );
+            throw new Error(`CharacterCampaignState not found: char=${id} campaign=${campaignId}`);
+        }
 
         const classRows = await this.db
             .select()
             .from(character_classes)
             .where(eq(character_classes.character_campaign_state_id, ccsRows[0].id));
 
+        getLogger().debug({ entity: "character", id, campaignId }, "getCharacter");
         return rowsToCharacter(charRows[0], ccsRows[0], classRows);
     }
 
@@ -910,7 +926,11 @@ export class PostgresGameStateStore implements IGameStateStore {
     /** Fetch a character's portable identity by UUID. Throws if not found. */
     async getCharacterIdentity(id: string): Promise<CharacterIdentity> {
         const rows = await this.db.select().from(characters).where(eq(characters.id, id)).limit(1);
-        if (!rows[0]) throw new Error(`Character not found: ${id}`);
+        if (!rows[0]) {
+            getLogger().error({ entity: "character", id }, "character not found");
+            throw new Error(`Character not found: ${id}`);
+        }
+        getLogger().debug({ entity: "character", id }, "getCharacterIdentity");
         return rowToCharacterIdentity(rows[0]);
     }
 
@@ -930,7 +950,11 @@ export class PostgresGameStateStore implements IGameStateStore {
             .from(character_campaign_state)
             .where(eq(character_campaign_state.id, id))
             .limit(1);
-        if (!rows[0]) throw new Error(`CharacterCampaignState not found: ${id}`);
+        if (!rows[0]) {
+            getLogger().error({ entity: "character_campaign_state", id }, "character campaign state not found");
+            throw new Error(`CharacterCampaignState not found: ${id}`);
+        }
+        getLogger().debug({ entity: "character_campaign_state", id }, "getCharacterCampaignState");
         return rowToCharacterCampaignState(rows[0]);
     }
 
@@ -942,6 +966,7 @@ export class PostgresGameStateStore implements IGameStateStore {
             .insert(character_campaign_state)
             .values(row)
             .onConflictDoUpdate({ target: character_campaign_state.id, set: rest });
+        getLogger().debug({ entity: "character_campaign_state", id: state.id }, "saveCharacterCampaignState");
     }
 
     // ── Character classes ──────────────────────────────────────────────────────
@@ -970,7 +995,11 @@ export class PostgresGameStateStore implements IGameStateStore {
     /** Fetch an encounter by UUID. Throws if not found. */
     async getEncounter(id: string): Promise<Encounter> {
         const rows = await this.db.select().from(encounters).where(eq(encounters.id, id)).limit(1);
-        if (!rows[0]) throw new Error(`Encounter not found: ${id}`);
+        if (!rows[0]) {
+            getLogger().error({ entity: "encounter", id }, "encounter not found");
+            throw new Error(`Encounter not found: ${id}`);
+        }
+        getLogger().debug({ entity: "encounter", id }, "getEncounter");
         return rowToEncounter(rows[0]);
     }
 
@@ -979,6 +1008,7 @@ export class PostgresGameStateStore implements IGameStateStore {
         const row = encounterToRow(encounter);
         const { id: _id, ...rest } = row;
         await this.db.insert(encounters).values(row).onConflictDoUpdate({ target: encounters.id, set: rest });
+        getLogger().debug({ entity: "encounter", id: encounter.id }, "saveEncounter");
     }
 
     /** Fetch the single active encounter for a campaign, or null if not in combat. */
@@ -1017,7 +1047,11 @@ export class PostgresGameStateStore implements IGameStateStore {
     /** Fetch an NPC by UUID. Throws if not found. */
     async getNPC(id: string): Promise<NPC> {
         const rows = await this.db.select().from(npcs).where(eq(npcs.id, id)).limit(1);
-        if (!rows[0]) throw new Error(`NPC not found: ${id}`);
+        if (!rows[0]) {
+            getLogger().error({ entity: "npc", id }, "npc not found");
+            throw new Error(`NPC not found: ${id}`);
+        }
+        getLogger().debug({ entity: "npc", id }, "getNPC");
         return rowToNPC(rows[0]);
     }
 
@@ -1026,6 +1060,7 @@ export class PostgresGameStateStore implements IGameStateStore {
         const row = npcToRow(npc);
         const { id: _id, ...rest } = row;
         await this.db.insert(npcs).values(row).onConflictDoUpdate({ target: npcs.id, set: rest });
+        getLogger().debug({ entity: "npc", id: npc.id }, "saveNPC");
     }
 
     /** Fetch all NPCs whose JSONB location->>'zone_id' matches zoneId within a campaign. */
@@ -1042,7 +1077,11 @@ export class PostgresGameStateStore implements IGameStateStore {
     /** Fetch a faction by UUID. Throws if not found. */
     async getFaction(id: string): Promise<Faction> {
         const rows = await this.db.select().from(factions).where(eq(factions.id, id)).limit(1);
-        if (!rows[0]) throw new Error(`Faction not found: ${id}`);
+        if (!rows[0]) {
+            getLogger().error({ entity: "faction", id }, "faction not found");
+            throw new Error(`Faction not found: ${id}`);
+        }
+        getLogger().debug({ entity: "faction", id }, "getFaction");
         return rowToFaction(rows[0]);
     }
 
@@ -1065,8 +1104,17 @@ export class PostgresGameStateStore implements IGameStateStore {
                 ),
             )
             .limit(1);
-        if (!rows[0])
+        if (!rows[0]) {
+            getLogger().error(
+                { entity: "faction_reputation", characterCampaignStateId, factionId },
+                "faction reputation not found",
+            );
             throw new Error(`FactionReputation not found for ccs=${characterCampaignStateId} faction=${factionId}`);
+        }
+        getLogger().debug(
+            { entity: "faction_reputation", characterCampaignStateId, factionId },
+            "getFactionReputation",
+        );
         return rowToFactionReputation(rows[0]);
     }
 
@@ -1289,7 +1337,11 @@ export class PostgresGameStateStore implements IGameStateStore {
     /** Fetch a container by UUID. Throws if not found. */
     async getContainer(id: string): Promise<Container> {
         const rows = await this.db.select().from(containers).where(eq(containers.id, id)).limit(1);
-        if (!rows[0]) throw new Error(`Container not found: ${id}`);
+        if (!rows[0]) {
+            getLogger().error({ entity: "container", id }, "container not found");
+            throw new Error(`Container not found: ${id}`);
+        }
+        getLogger().debug({ entity: "container", id }, "getContainer");
         return rowToContainer(rows[0]);
     }
 
@@ -1298,6 +1350,7 @@ export class PostgresGameStateStore implements IGameStateStore {
         const row = containerToRow(container);
         const { id: _id, ...rest } = row;
         await this.db.insert(containers).values(row).onConflictDoUpdate({ target: containers.id, set: rest });
+        getLogger().debug({ entity: "container", id: container.id }, "saveContainer");
     }
 
     // ── Quests ─────────────────────────────────────────────────────────────────
@@ -1305,7 +1358,11 @@ export class PostgresGameStateStore implements IGameStateStore {
     /** Fetch a quest by UUID. Throws if not found. */
     async getQuest(id: string): Promise<Quest> {
         const rows = await this.db.select().from(quests).where(eq(quests.id, id)).limit(1);
-        if (!rows[0]) throw new Error(`Quest not found: ${id}`);
+        if (!rows[0]) {
+            getLogger().error({ entity: "quest", id }, "quest not found");
+            throw new Error(`Quest not found: ${id}`);
+        }
+        getLogger().debug({ entity: "quest", id }, "getQuest");
         return rowToQuest(rows[0]);
     }
 
@@ -1330,7 +1387,11 @@ export class PostgresGameStateStore implements IGameStateStore {
     /** Fetch a world zone by UUID. Throws if not found. */
     async getWorldZone(id: string): Promise<WorldZone> {
         const rows = await this.db.select().from(world_zones).where(eq(world_zones.id, id)).limit(1);
-        if (!rows[0]) throw new Error(`WorldZone not found: ${id}`);
+        if (!rows[0]) {
+            getLogger().error({ entity: "world_zone", id }, "world zone not found");
+            throw new Error(`WorldZone not found: ${id}`);
+        }
+        getLogger().debug({ entity: "world_zone", id }, "getWorldZone");
         return rowToWorldZone(rows[0]);
     }
 
@@ -1597,7 +1658,10 @@ export class PostgresGameStateStore implements IGameStateStore {
             .from(campaign_snapshots)
             .where(eq(campaign_snapshots.id, snapshotId))
             .limit(1);
-        if (!snapRows[0]) throw new Error(`Snapshot not found: ${snapshotId}`);
+        if (!snapRows[0]) {
+            getLogger().error({ entity: "snapshot", id: snapshotId }, "snapshot not found");
+            throw new Error(`Snapshot not found: ${snapshotId}`);
+        }
 
         const snap = snapRows[0].state as Record<string, unknown>;
         const campaignId = snapRows[0].campaign_id;

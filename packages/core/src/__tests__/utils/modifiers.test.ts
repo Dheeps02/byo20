@@ -1,4 +1,5 @@
-import { describe, expect, it } from "bun:test";
+import { beforeAll, describe, expect, test } from "bun:test";
+import { initEngine } from "../../index";
 import {
     getModifier,
     getPassiveScore,
@@ -7,6 +8,10 @@ import {
     getSpellSaveDC,
     getTotalLevel,
 } from "../../utils/modifiers";
+
+beforeAll(() => {
+    initEngine();
+});
 
 describe("getModifier", () => {
     // Full table verification per 2024 PHB
@@ -36,10 +41,19 @@ describe("getModifier", () => {
     ];
 
     for (const [score, expected] of cases) {
-        it(`score ${score} → ${expected >= 0 ? "+" : ""}${expected}`, () => {
+        test(`score ${score} → ${expected >= 0 ? "+" : ""}${expected}`, () => {
             expect(getModifier(score)).toBe(expected);
         });
     }
+
+    // ── Invalid input guards ───────────────────────────────────────────────────
+    test("throws on score 0", () => {
+        expect(() => getModifier(0)).toThrow("[invariant]");
+    });
+
+    test("throws on score 31", () => {
+        expect(() => getModifier(31)).toThrow("[invariant]");
+    });
 });
 
 describe("getProficiencyBonus", () => {
@@ -67,64 +81,82 @@ describe("getProficiencyBonus", () => {
     ];
 
     for (const [level, expected] of cases) {
-        it(`level ${level} → +${expected}`, () => {
+        test(`level ${level} → +${expected}`, () => {
             expect(getProficiencyBonus(level)).toBe(expected);
         });
     }
+
+    // ── Invalid input guards ───────────────────────────────────────────────────
+    test("throws on level 0", () => {
+        expect(() => getProficiencyBonus(0)).toThrow("[invariant]");
+    });
+
+    test("throws on level 21", () => {
+        expect(() => getProficiencyBonus(21)).toThrow("[invariant]");
+    });
 });
 
 describe("getPassiveScore", () => {
-    it("non-proficient: 10 + modifier", () => {
+    test("non-proficient: 10 + modifier", () => {
         expect(getPassiveScore(3, false, 2)).toBe(13);
     });
 
-    it("proficient: 10 + modifier + proficiency bonus", () => {
+    test("proficient: 10 + modifier + proficiency bonus", () => {
         expect(getPassiveScore(3, true, 2)).toBe(15);
     });
 
-    it("passive Perception for +0 WIS, proficient, +2 prof = 12", () => {
+    test("passive Perception for +0 modifier, proficient, +2 prof = 12", () => {
         expect(getPassiveScore(0, true, 2)).toBe(12);
     });
 
-    it("passive Perception for +3 WIS, not proficient = 13", () => {
+    test("passive Perception for +3 modifier, not proficient = 13", () => {
         expect(getPassiveScore(3, false, 3)).toBe(13);
     });
 });
 
 describe("getSpellSaveDC", () => {
-    it("8 + proficiency + spellcasting modifier", () => {
+    test("8 + proficiency + spellcasting modifier", () => {
         expect(getSpellSaveDC(3, 4)).toBe(15);
     });
 
-    it("level 1 cleric with +3 WIS and +2 prof = DC 13", () => {
+    test("level 1 cleric with +3 WIS and +2 prof = DC 13", () => {
         expect(getSpellSaveDC(2, 3)).toBe(13);
     });
 });
 
 describe("getSpellAttackBonus", () => {
-    it("proficiency + spellcasting modifier", () => {
+    test("proficiency + spellcasting modifier", () => {
         expect(getSpellAttackBonus(3, 4)).toBe(7);
     });
 
-    it("level 1 wizard with +3 INT and +2 prof = +5", () => {
+    test("level 1 wizard with +3 INT and +2 prof = +5", () => {
         expect(getSpellAttackBonus(2, 3)).toBe(5);
     });
 });
 
 describe("getTotalLevel", () => {
-    it("single class", () => {
+    test("single class", () => {
         expect(getTotalLevel([{ classLevel: 7 }])).toBe(7);
     });
 
-    it("two-class multiclass sums correctly", () => {
+    test("two-class multiclass sums correctly", () => {
         expect(getTotalLevel([{ classLevel: 6 }, { classLevel: 4 }])).toBe(10);
     });
 
-    it("three-class multiclass", () => {
+    test("three-class multiclass", () => {
         expect(getTotalLevel([{ classLevel: 3 }, { classLevel: 3 }, { classLevel: 4 }])).toBe(10);
     });
 
-    it("empty array returns 0", () => {
+    test("empty array returns 0", () => {
         expect(getTotalLevel([])).toBe(0);
+    });
+
+    test("level 20 is valid", () => {
+        expect(getTotalLevel([{ classLevel: 20 }])).toBe(20);
+    });
+
+    // ── Invalid input guards ───────────────────────────────────────────────────
+    test("throws when total exceeds 20", () => {
+        expect(() => getTotalLevel([{ classLevel: 15 }, { classLevel: 6 }])).toThrow("[invariant]");
     });
 });

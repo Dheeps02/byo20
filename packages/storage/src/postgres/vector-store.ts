@@ -18,6 +18,7 @@ import type { FactionEvent, IVectorStore, LoreEntry, NPCMemory } from "@byo20/sh
  * the world-gen pipeline until the interface is extended.
  */
 import { desc, eq, sql } from "drizzle-orm";
+import { getLogger } from "../logger";
 import type { ServerDb } from "./client";
 import { faction_events, lore_entries, npc_memories } from "./schema/server/memory";
 
@@ -91,6 +92,7 @@ export class PostgresVectorStore implements IVectorStore {
         };
         const { id: _id, ...rest } = row;
         await this.db.insert(npc_memories).values(row).onConflictDoUpdate({ target: npc_memories.id, set: rest });
+        getLogger().debug({ entity: "npc_memory", id: memory.id, npcId: memory.npcId }, "upsertMemory");
     }
 
     /**
@@ -105,6 +107,7 @@ export class PostgresVectorStore implements IVectorStore {
             .where(eq(npc_memories.npc_id, npcId))
             .orderBy(desc(npc_memories.created_at_clock))
             .limit(topK);
+        getLogger().debug({ entity: "npc_memory", npcId, topK, count: rows.length }, "queryMemories");
         return rows.map(rowToNPCMemory);
     }
 
@@ -135,6 +138,7 @@ export class PostgresVectorStore implements IVectorStore {
         };
         const { id: _id, ...rest } = row;
         await this.db.insert(faction_events).values(row).onConflictDoUpdate({ target: faction_events.id, set: rest });
+        getLogger().debug({ entity: "faction_event", id: event.id, factionId: event.factionId }, "upsertFactionEvent");
     }
 
     /**
@@ -149,6 +153,7 @@ export class PostgresVectorStore implements IVectorStore {
             .where(eq(faction_events.faction_id, factionId))
             .orderBy(desc(faction_events.created_at_clock))
             .limit(topK);
+        getLogger().debug({ entity: "faction_event", factionId, topK, count: rows.length }, "queryFactionEvents");
         return rows.map(rowToFactionEvent);
     }
 

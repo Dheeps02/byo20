@@ -15,6 +15,7 @@ import type { ActionResources } from "@byo20/shared";
  * Agenda timers use ZRANGEBYSCORE on the game clock value, not wall time.
  */
 import Redis from "ioredis";
+import { getLogger } from "../logger";
 
 /** Safety-net TTL for combat keys. If an encounter or turn ends without the server
  * calling the clear* helpers (e.g. crash mid-combat), these keys auto-expire rather
@@ -26,10 +27,14 @@ const TURN_RESOURCES_TTL_SECONDS = 86_400;
 
 /** Create an ioredis client. Connects lazily on first command. */
 export function createRedisClient(url: string): Redis {
-    return new Redis(url, {
+    const client = new Redis(url, {
         lazyConnect: true, // don't connect until first command
         maxRetriesPerRequest: 3,
     });
+    client.on("error", (err: Error) => {
+        getLogger().error({ err: err.message }, "redis connection error");
+    });
+    return client;
 }
 
 // ── Key builders ──────────────────────────────────────────────────────────────
@@ -48,12 +53,15 @@ export const worldClockKey = (campaignId: string) => `world:${campaignId}:clock`
 /** Read the current in-game world clock (minutes elapsed). Returns 0 if unset. */
 export async function getWorldClock(redis: Redis, campaignId: string): Promise<number> {
     const val = await redis.get(worldClockKey(campaignId));
-    return val ? Number.parseInt(val, 10) : 0;
+    const clock = val ? Number.parseInt(val, 10) : 0;
+    getLogger().debug({ campaignId, clock }, "getWorldClock");
+    return clock;
 }
 
 /** Write the current in-game world clock (minutes elapsed). */
 export async function setWorldClock(redis: Redis, campaignId: string, clock: number): Promise<void> {
     await redis.set(worldClockKey(campaignId), clock);
+    getLogger().debug({ campaignId, clock }, "setWorldClock");
 }
 
 // ── Agenda sorted set ─────────────────────────────────────────────────────────
@@ -66,6 +74,7 @@ export async function scheduleAgendaEvent(
     firesAtClock: number,
 ): Promise<void> {
     await redis.zadd(agendaKey(campaignId), firesAtClock, eventId);
+    getLogger().debug({ campaignId, eventId, firesAtClock }, "scheduleAgendaEvent");
 }
 
 /** Return all event IDs whose fires_at_clock <= currentClock (due to fire). */
@@ -103,6 +112,7 @@ export async function rebuildAgendaFromDb(
     // zadd accepts score/member pairs as a flat list
     const args = pendingEvents.flatMap((e) => [e.fires_at_clock, e.id]) as (string | number)[];
     await redis.zadd(key, ...args);
+    getLogger().debug({ campaignId, count: pendingEvents.length }, "rebuildAgendaFromDb");
 }
 
 // ── Active effects (per encounter, per entity) ────────────────────────────────
@@ -110,9 +120,14 @@ export async function rebuildAgendaFromDb(
 /** Fetch the JSON-encoded active effect list for an entity in an encounter. Returns [] if none. */
 export async function getEntityEffects(redis: Redis, encounterId: string, entityId: string): Promise<unknown[]> {
     const raw = await redis.hget(effectsKey(encounterId), entityId);
-    if (!raw) return [];
+    if (!raw) {
+        getLogger().debug({ encounterId, entityId }, "getEntityEffects: no effects found");
+        return [];
+    }
     try {
-        return JSON.parse(raw) as unknown[];
+        const effects = JSON.parse(raw) as unknown[];
+        getLogger().debug({ encounterId, entityId, count: effects.length }, "getEntityEffects");
+        return effects;
     } catch {
         // Malformed data — treat as empty. Can happen if the process died mid-write.
         // The engine re-applies effects from its own state on the next action.
@@ -132,6 +147,7 @@ export async function setEntityEffects(
     pipeline.hset(key, entityId, JSON.stringify(effects));
     pipeline.expire(key, EFFECTS_TTL_SECONDS);
     await pipeline.exec();
+    getLogger().debug({ encounterId, entityId, count: effects.length }, "setEntityEffects");
 }
 
 /** Delete the entire effects hash for an encounter (called on encounter end). */
@@ -148,6 +164,11 @@ export async function clearEncounterEffects(redis: Redis, encounterId: string): 
  */
 export async function getTurnResources(redis: Redis, characterId: string): Promise<ActionResources> {
     const raw = await redis.hgetall(turnResourcesKey(characterId));
+    if (Object.keys(raw).length === 0) {
+        getLogger().warn({ characterId }, "getTurnResources: key absent — returning defaults");
+    } else {
+        getLogger().debug({ characterId }, "getTurnResources");
+    }
     return {
         movement_remaining: raw.movement_remaining !== undefined ? Number(raw.movement_remaining) : 0,
         actions_remaining: raw.actions_remaining !== undefined ? Number(raw.actions_remaining) : 1,
@@ -186,6 +207,7 @@ export async function setTurnResources(
     pipeline.hset(key, resources);
     pipeline.expire(key, TURN_RESOURCES_TTL_SECONDS);
     await pipeline.exec();
+    getLogger().debug({ characterId }, "setTurnResources");
 }
 
 /** Delete a character's turn resources hash (called on turn end). */

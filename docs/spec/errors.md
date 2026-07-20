@@ -68,6 +68,7 @@ Error codes are further grouped by subcategory within each namespace using the h
 | **BYO-1xxx — Engine** | |
 | `BYO-11xx` | Rules resolution |
 | `BYO-12xx` | Invalid game state |
+| `BYO-13xx` | Input validation |
 | **BYO-2xxx — Storage** | |
 | `BYO-21xx` | Database |
 | `BYO-22xx` | Migrations |
