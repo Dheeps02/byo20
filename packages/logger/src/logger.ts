@@ -17,15 +17,11 @@ import { Writable } from "node:stream";
 import pino, { type Level, type Logger } from "pino";
 import roll from "pino-roll";
 
-
 /** Maximum debug/info entries buffered in memory per logger instance. */
 const RING_BUFFER_SIZE = 500;
 
 /** Pino internal numeric level for warn. */
 const PINO_WARN = 40;
-
-/** Default server log path: ~/.byo20/logs/server.log */
-const DEFAULT_LOG_PATH = path.join(homedir(), ".byo20", "logs", "server.log");
 
 /** Module-level root logger, set by initLogger. */
 let rootLogger: Logger | null = null;
@@ -233,27 +229,4 @@ export function closeLogger(): void {
     if (fileWriter !== null) {
         fileWriter.end();
     }
-}
-
-/**
- * Flush all registered file writers to disk.
- *
- * Waits for each SonicBoom destination to reach its 'ready' state before calling
- * flushSync(). Intended for test teardown and graceful shutdown.
- */
-export async function flushAll(): Promise<void> {
-    const flush = (fw: RollDestination) =>
-        new Promise<void>((resolve) => {
-            const doFlush = () => {
-                try {
-                    fw.flushSync();
-                } catch {
-                    /* stream may be closed — ignore */
-                }
-                resolve();
-            };
-            if (fw.fd >= 0) doFlush();
-            else fw.on("ready", doFlush);
-        });
-    await Promise.all([...fileWriterRegistry].map(flush));
 }
