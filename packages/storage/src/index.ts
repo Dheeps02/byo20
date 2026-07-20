@@ -5,6 +5,14 @@
  * Import order follows the natural build sequence:
  *   schema → client → queries → stores → redis
  */
+import { initPackageLogger } from "./logger";
+
+// ── Package initialisation ────────────────────────────────────────────────────
+
+/** Initialise the storage package. Must be called after initLogger and before any store use. */
+export function initStorage(): void {
+    initPackageLogger();
+}
 
 // Re-export interface contracts so engine/transport/ai can import them
 // from either @byo20/shared (preferred) or @byo20/storage without the

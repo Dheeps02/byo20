@@ -76,6 +76,7 @@
       "name": "@byo20/storage",
       "version": "0.0.1",
       "dependencies": {
+        "@byo20/logger": "workspace:*",
         "@byo20/shared": "workspace:*",
         "drizzle-orm": "^0.44.0",
         "ioredis": "^5.6.1",

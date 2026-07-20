@@ -3,6 +3,14 @@
  * Public API: the engine class, the IRulesEngine contract, all context/result types,
  * utility functions, and the canonical conditions list.
  */
+import { initPackageLogger } from "./logger";
+
+// ── Package initialisation ────────────────────────────────────────────────────
+
+/** Initialise the engine package. Must be called after initLogger and before any engine use. */
+export function initEngine(): void {
+    initPackageLogger();
+}
 
 // ── Engine class and interface ────────────────────────────────────────────────
 export { DnD5eRulesEngine } from "./engines/dnd-5.5e";
