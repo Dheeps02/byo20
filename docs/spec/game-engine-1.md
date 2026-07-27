@@ -251,7 +251,7 @@ One creature is acting. Server tracks their resource state in Redis:
 current_combatant_id: string
 round_number: integer
 movement_remaining: integer   // feet remaining this turn
-action_used: boolean
+actions_remaining: uint8
 bonus_action_used: boolean
 reaction_used: boolean        // per round, not per turn — persists across turns
 free_interaction_used: boolean
@@ -418,7 +418,7 @@ Every combatant tracks these in Redis for their active turn:
 | Resource | Type | Notes |
 |---|---|---|
 | `movement_remaining` | integer (feet) | Decrements as movement is used. Difficult terrain costs 2ft per ft moved. |
-| `action_used` | boolean | One action per turn. |
+| `actions_remaining` | uint8 | Starts at 1. Incremented by active effects (e.g. Haste) or class features (e.g. Action Surge) at turn start. Cannot be used for Magic action when granted by Action Surge. |
 | `bonus_action_used` | boolean | Only available if a feature/spell/ability explicitly grants one. |
 | `reaction_used` | boolean | **Per round, not per turn.** Resets at start of creature's next turn. |
 | `free_interaction_used` | boolean | One minor object interaction per turn. |
@@ -1449,7 +1449,7 @@ Full column definitions to be finalized when written into storage-layer.md (cros
 | Persistent zones | AoE shape + `ActiveEffect` with duration. Affected entities rechecked every round/movement — same mechanism as Emanation. |
 | Reaction spells | Use the existing `AWAITING_REACTION` sub-state — no new interrupt mechanism. |
 | Rituals | +10 min cast time, no slot expended, must be prepared (Wizards exempt). Not practical mid-combat by nature — no special engine gate needed. |
-| Action resources | movement_remaining (int), action_used (bool), bonus_action_used (bool), reaction_used (bool, per round), free_interaction_used (bool), attacks_remaining (uint8) |
+| Action resources | movement_remaining (int), actions_remaining (uint8), bonus_action_used (bool), reaction_used (bool, per round), free_interaction_used (bool), attacks_remaining (uint8) |
 | Movement validation | On finalise only. Client highlights range locally. |
 | Opportunity attacks | Server monitors all movement. Triggers AWAITING_REACTION. |
 | Conditions | 15 conditions. No self-stacking (Exhaustion excepted). Additive across different conditions. |

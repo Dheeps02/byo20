@@ -199,9 +199,6 @@ return events
 ### ~~Replace `Row` placeholder with concrete domain types~~ — `feat/shared-domain-types`
 `IGameStateStore` and `IVectorStore` now use concrete domain types from `@byo20/shared/types/domain`. All `Row = Record<string, unknown>` aliases and `as typeof table.$inferInsert` casts removed. Row-to-domain mapping functions handle the translation between flat Drizzle rows and nested domain types.
 
-### ~~Return typed `ActionResources` from `getTurnResources`~~ — `feat/shared-domain-types`
-`getTurnResources` now returns `Promise<ActionResources>`, parsing raw Redis HASH strings into the typed shape from `@byo20/shared`. `setTurnResourcesTyped` is the new typed write helper.
-
 ### ~~Update `IGameStateStore` / `IVectorStore` method signatures~~ — `feat/shared-domain-types`
 Both interfaces now use concrete domain types throughout. `IGameStateStore` gains `getCharacterIdentity`, `saveCharacterIdentity`, `getContainer`, `saveContainer`, and `saveFaction`. `IVectorStore.queryMemories` and `queryFactionEvents` accept `context: string` rather than a pre-computed embedding.
 

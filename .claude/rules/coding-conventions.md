@@ -21,6 +21,12 @@
 - `PascalCase` for React components and their files (`UnitFrame.tsx`)
 - `camelCase` for everything else
 
+## String Literal Casing
+
+- **Uppercase** for engine/protocol-level discriminants: `ActionType` values (`"ATTACK"`, `"BONUS_ACTION"`), WebSocket message types (`"TURN_START"`, `"ACTION_REJECTED"`). These are the engine's own invented vocabulary and never touch the DB.
+- **Lowercase** for values that cross the storage boundary: condition names (`"incapacitated"`, `"paralyzed"`) match `ConditionName` in `@byo20/shared` and are stored as-is in Postgres/Redis. Changing these would require a DB migration.
+- Do not unify casing across these two categories — the difference is meaningful and load-bearing.
+
 ## Never Do
 - Game logic in the renderer
 - Game state through IPC

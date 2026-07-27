@@ -46,7 +46,6 @@ export {
     clearEncounterEffects,
     getTurnResources,
     setTurnResources,
-    setTurnResourcesTyped,
     clearTurnResources,
 } from "./redis/client";
 

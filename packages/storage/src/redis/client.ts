@@ -180,11 +180,7 @@ export async function getTurnResources(redis: Redis, characterId: string): Promi
 }
 
 /** Write a character's current-turn action resources. Stringifies all values for Redis HSET. */
-export async function setTurnResourcesTyped(
-    redis: Redis,
-    characterId: string,
-    resources: ActionResources,
-): Promise<void> {
+export async function setTurnResources(redis: Redis, characterId: string, resources: ActionResources): Promise<void> {
     const stringified: Record<string, string> = {
         movement_remaining: String(resources.movement_remaining),
         actions_remaining: String(resources.actions_remaining),
@@ -193,11 +189,11 @@ export async function setTurnResourcesTyped(
         free_interaction_used: String(resources.free_interaction_used),
         attacks_remaining: String(resources.attacks_remaining),
     };
-    await setTurnResources(redis, characterId, stringified);
+    await _setRawTurnResources(redis, characterId, stringified);
 }
 
-/** Write a character's current-turn action resources. Overwrites the previous value. */
-export async function setTurnResources(
+/** Write raw string-map turn resources to Redis. Internal use only — call setTurnResources instead. */
+async function _setRawTurnResources(
     redis: Redis,
     characterId: string,
     resources: Record<string, string>,
