@@ -279,16 +279,20 @@ describe("spendMovement", () => {
         expect(res.movement_remaining).toBe(10); // 10*2 = 20 deducted from 30
     });
 
-    test("clamps at 0, does not go negative", async () => {
-        await subsystem.spendMovement("player-1", 100, false);
+    test("rejects when movement is insufficient", async () => {
+        const result = await subsystem.spendMovement("player-1", 100, false);
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.reason).toMatch(/insufficient movement/i);
         const res = await store.getTurnResources("player-1");
-        expect(res.movement_remaining).toBe(0);
+        expect(res.movement_remaining).toBe(30); // unchanged on rejection
     });
 
-    test("difficult terrain clamp at 0", async () => {
-        await subsystem.spendMovement("player-1", 20, true); // cost = 40, remaining = 30
+    test("rejects on difficult terrain when movement is insufficient", async () => {
+        const result = await subsystem.spendMovement("player-1", 20, true); // cost = 40, remaining = 30
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.reason).toMatch(/insufficient movement/i);
         const res = await store.getTurnResources("player-1");
-        expect(res.movement_remaining).toBe(0);
+        expect(res.movement_remaining).toBe(30); // unchanged on rejection
     });
 });
 
@@ -415,5 +419,87 @@ describe("grantAdditionalAction", () => {
         await subsystem.grantAdditionalAction("player-1");
         const res = await store.getTurnResources("player-1");
         expect(res.actions_remaining).toBe(2);
+    });
+});
+
+// ── spendResource ─────────────────────────────────────────────────────────────
+
+describe("spendResource", () => {
+    let store: MemoryResourceStore;
+    let subsystem: ActionEconomySubsystem;
+
+    beforeEach(() => {
+        [subsystem, store] = makeSubsystem();
+        store.seed("player-1", defaultResources());
+    });
+
+    test("ok: decrements actions_remaining", async () => {
+        const result = await subsystem.spendResource("player-1", "action");
+        expect(result.ok).toBe(true);
+        const res = await store.getTurnResources("player-1");
+        expect(res.actions_remaining).toBe(0);
+    });
+
+    test("ok: sets bonus_action_used to true", async () => {
+        const result = await subsystem.spendResource("player-1", "bonus_action");
+        expect(result.ok).toBe(true);
+        const res = await store.getTurnResources("player-1");
+        expect(res.bonus_action_used).toBe(true);
+    });
+
+    test("ok: sets reaction_used to true", async () => {
+        const result = await subsystem.spendResource("player-1", "reaction");
+        expect(result.ok).toBe(true);
+        const res = await store.getTurnResources("player-1");
+        expect(res.reaction_used).toBe(true);
+    });
+
+    test("ok: sets free_interaction_used to true", async () => {
+        const result = await subsystem.spendResource("player-1", "free_interaction");
+        expect(result.ok).toBe(true);
+        const res = await store.getTurnResources("player-1");
+        expect(res.free_interaction_used).toBe(true);
+    });
+
+    test("ok: decrements attacks_remaining", async () => {
+        const result = await subsystem.spendResource("player-1", "attack");
+        expect(result.ok).toBe(true);
+        const res = await store.getTurnResources("player-1");
+        expect(res.attacks_remaining).toBe(0);
+    });
+
+    test("rejects when actions_remaining is 0", async () => {
+        store.seed("player-1", { actions_remaining: 0 });
+        const result = await subsystem.spendResource("player-1", "action");
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.reason).toMatch(/no actions remaining/i);
+    });
+
+    test("rejects when bonus_action already used", async () => {
+        store.seed("player-1", { bonus_action_used: true });
+        const result = await subsystem.spendResource("player-1", "bonus_action");
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.reason).toMatch(/bonus action/i);
+    });
+
+    test("rejects when reaction already used", async () => {
+        store.seed("player-1", { reaction_used: true });
+        const result = await subsystem.spendResource("player-1", "reaction");
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.reason).toMatch(/reaction/i);
+    });
+
+    test("rejects when free_interaction already used", async () => {
+        store.seed("player-1", { free_interaction_used: true });
+        const result = await subsystem.spendResource("player-1", "free_interaction");
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.reason).toMatch(/free/i);
+    });
+
+    test("rejects when attacks_remaining is 0", async () => {
+        store.seed("player-1", { attacks_remaining: 0 });
+        const result = await subsystem.spendResource("player-1", "attack");
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.reason).toMatch(/no attacks remaining/i);
     });
 });
