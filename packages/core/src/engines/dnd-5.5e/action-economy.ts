@@ -1,9 +1,7 @@
-import { createLogger } from "@byo20/logger";
 import type { ActionResources, GameRejection, Result } from "@byo20/shared";
+import { getLogger } from "../../logger";
 import { computeSphere } from "../../utils/geometry";
 import type { Vec3 } from "../../utils/geometry";
-
-const logger = createLogger("action-economy");
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -104,7 +102,7 @@ export class ActionEconomySubsystem {
             attacks_remaining: attacksTotal,
         };
         await this.store.setTurnResources(combatantId, resources);
-        logger.debug({ combatantId, baseSpeed, attacksTotal }, "initTurnResources");
+        getLogger().debug({ combatantId, baseSpeed, attacksTotal }, "initTurnResources");
     }
 
     /**
@@ -129,7 +127,7 @@ export class ActionEconomySubsystem {
             attacks_remaining: attacksTotal,
         };
         await this.store.setTurnResources(combatantId, resources);
-        logger.debug({ combatantId, baseSpeed, attacksTotal, grantActionCount }, "resetBetweenTurns");
+        getLogger().debug({ combatantId, baseSpeed, attacksTotal, grantActionCount }, "resetBetweenTurns");
     }
 
     /**
@@ -139,7 +137,7 @@ export class ActionEconomySubsystem {
     async resetReaction(combatantId: string): Promise<void> {
         const current = await this.store.getTurnResources(combatantId);
         await this.store.setTurnResources(combatantId, { ...current, reaction_used: false });
-        logger.debug({ combatantId }, "resetReaction");
+        getLogger().debug({ combatantId }, "resetReaction");
     }
 
     /** Increment actions_remaining by 1 (Action Surge, Haste mid-turn grant). */
@@ -149,7 +147,7 @@ export class ActionEconomySubsystem {
             ...current,
             actions_remaining: current.actions_remaining + 1,
         });
-        logger.debug({ combatantId }, "grantAdditionalAction");
+        getLogger().debug({ combatantId }, "grantAdditionalAction");
     }
 
     /**
@@ -165,7 +163,7 @@ export class ActionEconomySubsystem {
     ): Promise<Result<void, GameRejection>> {
         // Step 1: Is it this combatant's turn?
         if (combatantId !== currentCombatantId) {
-            logger.debug({ combatantId, currentCombatantId }, "validateAction: not this combatant's turn");
+            getLogger().debug({ combatantId, currentCombatantId }, "validateAction: not this combatant's turn");
             return {
                 ok: false,
                 error: {
@@ -181,7 +179,7 @@ export class ActionEconomySubsystem {
 
         if (ACTION_CONSUMING_TYPES.has(action)) {
             if (resources.actions_remaining <= 0) {
-                logger.debug({ combatantId, action }, "validateAction: no actions remaining");
+                getLogger().debug({ combatantId, action }, "validateAction: no actions remaining");
                 return {
                     ok: false,
                     error: {
@@ -193,7 +191,7 @@ export class ActionEconomySubsystem {
             }
         } else if (action === "BONUS_ACTION") {
             if (resources.bonus_action_used) {
-                logger.debug({ combatantId, action }, "validateAction: bonus action already used");
+                getLogger().debug({ combatantId, action }, "validateAction: bonus action already used");
                 return {
                     ok: false,
                     error: { reason: "Bonus action already used this turn.", action_type: action },
@@ -201,7 +199,7 @@ export class ActionEconomySubsystem {
             }
         } else if (action === "REACTION") {
             if (resources.reaction_used) {
-                logger.debug({ combatantId, action }, "validateAction: reaction already used");
+                getLogger().debug({ combatantId, action }, "validateAction: reaction already used");
                 return {
                     ok: false,
                     error: { reason: "Reaction already used this round.", action_type: action },
@@ -209,7 +207,7 @@ export class ActionEconomySubsystem {
             }
         } else if (action === "FREE_INTERACTION") {
             if (resources.free_interaction_used) {
-                logger.debug({ combatantId, action }, "validateAction: free interaction already used");
+                getLogger().debug({ combatantId, action }, "validateAction: free interaction already used");
                 return {
                     ok: false,
                     error: { reason: "Free object interaction already used this turn.", action_type: action },
@@ -226,7 +224,7 @@ export class ActionEconomySubsystem {
             isIncapacitated &&
             (ACTION_CONSUMING_TYPES.has(action) || action === "BONUS_ACTION" || action === "REACTION")
         ) {
-            logger.debug({ combatantId, action, allConditions }, "validateAction: incapacitated");
+            getLogger().debug({ combatantId, action, allConditions }, "validateAction: incapacitated");
             return {
                 ok: false,
                 error: {
@@ -238,7 +236,7 @@ export class ActionEconomySubsystem {
         }
 
         // Step 5: target/LOS/range — delegated to combat engine (out of scope here).
-        logger.debug({ combatantId, action }, "validateAction: ok");
+        getLogger().debug({ combatantId, action }, "validateAction: ok");
         return { ok: true, value: undefined };
     }
 
@@ -264,12 +262,12 @@ export class ActionEconomySubsystem {
                 updated = { ...current, attacks_remaining: Math.max(0, current.attacks_remaining - 1) };
                 break;
             default:
-                logger.warn({ combatantId, resource }, "spendResource: unknown resource type");
+                getLogger().warn({ combatantId, resource }, "spendResource: unknown resource type");
                 return;
         }
 
         await this.store.setTurnResources(combatantId, updated);
-        logger.debug({ combatantId, resource }, "spendResource");
+        getLogger().debug({ combatantId, resource }, "spendResource");
     }
 
     /** Deduct movement cost; difficult terrain doubles the foot cost. */
@@ -281,7 +279,7 @@ export class ActionEconomySubsystem {
             movement_remaining: Math.max(0, current.movement_remaining - cost),
         };
         await this.store.setTurnResources(combatantId, updated);
-        logger.debug({ combatantId, feet, difficultTerrain, cost }, "spendMovement");
+        getLogger().debug({ combatantId, feet, difficultTerrain, cost }, "spendMovement");
     }
 
     /**
@@ -301,7 +299,7 @@ export class ActionEconomySubsystem {
     ): OACandidate[] {
         const moving = combatants.find((c) => c.id === movingCombatantId);
         if (!moving) {
-            logger.warn({ movingCombatantId }, "checkOpportunityAttacks: moving combatant not found");
+            getLogger().warn({ movingCombatantId }, "checkOpportunityAttacks: moving combatant not found");
             return [];
         }
 
@@ -332,7 +330,7 @@ export class ActionEconomySubsystem {
             result.push({ combatantId: combatant.id });
         }
 
-        logger.debug({ movingCombatantId, candidateCount: result.length }, "checkOpportunityAttacks");
+        getLogger().debug({ movingCombatantId, candidateCount: result.length }, "checkOpportunityAttacks");
         return result;
     }
 }
