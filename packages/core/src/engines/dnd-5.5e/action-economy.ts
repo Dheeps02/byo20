@@ -1,5 +1,5 @@
-import type { ActionResources, GameRejection, Result } from "@byo20/shared";
 import { createLogger } from "@byo20/logger";
+import type { ActionResources, GameRejection, Result } from "@byo20/shared";
 import { computeSphere } from "../../utils/geometry";
 import type { Vec3 } from "../../utils/geometry";
 
@@ -58,13 +58,7 @@ export interface ConditionsSubsystem {
 
 // ── Internal constants ────────────────────────────────────────────────────────
 
-const INCAPACITATING_CONDITIONS = new Set([
-    "incapacitated",
-    "paralyzed",
-    "petrified",
-    "stunned",
-    "unconscious",
-]);
+const INCAPACITATING_CONDITIONS = new Set(["incapacitated", "paralyzed", "petrified", "stunned", "unconscious"]);
 
 const ACTION_CONSUMING_TYPES = new Set<ActionType>([
     "ATTACK",
@@ -125,9 +119,7 @@ export class ActionEconomySubsystem {
         activeEffects: unknown[],
     ): Promise<void> {
         const current = await this.store.getTurnResources(combatantId);
-        const grantActionCount = activeEffects.filter(
-            (e) => (e as { type?: string }).type === "grant_action",
-        ).length;
+        const grantActionCount = activeEffects.filter((e) => (e as { type?: string }).type === "grant_action").length;
         const resources: ActionResources = {
             movement_remaining: baseSpeed,
             actions_remaining: 1 + grantActionCount,

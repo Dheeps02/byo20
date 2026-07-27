@@ -1,14 +1,8 @@
 import { beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import type { ActionResources } from "@byo20/shared";
+import { ActionEconomySubsystem } from "../engines/dnd-5.5e/action-economy";
+import type { ActionResourceStore, CombatantState, ConditionsSubsystem } from "../engines/dnd-5.5e/action-economy";
 import { initEngine } from "../index";
-import {
-    ActionEconomySubsystem,
-} from "../engines/dnd-5.5e/action-economy";
-import type {
-    ActionResourceStore,
-    CombatantState,
-    ConditionsSubsystem,
-} from "../engines/dnd-5.5e/action-economy";
 import type { Vec3 } from "../utils/geometry";
 
 beforeAll(() => {
@@ -60,8 +54,8 @@ function makeSubsystem(store?: MemoryResourceStore): [ActionEconomySubsystem, Me
 describe("checkOpportunityAttacks", () => {
     const [subsystem] = makeSubsystem();
 
-    const moverPos: Vec3 = { x: 1, y: 0, z: 0 };   // 5ft from origin
-    const farPos: Vec3 = { x: 10, y: 0, z: 0 };     // destination, 50ft from origin
+    const moverPos: Vec3 = { x: 1, y: 0, z: 0 }; // 5ft from origin
+    const farPos: Vec3 = { x: 10, y: 0, z: 0 }; // destination, 50ft from origin
 
     function enemy(overrides: Partial<CombatantState> = {}): CombatantState {
         return {
@@ -241,8 +235,18 @@ describe("validateAction", () => {
 
     test("all 12 standard action types are blocked by incapacitation", async () => {
         const standardActions = [
-            "ATTACK", "DASH", "DISENGAGE", "DODGE", "HELP", "HIDE",
-            "INFLUENCE", "MAGIC", "READY", "SEARCH", "STUDY", "UTILIZE",
+            "ATTACK",
+            "DASH",
+            "DISENGAGE",
+            "DODGE",
+            "HELP",
+            "HIDE",
+            "INFLUENCE",
+            "MAGIC",
+            "READY",
+            "SEARCH",
+            "STUDY",
+            "UTILIZE",
         ] as const;
         for (const action of standardActions) {
             store.seed("player-1", defaultResources());
