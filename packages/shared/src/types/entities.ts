@@ -37,7 +37,7 @@ export type ConditionName = z.infer<typeof ConditionNameSchema>;
  */
 export const ActionResourcesSchema = z.object({
     movement_remaining: z.number(),
-    actions_remaining: z.number().int().min(0).max(2),
+    actions_remaining: z.number().int().min(0).max(4),
     bonus_action_used: z.boolean(),
     reaction_used: z.boolean(),
     free_interaction_used: z.boolean(),
