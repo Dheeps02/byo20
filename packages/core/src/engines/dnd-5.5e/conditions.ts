@@ -40,3 +40,12 @@ export function applyCondition(entityId: string, condition: Condition): void {
 export function removeCondition(entityId: string, condition: Condition): void {
     throw new NotImplementedError("removeCondition");
 }
+
+import type { ConditionsSubsystem } from "./action-economy";
+
+/** No-op stub returned by the action economy subsystem until conditions are wired up. */
+export class StubConditionsSubsystem implements ConditionsSubsystem {
+    async getActiveConditions(_combatantId: string): Promise<string[]> {
+        return [];
+    }
+}
