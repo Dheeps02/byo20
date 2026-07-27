@@ -1,4 +1,4 @@
-import type { ActionResources, GameRejection, Result } from "@byo20/shared";
+import type { ActionResources, ConditionName, GameRejection, Result } from "@byo20/shared";
 import { getLogger } from "../../logger";
 import { computeSphere } from "../../utils/geometry";
 import type { Vec3 } from "../../utils/geometry";
@@ -159,7 +159,7 @@ export class ActionEconomySubsystem {
         combatantId: string,
         action: ActionType,
         currentCombatantId: string,
-        conditions: string[],
+        conditions: ConditionName[],
     ): Promise<Result<void, GameRejection>> {
         // Step 1: Is it this combatant's turn?
         if (combatantId !== currentCombatantId) {
