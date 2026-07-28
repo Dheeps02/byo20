@@ -100,6 +100,7 @@ export { ActionEconomySubsystem } from "./engines/dnd-5.5e/action-economy";
 export type {
     ActionType,
     SpendableResource,
+    SpendOptions,
     OACandidate,
     CombatantState,
     ActionResourceStore,

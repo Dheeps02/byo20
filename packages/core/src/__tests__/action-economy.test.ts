@@ -26,7 +26,9 @@ class MemoryResourceStore implements ActionResourceStore {
     private data = new Map<string, ActionResources>();
 
     async getTurnResources(combatantId: string): Promise<ActionResources> {
-        return this.data.get(combatantId) ?? { ...defaultResources() };
+        const stored = this.data.get(combatantId);
+        // Return a copy, not the stored reference — mirrors Redis which always parses fresh.
+        return stored ? { ...stored } : { ...defaultResources() };
     }
 
     async setTurnResources(combatantId: string, resources: ActionResources): Promise<void> {
@@ -231,46 +233,6 @@ describe("validateAction", () => {
     });
 });
 
-// ── spendMovement ─────────────────────────────────────────────────────────────
-
-describe("spendMovement", () => {
-    let store: MemoryResourceStore;
-    let subsystem: ActionEconomySubsystem;
-
-    beforeEach(() => {
-        [subsystem, store] = makeSubsystem();
-        store.seed("player-1", { movement_remaining: 30 });
-    });
-
-    test("deducts feet on normal terrain", async () => {
-        await subsystem.spendMovement("player-1", 10, false);
-        const res = await store.getTurnResources("player-1");
-        expect(res.movement_remaining).toBe(20);
-    });
-
-    test("doubles cost on difficult terrain", async () => {
-        await subsystem.spendMovement("player-1", 10, true);
-        const res = await store.getTurnResources("player-1");
-        expect(res.movement_remaining).toBe(10); // 10*2 = 20 deducted from 30
-    });
-
-    test("rejects when movement is insufficient", async () => {
-        const result = await subsystem.spendMovement("player-1", 100, false);
-        expect(result.ok).toBe(false);
-        if (!result.ok) expect(result.error.reason).toMatch(/insufficient movement/i);
-        const res = await store.getTurnResources("player-1");
-        expect(res.movement_remaining).toBe(30); // unchanged on rejection
-    });
-
-    test("rejects on difficult terrain when movement is insufficient", async () => {
-        const result = await subsystem.spendMovement("player-1", 20, true); // cost = 40, remaining = 30
-        expect(result.ok).toBe(false);
-        if (!result.ok) expect(result.error.reason).toMatch(/insufficient movement/i);
-        const res = await store.getTurnResources("player-1");
-        expect(res.movement_remaining).toBe(30); // unchanged on rejection
-    });
-});
-
 // ── resetTurnResources ────────────────────────────────────────────────────────
 
 describe("resetTurnResources", () => {
@@ -402,35 +364,35 @@ describe("spendResource", () => {
     });
 
     test("ok: decrements actions_remaining", async () => {
-        const result = await subsystem.spendResource("player-1", "action");
+        const result = await subsystem.spendResource("player-1", { resource: "action" });
         expect(result.ok).toBe(true);
         const res = await store.getTurnResources("player-1");
         expect(res.actions_remaining).toBe(0);
     });
 
     test("ok: sets bonus_action_used to true", async () => {
-        const result = await subsystem.spendResource("player-1", "bonus_action");
+        const result = await subsystem.spendResource("player-1", { resource: "bonus_action" });
         expect(result.ok).toBe(true);
         const res = await store.getTurnResources("player-1");
         expect(res.bonus_action_used).toBe(true);
     });
 
     test("ok: sets reaction_used to true", async () => {
-        const result = await subsystem.spendResource("player-1", "reaction");
+        const result = await subsystem.spendResource("player-1", { resource: "reaction" });
         expect(result.ok).toBe(true);
         const res = await store.getTurnResources("player-1");
         expect(res.reaction_used).toBe(true);
     });
 
     test("ok: sets free_interaction_used to true", async () => {
-        const result = await subsystem.spendResource("player-1", "free_interaction");
+        const result = await subsystem.spendResource("player-1", { resource: "free_interaction" });
         expect(result.ok).toBe(true);
         const res = await store.getTurnResources("player-1");
         expect(res.free_interaction_used).toBe(true);
     });
 
     test("ok: decrements attacks_remaining", async () => {
-        const result = await subsystem.spendResource("player-1", "attack");
+        const result = await subsystem.spendResource("player-1", { resource: "attack" });
         expect(result.ok).toBe(true);
         const res = await store.getTurnResources("player-1");
         expect(res.attacks_remaining).toBe(0);
@@ -438,36 +400,72 @@ describe("spendResource", () => {
 
     test("rejects when actions_remaining is 0", async () => {
         store.seed("player-1", { actions_remaining: 0 });
-        const result = await subsystem.spendResource("player-1", "action");
+        const result = await subsystem.spendResource("player-1", { resource: "action" });
         expect(result.ok).toBe(false);
         if (!result.ok) expect(result.error.reason).toMatch(/no actions remaining/i);
     });
 
     test("rejects when bonus_action already used", async () => {
         store.seed("player-1", { bonus_action_used: true });
-        const result = await subsystem.spendResource("player-1", "bonus_action");
+        const result = await subsystem.spendResource("player-1", { resource: "bonus_action" });
         expect(result.ok).toBe(false);
         if (!result.ok) expect(result.error.reason).toMatch(/bonus action/i);
     });
 
     test("rejects when reaction already used", async () => {
         store.seed("player-1", { reaction_used: true });
-        const result = await subsystem.spendResource("player-1", "reaction");
+        const result = await subsystem.spendResource("player-1", { resource: "reaction" });
         expect(result.ok).toBe(false);
         if (!result.ok) expect(result.error.reason).toMatch(/reaction/i);
     });
 
     test("rejects when free_interaction already used", async () => {
         store.seed("player-1", { free_interaction_used: true });
-        const result = await subsystem.spendResource("player-1", "free_interaction");
+        const result = await subsystem.spendResource("player-1", { resource: "free_interaction" });
         expect(result.ok).toBe(false);
         if (!result.ok) expect(result.error.reason).toMatch(/free/i);
     });
 
     test("rejects when attacks_remaining is 0", async () => {
         store.seed("player-1", { attacks_remaining: 0 });
-        const result = await subsystem.spendResource("player-1", "attack");
+        const result = await subsystem.spendResource("player-1", { resource: "attack" });
         expect(result.ok).toBe(false);
         if (!result.ok) expect(result.error.reason).toMatch(/no attacks remaining/i);
+    });
+
+    test("movement: deducts feet on normal terrain", async () => {
+        store.seed("player-1", { movement_remaining: 30 });
+        await subsystem.spendResource("player-1", { resource: "movement", feet: 10 });
+        const res = await store.getTurnResources("player-1");
+        expect(res.movement_remaining).toBe(20);
+    });
+
+    test("movement: doubles cost on difficult terrain", async () => {
+        store.seed("player-1", { movement_remaining: 30 });
+        await subsystem.spendResource("player-1", { resource: "movement", feet: 10, difficultTerrain: true });
+        const res = await store.getTurnResources("player-1");
+        expect(res.movement_remaining).toBe(10); // 10*2 = 20 deducted from 30
+    });
+
+    test("movement: rejects when insufficient", async () => {
+        store.seed("player-1", { movement_remaining: 30 });
+        const result = await subsystem.spendResource("player-1", { resource: "movement", feet: 100 });
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.reason).toMatch(/insufficient movement/i);
+        const res = await store.getTurnResources("player-1");
+        expect(res.movement_remaining).toBe(30); // unchanged on rejection
+    });
+
+    test("movement: rejects on difficult terrain when cost exceeds remaining", async () => {
+        store.seed("player-1", { movement_remaining: 30 });
+        const result = await subsystem.spendResource("player-1", {
+            resource: "movement",
+            feet: 20,
+            difficultTerrain: true,
+        }); // cost = 40, remaining = 30
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.reason).toMatch(/insufficient movement/i);
+        const res = await store.getTurnResources("player-1");
+        expect(res.movement_remaining).toBe(30); // unchanged on rejection
     });
 });

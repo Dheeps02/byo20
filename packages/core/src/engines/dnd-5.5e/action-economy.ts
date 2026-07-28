@@ -22,8 +22,17 @@ export type ActionType =
     | "STUDY"
     | "UTILIZE";
 
-/** Resources that can be spent one unit at a time. */
+/** Resources that can be spent one unit at a time (boolean flags or integer counters). */
 export type SpendableResource = "action" | "bonus_action" | "reaction" | "free_interaction" | "attack";
+
+/**
+ * Discriminated union for spendResource options.
+ * The "movement" arm carries the additional feet and terrain data needed to compute cost;
+ * all other resources are identified by name alone.
+ */
+export type SpendOptions =
+    | { resource: SpendableResource }
+    | { resource: "movement"; feet: number; difficultTerrain?: boolean };
 
 /** A combatant eligible to make an opportunity attack. */
 export interface OACandidate {
@@ -188,91 +197,85 @@ export class ActionEconomySubsystem {
         return { ok: true, value: undefined };
     }
 
-    /** Mark a boolean resource as spent or decrement a counter resource by 1. */
-    async spendResource(combatantId: string, resource: SpendableResource): Promise<Result<void, GameRejection>> {
+    /**
+     * Spend one unit of a resource, or deduct movement feet.
+     * getTurnResources always returns a fresh object (Redis parses on every read),
+     * so mutating `current` before passing it to setTurnResources is safe.
+     */
+    async spendResource(combatantId: string, options: SpendOptions): Promise<Result<void, GameRejection>> {
         const current = await this.store.getTurnResources(combatantId);
-        let updated: ActionResources;
 
-        switch (resource) {
+        switch (options.resource) {
             case "action":
                 if (current.actions_remaining <= 0) {
-                    getLogger().warn({ combatantId, resource }, "spendResource: no actions remaining");
-                    return { ok: false, error: { reason: "No actions remaining.", action_type: resource } };
+                    getLogger().warn({ combatantId }, "spendResource: no actions remaining");
+                    return { ok: false, error: { reason: "No actions remaining.", action_type: "action" } };
                 }
-                updated = { ...current, actions_remaining: current.actions_remaining - 1 };
+                current.actions_remaining -= 1;
                 break;
             case "bonus_action":
                 if (current.bonus_action_used) {
-                    getLogger().warn({ combatantId, resource }, "spendResource: bonus action already used");
+                    getLogger().warn({ combatantId }, "spendResource: bonus action already used");
                     return {
                         ok: false,
-                        error: { reason: "Bonus action already used this turn.", action_type: resource },
+                        error: { reason: "Bonus action already used this turn.", action_type: "bonus_action" },
                     };
                 }
-                updated = { ...current, bonus_action_used: true };
+                current.bonus_action_used = true;
                 break;
             case "reaction":
                 if (current.reaction_used) {
-                    getLogger().warn({ combatantId, resource }, "spendResource: reaction already used");
-                    return { ok: false, error: { reason: "Reaction already used this round.", action_type: resource } };
+                    getLogger().warn({ combatantId }, "spendResource: reaction already used");
+                    return {
+                        ok: false,
+                        error: { reason: "Reaction already used this round.", action_type: "reaction" },
+                    };
                 }
-                updated = { ...current, reaction_used: true };
+                current.reaction_used = true;
                 break;
             case "free_interaction":
                 if (current.free_interaction_used) {
-                    getLogger().warn({ combatantId, resource }, "spendResource: free interaction already used");
+                    getLogger().warn({ combatantId }, "spendResource: free interaction already used");
                     return {
                         ok: false,
-                        error: { reason: "Free object interaction already used this turn.", action_type: resource },
+                        error: {
+                            reason: "Free object interaction already used this turn.",
+                            action_type: "free_interaction",
+                        },
                     };
                 }
-                updated = { ...current, free_interaction_used: true };
+                current.free_interaction_used = true;
                 break;
             case "attack":
                 if (current.attacks_remaining <= 0) {
-                    getLogger().warn({ combatantId, resource }, "spendResource: no attacks remaining");
-                    return { ok: false, error: { reason: "No attacks remaining.", action_type: resource } };
+                    getLogger().warn({ combatantId }, "spendResource: no attacks remaining");
+                    return { ok: false, error: { reason: "No attacks remaining.", action_type: "attack" } };
                 }
-                updated = { ...current, attacks_remaining: current.attacks_remaining - 1 };
+                current.attacks_remaining -= 1;
                 break;
-            default:
-                getLogger().warn({ combatantId, resource }, "spendResource: unknown resource type");
-                return { ok: false, error: { reason: "Unknown resource type.", action_type: resource } };
+            case "movement": {
+                const cost = options.difficultTerrain ? options.feet * 2 : options.feet;
+                if (current.movement_remaining < cost) {
+                    getLogger().warn(
+                        { combatantId, feet: options.feet, cost, available: current.movement_remaining },
+                        "spendResource: insufficient movement",
+                    );
+                    return {
+                        ok: false,
+                        error: {
+                            reason: "Insufficient movement remaining.",
+                            action_type: "movement",
+                            context: { requested: cost, available: current.movement_remaining },
+                        },
+                    };
+                }
+                current.movement_remaining -= cost;
+                break;
+            }
         }
 
-        await this.store.setTurnResources(combatantId, updated);
-        getLogger().debug({ combatantId, resource }, "spendResource");
-        return { ok: true, value: undefined };
-    }
-
-    /** Deduct movement cost; difficult terrain doubles the foot cost. */
-    async spendMovement(
-        combatantId: string,
-        feet: number,
-        difficultTerrain: boolean,
-    ): Promise<Result<void, GameRejection>> {
-        const current = await this.store.getTurnResources(combatantId);
-        const cost = difficultTerrain ? feet * 2 : feet;
-        if (current.movement_remaining < cost) {
-            getLogger().warn(
-                { combatantId, feet, cost, available: current.movement_remaining },
-                "spendMovement: insufficient movement",
-            );
-            return {
-                ok: false,
-                error: {
-                    reason: "Insufficient movement remaining.",
-                    action_type: "movement",
-                    context: { requested: cost, available: current.movement_remaining },
-                },
-            };
-        }
-        const updated: ActionResources = {
-            ...current,
-            movement_remaining: current.movement_remaining - cost,
-        };
-        await this.store.setTurnResources(combatantId, updated);
-        getLogger().debug({ combatantId, feet, difficultTerrain, cost }, "spendMovement");
+        await this.store.setTurnResources(combatantId, current);
+        getLogger().debug({ combatantId, resource: options.resource }, "spendResource");
         return { ok: true, value: undefined };
     }
 
