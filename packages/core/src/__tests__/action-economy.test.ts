@@ -188,59 +188,34 @@ describe("validateAction", () => {
         if (!result.ok) expect(result.error.reason).toMatch(/no actions remaining/i);
     });
 
-    test("rejects BONUS_ACTION when bonus_action_used", async () => {
-        store.seed("player-1", { bonus_action_used: true });
-        const result = await subsystem.validateAction("player-1", "BONUS_ACTION", "player-1", []);
-        expect(result.ok).toBe(false);
-        if (!result.ok) expect(result.error.reason).toMatch(/bonus action/i);
-    });
-
-    test("rejects REACTION when reaction_used", async () => {
-        store.seed("player-1", { reaction_used: true });
-        const result = await subsystem.validateAction("player-1", "REACTION", "player-1", []);
-        expect(result.ok).toBe(false);
-        if (!result.ok) expect(result.error.reason).toMatch(/reaction/i);
-    });
-
-    test("rejects FREE_INTERACTION when already used", async () => {
-        store.seed("player-1", { free_interaction_used: true });
-        const result = await subsystem.validateAction("player-1", "FREE_INTERACTION", "player-1", []);
-        expect(result.ok).toBe(false);
-        if (!result.ok) expect(result.error.reason).toMatch(/free/i);
-    });
-
     test("rejects standard action when incapacitated condition passed", async () => {
         const result = await subsystem.validateAction("player-1", "ATTACK", "player-1", ["incapacitated"]);
         expect(result.ok).toBe(false);
         if (!result.ok) expect(result.error.reason).toMatch(/incapacitated/i);
     });
 
-    test("rejects BONUS_ACTION when paralyzed (includes incapacitated)", async () => {
-        const result = await subsystem.validateAction("player-1", "BONUS_ACTION", "player-1", ["paralyzed"]);
+    test("DASH blocked when paralyzed (incapacitating condition)", async () => {
+        const result = await subsystem.validateAction("player-1", "DASH", "player-1", ["paralyzed"]);
         expect(result.ok).toBe(false);
         if (!result.ok) expect(result.error.reason).toMatch(/incapacitated/i);
     });
 
-    test("rejects REACTION when stunned (includes incapacitated)", async () => {
-        const result = await subsystem.validateAction("player-1", "REACTION", "player-1", ["stunned"]);
+    test("CAST_SPELL blocked when stunned (incapacitating condition)", async () => {
+        const result = await subsystem.validateAction("player-1", "CAST_SPELL", "player-1", ["stunned"]);
         expect(result.ok).toBe(false);
         if (!result.ok) expect(result.error.reason).toMatch(/incapacitated/i);
     });
 
-    test("FREE_INTERACTION allowed even when incapacitated (spec: not blocked)", async () => {
-        // FREE_INTERACTION is not in the list blocked by incapacitation per spec
-        const result = await subsystem.validateAction("player-1", "FREE_INTERACTION", "player-1", ["incapacitated"]);
-        expect(result.ok).toBe(true);
-    });
-
-    test("all 12 standard action types are blocked by incapacitation", async () => {
-        const standardActions = [
+    test("all 14 action types are blocked by incapacitation", async () => {
+        const allActions = [
             "ATTACK",
+            "CAST_SPELL",
             "DASH",
             "DISENGAGE",
             "DODGE",
             "HELP",
             "HIDE",
+            "IMPROVISED",
             "INFLUENCE",
             "MAGIC",
             "READY",
@@ -248,7 +223,7 @@ describe("validateAction", () => {
             "STUDY",
             "UTILIZE",
         ] as const;
-        for (const action of standardActions) {
+        for (const action of allActions) {
             store.seed("player-1", defaultResources());
             const result = await subsystem.validateAction("player-1", action, "player-1", ["incapacitated"]);
             expect(result.ok).toBe(false);

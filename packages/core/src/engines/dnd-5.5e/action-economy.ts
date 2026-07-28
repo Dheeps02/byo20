@@ -5,24 +5,22 @@ import type { Vec3 } from "../../utils/geometry";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
-/** All action types the engine recognises. */
+/** All action types the engine recognises. Each costs one action (see getResourceCost). */
 export type ActionType =
     | "ATTACK"
+    | "CAST_SPELL"
     | "DASH"
     | "DISENGAGE"
     | "DODGE"
     | "HELP"
     | "HIDE"
+    | "IMPROVISED"
     | "INFLUENCE"
     | "MAGIC"
     | "READY"
     | "SEARCH"
     | "STUDY"
-    | "UTILIZE"
-    | "IMPROVISED"
-    | "BONUS_ACTION"
-    | "REACTION"
-    | "FREE_INTERACTION";
+    | "UTILIZE";
 
 /** Resources that can be spent one unit at a time. */
 export type SpendableResource = "action" | "bonus_action" | "reaction" | "free_interaction" | "attack";
@@ -58,22 +56,6 @@ export interface ConditionsSubsystem {
 
 const INCAPACITATING_CONDITIONS = new Set(["incapacitated", "paralyzed", "petrified", "stunned", "unconscious"]);
 
-const ACTION_CONSUMING_TYPES = new Set<ActionType>([
-    "ATTACK",
-    "DASH",
-    "DISENGAGE",
-    "DODGE",
-    "HELP",
-    "HIDE",
-    "INFLUENCE",
-    "MAGIC",
-    "READY",
-    "SEARCH",
-    "STUDY",
-    "UTILIZE",
-    "IMPROVISED",
-]);
-
 // ── Geometry helper (distance not exported from geometry.ts) ──────────────────
 
 function dist3(a: Vec3, b: Vec3): number {
@@ -81,6 +63,15 @@ function dist3(a: Vec3, b: Vec3): number {
     const dy = a.y - b.y;
     const dz = a.z - b.z;
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+/**
+ * Maps an ActionType to the SpendableResource it consumes.
+ * All current ActionTypes cost one action; this function exists as the extension
+ * point for future actions that might cost a different resource (e.g., bonus_action).
+ */
+function getResourceCost(_action: ActionType): SpendableResource {
+    return "action";
 }
 
 // ── Subsystem ─────────────────────────────────────────────────────────────────
@@ -159,53 +150,28 @@ export class ActionEconomySubsystem {
         // Steps 2 & 3: Resource cost check.
         const resources = await this.store.getTurnResources(combatantId);
 
-        if (ACTION_CONSUMING_TYPES.has(action)) {
-            if (resources.actions_remaining <= 0) {
-                getLogger().debug({ combatantId, action }, "validateAction: no actions remaining");
-                return {
-                    ok: false,
-                    error: {
-                        reason: "No actions remaining.",
-                        action_type: action,
-                        context: { actions_remaining: resources.actions_remaining },
-                    },
-                };
-            }
-        } else if (action === "BONUS_ACTION") {
-            if (resources.bonus_action_used) {
-                getLogger().debug({ combatantId, action }, "validateAction: bonus action already used");
-                return {
-                    ok: false,
-                    error: { reason: "Bonus action already used this turn.", action_type: action },
-                };
-            }
-        } else if (action === "REACTION") {
-            if (resources.reaction_used) {
-                getLogger().debug({ combatantId, action }, "validateAction: reaction already used");
-                return {
-                    ok: false,
-                    error: { reason: "Reaction already used this round.", action_type: action },
-                };
-            }
-        } else if (action === "FREE_INTERACTION") {
-            if (resources.free_interaction_used) {
-                getLogger().debug({ combatantId, action }, "validateAction: free interaction already used");
-                return {
-                    ok: false,
-                    error: { reason: "Free object interaction already used this turn.", action_type: action },
-                };
-            }
+        switch (getResourceCost(action)) {
+            case "action":
+                if (resources.actions_remaining <= 0) {
+                    getLogger().debug({ combatantId, action }, "validateAction: no actions remaining");
+                    return {
+                        ok: false,
+                        error: {
+                            reason: "No actions remaining.",
+                            action_type: action,
+                            context: { actions_remaining: resources.actions_remaining },
+                        },
+                    };
+                }
+                break;
         }
 
-        // Step 4: Condition legality.
+        // Step 4: Condition legality — all ActionTypes are blocked by incapacitation.
         const storedConditions = await this.conditions.getActiveConditions(combatantId);
         const allConditions = [...new Set([...conditions, ...storedConditions])];
         const isIncapacitated = allConditions.some((c) => INCAPACITATING_CONDITIONS.has(c));
 
-        if (
-            isIncapacitated &&
-            (ACTION_CONSUMING_TYPES.has(action) || action === "BONUS_ACTION" || action === "REACTION")
-        ) {
+        if (isIncapacitated) {
             getLogger().debug({ combatantId, action, allConditions }, "validateAction: incapacitated");
             return {
                 ok: false,
