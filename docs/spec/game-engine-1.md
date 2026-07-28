@@ -444,12 +444,47 @@ When a creature moves out of a square within 5ft of an enemy that can see them (
 
 Server monitors all movement. After every position update:
 ```
-for each enemy within 5ft of moving creature's previous position:
-  if enemy can see moving creature AND enemy reaction_used = false:
-    → fire AWAITING_REACTION for that enemy
+for each combatant C within 5ft of moving creature's previous position:
+  if C can see moving creature
+     AND C.reaction_used = false
+     AND C is not incapacitated
+     AND C is hostile to the mover (see Team Filter below):
+    → fire AWAITING_REACTION for C
 ```
 
 This is the most common `AWAITING_REACTION` trigger.
+
+#### Team Filter and PvP
+
+Hostility is determined by `CombatantState`:
+
+- `teamId` — combatants on the same team are allies and normally cannot OA each other.
+- `friendlyFire: boolean` — set by the conditions subsystem when a charm or domination effect forces a combatant to attack its own team. Overrides the team filter for that combatant.
+- `pvpEnabled: boolean` — per-campaign flag (`campaigns.pvp_enabled`). When true, allies can trigger OAs against each other (all team-filter checks are skipped).
+
+Skip an OA candidate only when: `isAlly && !candidate.friendlyFire && !pvpEnabled`.
+
+#### Player OA — QTE
+
+When an `AWAITING_REACTION` fires for a **player** combatant:
+
+1. Server sends `REACTION_PROMPT { combatant_id, trigger: "OA", timeout_ms: 2000 }` to the player's client.
+2. Client shows a 2-second timed prompt ("Take opportunity attack?").
+3. Player responds with `REACTION_RESPONSE { take: true | false }` or the timer expires (treated as `take: false`).
+4. Server resolves the melee attack or consumes no reaction and resumes the moving creature's turn.
+
+#### NPC OA — Decision Logic
+
+NPC reactions are resolved server-side at zero LLM cost using a four-gate priority check. Each gate short-circuits the rest:
+
+| Priority | Gate | Decision |
+|---|---|---|
+| 1 | `npc.reckless = true` | Always take the OA. |
+| 2 | Archetype is `"ranged"` or `"caster"` | Skip — these archetypes avoid melee engagement. |
+| 3 | `npc.aggression = "passive"` | Skip. `"aggressive"` → always take. |
+| 4 | `npc.aggression = "neutral"` + HP > 50 % | Take the OA. Below 50 % HP, skip to avoid risk. |
+
+The `reckless` and `aggression` fields live on the `npcs` table (see storage spec).
 
 ### Validation Flow
 
