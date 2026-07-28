@@ -36,15 +36,21 @@ export type SpendOptions =
 
 /** A combatant eligible to make an opportunity attack. */
 export interface OACandidate {
+    /** UUID of the combatant eligible to make the opportunity attack. */
     combatantId: string;
 }
 
 /** Minimal per-combatant state needed for OA resolution. */
 export interface CombatantState {
+    /** Combatant UUID. */
     id: string;
+    /** Current world position; 1 unit = 5 ft. */
     position: Vec3;
+    /** Team identifier; combatants on the same team are allies. */
     teamId: string;
+    /** Active condition names (lowercase, storage-boundary values). */
     conditions: string[];
+    /** Whether the reaction has been spent this round. */
     reaction_used: boolean;
     /** True when a charm or domination effect makes this combatant attack its own team. */
     friendlyFire: boolean;
@@ -54,21 +60,45 @@ export interface CombatantState {
 
 /** Thin read/write interface over the turn-resources Redis HASH. */
 export interface ActionResourceStore {
+    /**
+     * Fetch the current-turn resource budget for a combatant.
+     * Returns max-budget defaults when no key exists (e.g. before the first reset).
+     * @param combatantId - Combatant UUID.
+     * @returns The combatant's current ActionResources.
+     */
     getTurnResources(combatantId: string): Promise<ActionResources>;
+
+    /**
+     * Write the current-turn resource budget for a combatant.
+     * @param combatantId - Combatant UUID.
+     * @param resources - New resource values to persist.
+     */
     setTurnResources(combatantId: string, resources: ActionResources): Promise<void>;
 }
 
 /** Minimal conditions query needed by action validation. */
 export interface ConditionsSubsystem {
+    /**
+     * Return the active condition names for a combatant.
+     * @param combatantId - Combatant UUID.
+     * @returns Array of lowercase condition name strings.
+     */
     getActiveConditions(combatantId: string): Promise<string[]>;
 }
 
 // ── Internal constants ────────────────────────────────────────────────────────
 
+/** Condition names whose incapacitated effect blocks all actions. */
 const INCAPACITATING_CONDITIONS = new Set(["incapacitated", "paralyzed", "petrified", "stunned", "unconscious"]);
 
 // ── Geometry helper (distance not exported from geometry.ts) ──────────────────
 
+/**
+ * Euclidean distance between two 3-D points.
+ * @param a - First point.
+ * @param b - Second point.
+ * @returns Distance in world units (1 unit = 5 ft).
+ */
 function dist3(a: Vec3, b: Vec3): number {
     const dx = a.x - b.x;
     const dy = a.y - b.y;
@@ -80,6 +110,8 @@ function dist3(a: Vec3, b: Vec3): number {
  * Maps an ActionType to the SpendableResource it consumes.
  * All current ActionTypes cost one action; this function exists as the extension
  * point for future actions that might cost a different resource (e.g., bonus_action).
+ * @param _action - The action type being validated.
+ * @returns The resource that must be available for the action to proceed.
  */
 function getResourceCost(_action: ActionType): SpendableResource {
     return "action";
@@ -87,7 +119,16 @@ function getResourceCost(_action: ActionType): SpendableResource {
 
 // ── Subsystem ─────────────────────────────────────────────────────────────────
 
+/**
+ * Manages per-turn action resources for all combatants.
+ * Validates action legality, spends resources, and computes opportunity attack eligibility.
+ * Stateless beyond its injected store and conditions query — all mutable state lives in Redis.
+ */
 export class ActionEconomySubsystem {
+    /**
+     * @param store - Redis-backed store for per-turn action budgets.
+     * @param conditions - Query interface for a combatant's active conditions.
+     */
     constructor(
         private readonly store: ActionResourceStore,
         private readonly conditions: ConditionsSubsystem,
@@ -99,6 +140,11 @@ export class ActionEconomySubsystem {
      * At combat start the store key does not yet exist — getTurnResources returns safe defaults,
      * so no special handling is needed.
      * `actions_remaining` is 1 + count of `grant_action` primitives in activeEffects.
+     * @param combatantId - Combatant UUID.
+     * @param baseSpeed - Movement speed in feet for this turn.
+     * @param attacksTotal - Number of attacks granted by Extra Attack or similar.
+     * @param activeEffects - Current active effects; grant_action entries add extra actions.
+     * @param preserveReaction - If true, carry over reaction_used from the previous turn.
      */
     async resetTurnResources(
         combatantId: string,
@@ -127,6 +173,7 @@ export class ActionEconomySubsystem {
     /**
      * Reset only reaction_used to false.
      * Called at the start of ACTIVE_TURN — PHB: reaction resets at the start of your own turn.
+     * @param combatantId - Combatant UUID.
      */
     async resetReaction(combatantId: string): Promise<void> {
         const current = await this.store.getTurnResources(combatantId);
@@ -138,6 +185,11 @@ export class ActionEconomySubsystem {
      * Six-step validation (spec § Action Economy → Validation Flow).
      * Step 5 (target/range/LOS) is handled by the combat engine — this subsystem
      * validates only resource availability and condition legality.
+     * @param combatantId - The combatant attempting the action.
+     * @param action - The action type being attempted.
+     * @param currentCombatantId - The combatant whose turn it currently is.
+     * @param conditions - Conditions currently active on the combatant (merged with stored).
+     * @returns Ok if the action is legal; a GameRejection describing the failure otherwise.
      */
     async validateAction(
         combatantId: string,
@@ -203,6 +255,9 @@ export class ActionEconomySubsystem {
      * Spend one unit of a resource, or deduct movement feet.
      * getTurnResources always returns a fresh object (Redis parses on every read),
      * so mutating `current` before passing it to setTurnResources is safe.
+     * @param combatantId - Combatant UUID.
+     * @param options - Which resource to spend; the "movement" arm adds feet and terrain.
+     * @returns Ok on success; a GameRejection if the resource is already exhausted.
      */
     async spendResource(combatantId: string, options: SpendOptions): Promise<Result<void, GameRejection>> {
         const current = await this.store.getTurnResources(combatantId);
@@ -282,14 +337,21 @@ export class ActionEconomySubsystem {
     }
 
     /**
-     * Pure function — returns all combatants eligible to make an opportunity attack
-     * against `movingCombatantId` after it moved from prevPosition to newPosition.
+     * Returns all combatants eligible to make an opportunity attack against
+     * `movingCombatantId` after it moved from prevPosition to newPosition.
      *
-     * A candidate must: be within 5ft of prevPosition, have left their reach, have
-     * reaction available, not be incapacitated, and be hostile to the mover. A combatant
-     * is hostile if they are on a different team, OR if pvpEnabled is true, OR if
-     * combatant.friendlyFire is true (charm/domination makes them attack their own team).
+     * A candidate must: be within 5ft of prevPosition, have left the candidate's reach,
+     * have reaction available, not be incapacitated, and be hostile to the mover.
+     * A combatant is hostile if on a different team, OR pvpEnabled is true, OR
+     * combatant.friendlyFire is true (charm/domination forcing same-team attacks).
      * If `canSee` is provided, visibility is also checked.
+     * @param movingCombatantId - UUID of the combatant that moved.
+     * @param prevPosition - The mover's position before the move.
+     * @param newPosition - The mover's position after the move.
+     * @param combatants - All combatants currently in the encounter.
+     * @param pvpEnabled - Whether player-vs-player attacks are allowed in this campaign.
+     * @param canSee - Optional visibility predicate; (observerId, targetId) → boolean.
+     * @returns Array of OACandidates eligible to trigger an opportunity attack.
      */
     checkOpportunityAttacks(
         movingCombatantId: string,
