@@ -296,9 +296,9 @@ describe("spendMovement", () => {
     });
 });
 
-// ── resetBetweenTurns vs resetReaction ───────────────────────────────────────
+// ── resetTurnResources ────────────────────────────────────────────────────────
 
-describe("resetBetweenTurns", () => {
+describe("resetTurnResources", () => {
     let store: MemoryResourceStore;
     let subsystem: ActionEconomySubsystem;
 
@@ -315,7 +315,7 @@ describe("resetBetweenTurns", () => {
             free_interaction_used: true,
             attacks_remaining: 0,
         });
-        await subsystem.resetBetweenTurns("player-1", 30, 1, []);
+        await subsystem.resetTurnResources("player-1", 30, 1, [], true);
         const res = await store.getTurnResources("player-1");
         expect(res.movement_remaining).toBe(30);
         expect(res.actions_remaining).toBe(1);
@@ -324,11 +324,30 @@ describe("resetBetweenTurns", () => {
         expect(res.attacks_remaining).toBe(1);
     });
 
-    test("preserves reaction_used across turn transition", async () => {
+    test("preserveReaction: true — keeps reaction_used from previous state", async () => {
         store.seed("player-1", { reaction_used: true });
-        await subsystem.resetBetweenTurns("player-1", 30, 1, []);
+        await subsystem.resetTurnResources("player-1", 30, 1, [], true);
         const res = await store.getTurnResources("player-1");
         expect(res.reaction_used).toBe(true);
+    });
+
+    test("preserveReaction: false — clears reaction_used", async () => {
+        store.seed("player-1", { reaction_used: true });
+        await subsystem.resetTurnResources("player-1", 30, 1, [], false);
+        const res = await store.getTurnResources("player-1");
+        expect(res.reaction_used).toBe(false);
+    });
+
+    test("combat start — no existing key, preserveReaction: false writes clean state", async () => {
+        // No seed — store returns defaults (reaction_used: false)
+        await subsystem.resetTurnResources("player-1", 35, 2, [], false);
+        const res = await store.getTurnResources("player-1");
+        expect(res.movement_remaining).toBe(35);
+        expect(res.actions_remaining).toBe(1);
+        expect(res.attacks_remaining).toBe(2);
+        expect(res.reaction_used).toBe(false);
+        expect(res.bonus_action_used).toBe(false);
+        expect(res.free_interaction_used).toBe(false);
     });
 
     test("counts grant_action effects in activeEffects", async () => {
@@ -337,17 +356,19 @@ describe("resetBetweenTurns", () => {
             { type: "light", id: "torch-1" },
             { type: "grant_action", id: "surge-1" },
         ];
-        await subsystem.resetBetweenTurns("player-1", 30, 1, activeEffects);
+        await subsystem.resetTurnResources("player-1", 30, 1, activeEffects, false);
         const res = await store.getTurnResources("player-1");
         expect(res.actions_remaining).toBe(3); // 1 base + 2 grant_action
     });
 
     test("no grant_action effects leaves actions_remaining at 1", async () => {
-        await subsystem.resetBetweenTurns("player-1", 30, 1, [{ type: "condition", id: "x" }]);
+        await subsystem.resetTurnResources("player-1", 30, 1, [{ type: "condition", id: "x" }], false);
         const res = await store.getTurnResources("player-1");
         expect(res.actions_remaining).toBe(1);
     });
 });
+
+// ── resetReaction ─────────────────────────────────────────────────────────────
 
 describe("resetReaction", () => {
     let store: MemoryResourceStore;
@@ -382,43 +403,15 @@ describe("resetReaction", () => {
         expect(res.attacks_remaining).toBe(0);
     });
 
-    test("reaction not reset by resetBetweenTurns alone (requires resetReaction)", async () => {
+    test("reaction preserved by resetTurnResources(preserveReaction:true), cleared by resetReaction", async () => {
         store.seed("player-1", { reaction_used: true });
-        await subsystem.resetBetweenTurns("player-1", 30, 1, []);
-        const afterBetweenTurns = await store.getTurnResources("player-1");
-        expect(afterBetweenTurns.reaction_used).toBe(true); // still true
+        await subsystem.resetTurnResources("player-1", 30, 1, [], true);
+        const afterReset = await store.getTurnResources("player-1");
+        expect(afterReset.reaction_used).toBe(true); // still true
 
         await subsystem.resetReaction("player-1");
         const afterResetReaction = await store.getTurnResources("player-1");
         expect(afterResetReaction.reaction_used).toBe(false); // now false
-    });
-});
-
-// ── initTurnResources ─────────────────────────────────────────────────────────
-
-describe("initTurnResources", () => {
-    test("writes fresh budget with provided speed and attacks", async () => {
-        const [subsystem, store] = makeSubsystem();
-        await subsystem.initTurnResources("player-1", 40, 2);
-        const res = await store.getTurnResources("player-1");
-        expect(res.movement_remaining).toBe(40);
-        expect(res.actions_remaining).toBe(1);
-        expect(res.attacks_remaining).toBe(2);
-        expect(res.bonus_action_used).toBe(false);
-        expect(res.reaction_used).toBe(false);
-        expect(res.free_interaction_used).toBe(false);
-    });
-});
-
-// ── grantAdditionalAction ─────────────────────────────────────────────────────
-
-describe("grantAdditionalAction", () => {
-    test("increments actions_remaining by 1", async () => {
-        const [subsystem, store] = makeSubsystem();
-        store.seed("player-1", { actions_remaining: 1 });
-        await subsystem.grantAdditionalAction("player-1");
-        const res = await store.getTurnResources("player-1");
-        expect(res.actions_remaining).toBe(2);
     });
 });
 

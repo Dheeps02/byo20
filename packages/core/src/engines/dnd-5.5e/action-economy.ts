@@ -91,30 +91,19 @@ export class ActionEconomySubsystem {
         private readonly conditions: ConditionsSubsystem,
     ) {}
 
-    /** Write a fresh full-budget resource set at the start of a combatant's first turn. */
-    async initTurnResources(combatantId: string, baseSpeed: number, attacksTotal: number): Promise<void> {
-        const resources: ActionResources = {
-            movement_remaining: baseSpeed,
-            actions_remaining: 1,
-            bonus_action_used: false,
-            reaction_used: false,
-            free_interaction_used: false,
-            attacks_remaining: attacksTotal,
-        };
-        await this.store.setTurnResources(combatantId, resources);
-        getLogger().debug({ combatantId, baseSpeed, attacksTotal }, "initTurnResources");
-    }
-
     /**
-     * Reset all per-turn resources for the next turn, preserving `reaction_used`
-     * (reaction is per-round, resets at the START of the creature's own turn via resetReaction).
-     * `actions_remaining` is set to 1 + count of `grant_action` primitives in activeEffects.
+     * Reset all per-turn resources for a combatant.
+     * Used at combat start (preserveReaction: false) and TURN_TRANSITION (preserveReaction: true).
+     * At combat start the store key does not yet exist — getTurnResources returns safe defaults,
+     * so no special handling is needed.
+     * `actions_remaining` is 1 + count of `grant_action` primitives in activeEffects.
      */
-    async resetBetweenTurns(
+    async resetTurnResources(
         combatantId: string,
         baseSpeed: number,
         attacksTotal: number,
         activeEffects: unknown[],
+        preserveReaction: boolean,
     ): Promise<void> {
         const current = await this.store.getTurnResources(combatantId);
         const grantActionCount = activeEffects.filter((e) => (e as { type?: string }).type === "grant_action").length;
@@ -122,32 +111,25 @@ export class ActionEconomySubsystem {
             movement_remaining: baseSpeed,
             actions_remaining: 1 + grantActionCount,
             bonus_action_used: false,
-            reaction_used: current.reaction_used,
+            reaction_used: preserveReaction ? current.reaction_used : false,
             free_interaction_used: false,
             attacks_remaining: attacksTotal,
         };
         await this.store.setTurnResources(combatantId, resources);
-        getLogger().debug({ combatantId, baseSpeed, attacksTotal, grantActionCount }, "resetBetweenTurns");
+        getLogger().debug(
+            { combatantId, baseSpeed, attacksTotal, grantActionCount, preserveReaction },
+            "resetTurnResources",
+        );
     }
 
     /**
      * Reset only reaction_used to false.
-     * Called when ACTIVE_TURN begins — PHB: reaction resets at the start of your own turn.
+     * Called at the start of ACTIVE_TURN — PHB: reaction resets at the start of your own turn.
      */
     async resetReaction(combatantId: string): Promise<void> {
         const current = await this.store.getTurnResources(combatantId);
         await this.store.setTurnResources(combatantId, { ...current, reaction_used: false });
         getLogger().debug({ combatantId }, "resetReaction");
-    }
-
-    /** Increment actions_remaining by 1 (Action Surge, Haste mid-turn grant). */
-    async grantAdditionalAction(combatantId: string): Promise<void> {
-        const current = await this.store.getTurnResources(combatantId);
-        await this.store.setTurnResources(combatantId, {
-            ...current,
-            actions_remaining: current.actions_remaining + 1,
-        });
-        getLogger().debug({ combatantId }, "grantAdditionalAction");
     }
 
     /**
