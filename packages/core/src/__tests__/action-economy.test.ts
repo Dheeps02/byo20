@@ -66,6 +66,7 @@ describe("checkOpportunityAttacks", () => {
             teamId: "red",
             conditions: [],
             reaction_used: false,
+            friendlyFire: false,
             ...overrides,
         };
     }
@@ -77,13 +78,14 @@ describe("checkOpportunityAttacks", () => {
             teamId: "blue",
             conditions: [],
             reaction_used: false,
+            friendlyFire: false,
             ...overrides,
         };
     }
 
     test("returns candidate when enemy within 5ft of prevPosition and mover left reach", () => {
         const combatants = [mover(), enemy()];
-        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants);
+        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants, false);
         expect(result).toHaveLength(1);
         expect(result[0].combatantId).toBe("enemy-1");
     });
@@ -92,61 +94,77 @@ describe("checkOpportunityAttacks", () => {
         // enemy at (0,0,0); mover moves from (1,0,0) to (0.5,0,0) — still in reach
         const newPos: Vec3 = { x: 0.5, y: 0, z: 0 };
         const combatants = [mover(), enemy()];
-        const result = subsystem.checkOpportunityAttacks("mover", moverPos, newPos, combatants);
+        const result = subsystem.checkOpportunityAttacks("mover", moverPos, newPos, combatants, false);
         expect(result).toHaveLength(0);
     });
 
     test("returns nothing when enemy is outside 5ft of prevPosition", () => {
         const farEnemy = enemy({ position: { x: 5, y: 0, z: 0 } }); // 25ft away
         const combatants = [mover(), farEnemy];
-        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants);
+        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants, false);
         expect(result).toHaveLength(0);
     });
 
     test("excludes enemy with reaction already spent", () => {
         const spentEnemy = enemy({ reaction_used: true });
         const combatants = [mover(), spentEnemy];
-        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants);
+        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants, false);
         expect(result).toHaveLength(0);
     });
 
     test("excludes incapacitated enemy", () => {
         const incapacitatedEnemy = enemy({ conditions: ["incapacitated"] });
         const combatants = [mover(), incapacitatedEnemy];
-        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants);
+        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants, false);
         expect(result).toHaveLength(0);
     });
 
     test("excludes paralyzed enemy (includes incapacitated)", () => {
         const paralyzedEnemy = enemy({ conditions: ["paralyzed"] });
         const combatants = [mover(), paralyzedEnemy];
-        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants);
+        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants, false);
         expect(result).toHaveLength(0);
     });
 
-    test("excludes ally (same teamId)", () => {
+    test("excludes ally (pvpEnabled: false, friendlyFire: false)", () => {
         const ally = enemy({ id: "ally-1", teamId: "blue" });
         const combatants = [mover(), ally];
-        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants);
+        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants, false);
         expect(result).toHaveLength(0);
+    });
+
+    test("includes ally when pvpEnabled: true", () => {
+        const ally = enemy({ id: "ally-1", teamId: "blue" });
+        const combatants = [mover(), ally];
+        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants, true);
+        expect(result).toHaveLength(1);
+        expect(result[0].combatantId).toBe("ally-1");
+    });
+
+    test("includes ally when friendlyFire: true (charmed to attack own team)", () => {
+        const charmedAlly = enemy({ id: "charmed-ally", teamId: "blue", friendlyFire: true });
+        const combatants = [mover(), charmedAlly];
+        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants, false);
+        expect(result).toHaveLength(1);
+        expect(result[0].combatantId).toBe("charmed-ally");
     });
 
     test("excludes enemy when canSee returns false", () => {
         const combatants = [mover(), enemy()];
         const canSee = () => false;
-        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants, canSee);
+        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants, false, canSee);
         expect(result).toHaveLength(0);
     });
 
     test("includes enemy when canSee returns true", () => {
         const combatants = [mover(), enemy()];
         const canSee = () => true;
-        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants, canSee);
+        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants, false, canSee);
         expect(result).toHaveLength(1);
     });
 
     test("returns empty when moving combatant not found", () => {
-        const result = subsystem.checkOpportunityAttacks("ghost", moverPos, farPos, [mover()]);
+        const result = subsystem.checkOpportunityAttacks("ghost", moverPos, farPos, [mover()], false);
         expect(result).toHaveLength(0);
     });
 
@@ -155,7 +173,7 @@ describe("checkOpportunityAttacks", () => {
         const spentReaction = enemy({ id: "enemy-spent", position: { x: 0.5, y: 0, z: 0 }, reaction_used: true });
         const tooFar = enemy({ id: "enemy-far", position: { x: 5, y: 0, z: 0 } });
         const combatants = [mover(), eligible, spentReaction, tooFar];
-        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants);
+        const result = subsystem.checkOpportunityAttacks("mover", moverPos, farPos, combatants, false);
         expect(result).toHaveLength(1);
         expect(result[0].combatantId).toBe("enemy-eligible");
     });

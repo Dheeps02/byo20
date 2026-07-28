@@ -46,6 +46,8 @@ export interface CombatantState {
     teamId: string;
     conditions: string[];
     reaction_used: boolean;
+    /** True when a charm or domination effect makes this combatant attack its own team. */
+    friendlyFire: boolean;
 }
 
 // ── Injectable interfaces ─────────────────────────────────────────────────────
@@ -283,15 +285,18 @@ export class ActionEconomySubsystem {
      * Pure function — returns all combatants eligible to make an opportunity attack
      * against `movingCombatantId` after it moved from prevPosition to newPosition.
      *
-     * A candidate must: be within 5ft of prevPosition, have left their reach (not still
-     * within 5ft at newPosition), be an enemy, have reaction available, and not be
-     * incapacitated. If `canSee` is provided, visibility is also checked.
+     * A candidate must: be within 5ft of prevPosition, have left their reach, have
+     * reaction available, not be incapacitated, and be hostile to the mover. A combatant
+     * is hostile if they are on a different team, OR if pvpEnabled is true, OR if
+     * combatant.friendlyFire is true (charm/domination makes them attack their own team).
+     * If `canSee` is provided, visibility is also checked.
      */
     checkOpportunityAttacks(
         movingCombatantId: string,
         prevPosition: Vec3,
         newPosition: Vec3,
         combatants: CombatantState[],
+        pvpEnabled: boolean,
         canSee?: (observerId: string, targetId: string) => boolean,
     ): OACandidate[] {
         const moving = combatants.find((c) => c.id === movingCombatantId);
@@ -316,10 +321,13 @@ export class ActionEconomySubsystem {
         for (const combatant of others) {
             if (!withinFiveOfPrev.has(combatant.id)) continue;
 
-            // Creature left this enemy's 5ft reach (1 world unit = 5ft).
+            // Creature left this combatant's 5ft reach (1 world unit = 5ft).
             if (dist3(combatant.position, newPosition) <= 1) continue;
 
-            if (combatant.teamId === moving.teamId) continue;
+            // Skip allies unless pvpEnabled or friendlyFire overrides the team filter.
+            const isAlly = combatant.teamId === moving.teamId;
+            if (isAlly && !combatant.friendlyFire && !pvpEnabled) continue;
+
             if (combatant.reaction_used) continue;
             if (combatant.conditions.some((c) => INCAPACITATING_CONDITIONS.has(c))) continue;
             if (canSee && !canSee(combatant.id, movingCombatantId)) continue;
