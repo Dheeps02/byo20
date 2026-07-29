@@ -6,7 +6,11 @@ import type { Vec3 } from "../../utils/math";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
-/** All action types the engine recognises. Each costs one action (see getResourceCost). */
+/**
+ * All action types the engine recognises.
+ * Resource cost (action / bonus_action / reaction / …) is resolved by the engine
+ * from the ability's SRD definition before validateAction is called.
+ */
 export type ActionType =
     | "ATTACK"
     | "DASH"
@@ -91,17 +95,6 @@ export interface ConditionsSubsystem {
 /** Condition names whose incapacitated effect blocks all actions. */
 const INCAPACITATING_CONDITIONS = new Set(["incapacitated", "paralyzed", "petrified", "stunned", "unconscious"]);
 
-/**
- * Maps an ActionType to the SpendableResource it consumes.
- * All current ActionTypes cost one action; this function exists as the extension
- * point for future actions that might cost a different resource (e.g., bonus_action).
- * @param _action - The action type being validated.
- * @returns The resource that must be available for the action to proceed.
- */
-function getResourceCost(_action: ActionType): SpendableResource {
-    return "action";
-}
-
 // ── Subsystem ─────────────────────────────────────────────────────────────────
 
 /**
@@ -169,9 +162,15 @@ export class ActionEconomySubsystem {
     /**
      * Six-step validation (spec § Action Economy → Validation Flow).
      * Step 5 (target/range/LOS) is handled by the combat engine — this subsystem
-     * validates only resource availability and condition legality.
+     * validates resource availability and condition legality only.
+     *
+     * `resourceCost` must be resolved by the engine from the ability's SRD definition
+     * before calling this method. The transport layer never derives resource cost.
+     * Generic actions (DASH, DODGE, …) default to "action"; IMPROVISED defaults to
+     * "action" unless the DM overrides during adjudication.
      * @param combatantId - The combatant attempting the action.
      * @param action - The action type being attempted.
+     * @param resourceCost - Resource consumed by this specific ability, resolved by the engine.
      * @param currentCombatantId - The combatant whose turn it currently is.
      * @param conditions - Conditions currently active on the combatant (merged with stored).
      * @returns Ok if the action is legal; a GameRejection describing the failure otherwise.
@@ -179,6 +178,7 @@ export class ActionEconomySubsystem {
     async validateAction(
         combatantId: string,
         action: ActionType,
+        resourceCost: SpendableResource,
         currentCombatantId: string,
         conditions: ConditionName[],
     ): Promise<Result<void, GameRejection>> {
@@ -195,10 +195,10 @@ export class ActionEconomySubsystem {
             };
         }
 
-        // Steps 2 & 3: Resource cost check.
+        // Steps 2 & 3: Resource availability — cost is resolved by the engine before this call.
         const resources = await this.store.getTurnResources(combatantId);
 
-        switch (getResourceCost(action)) {
+        switch (resourceCost) {
             case "action":
                 if (resources.actions_remaining <= 0) {
                     getLogger().debug({ combatantId, action }, "validateAction: no actions remaining");
@@ -212,14 +212,50 @@ export class ActionEconomySubsystem {
                     };
                 }
                 break;
+            case "bonus_action":
+                if (resources.bonus_action_used) {
+                    getLogger().debug({ combatantId, action }, "validateAction: bonus action already used");
+                    return {
+                        ok: false,
+                        error: { reason: "Bonus action already used this turn.", action_type: action },
+                    };
+                }
+                break;
+            case "reaction":
+                if (resources.reaction_used) {
+                    getLogger().debug({ combatantId, action }, "validateAction: reaction already used");
+                    return {
+                        ok: false,
+                        error: { reason: "Reaction already used this round.", action_type: action },
+                    };
+                }
+                break;
+            case "free_interaction":
+                if (resources.free_interaction_used) {
+                    getLogger().debug({ combatantId, action }, "validateAction: free interaction already used");
+                    return {
+                        ok: false,
+                        error: { reason: "Free object interaction already used this turn.", action_type: action },
+                    };
+                }
+                break;
+            case "attack":
+                // Per-roll attack sub-resource is validated via validateAttack(), not here.
+                break;
         }
 
-        // Step 4: Condition legality — all ActionTypes are blocked by incapacitation.
+        // Step 4: Condition legality.
+        // Incapacitation blocks actions, bonus actions, and reactions (PHB).
+        // free_interaction and attack sub-resource are exempt — incapacitated creatures
+        // cannot declare the Attack action in the first place, so attacks_remaining
+        // is moot, and free_interaction is already gated at the action level.
         const storedConditions = await this.conditions.getActiveConditions(combatantId);
         const allConditions = [...new Set([...conditions, ...storedConditions])];
         const isIncapacitated = allConditions.some((c) => INCAPACITATING_CONDITIONS.has(c));
+        const blockedByIncapacitation =
+            resourceCost === "action" || resourceCost === "bonus_action" || resourceCost === "reaction";
 
-        if (isIncapacitated) {
+        if (isIncapacitated && blockedByIncapacitation) {
             getLogger().debug({ combatantId, action, allConditions }, "validateAction: incapacitated");
             return {
                 ok: false,
@@ -233,6 +269,30 @@ export class ActionEconomySubsystem {
 
         // Step 5: target/LOS/range — delegated to combat engine (out of scope here).
         getLogger().debug({ combatantId, action }, "validateAction: ok");
+        return { ok: true, value: undefined };
+    }
+
+    /**
+     * Validate that the combatant has an attack roll remaining within the current Attack action.
+     * Called by the combat engine before each individual attack roll — attacks_remaining is a
+     * sub-resource spent per roll, not per action declaration.
+     * @param combatantId - Combatant UUID.
+     * @returns Ok if attacks_remaining > 0; a GameRejection otherwise.
+     */
+    async validateAttack(combatantId: string): Promise<Result<void, GameRejection>> {
+        const resources = await this.store.getTurnResources(combatantId);
+        if (resources.attacks_remaining <= 0) {
+            getLogger().debug({ combatantId }, "validateAttack: no attacks remaining");
+            return {
+                ok: false,
+                error: {
+                    reason: "No attacks remaining.",
+                    action_type: "attack",
+                    context: { attacks_remaining: resources.attacks_remaining },
+                },
+            };
+        }
+        getLogger().debug({ combatantId }, "validateAttack: ok");
         return { ok: true, value: undefined };
     }
 

@@ -191,42 +191,101 @@ describe("validateAction", () => {
     });
 
     test("ok when it is the combatant's turn and resources available", async () => {
-        const result = await subsystem.validateAction("player-1", "ATTACK", "player-1", []);
+        const result = await subsystem.validateAction("player-1", "ATTACK", "action", "player-1", []);
         expect(result.ok).toBe(true);
     });
 
     test("rejects when it is not this combatant's turn", async () => {
-        const result = await subsystem.validateAction("player-1", "ATTACK", "player-2", []);
+        const result = await subsystem.validateAction("player-1", "ATTACK", "action", "player-2", []);
         expect(result.ok).toBe(false);
         if (!result.ok) expect(result.error.reason).toMatch(/not your turn/i);
     });
 
     test("rejects when actions_remaining is 0", async () => {
         store.seed("player-1", { actions_remaining: 0 });
-        const result = await subsystem.validateAction("player-1", "ATTACK", "player-1", []);
+        const result = await subsystem.validateAction("player-1", "ATTACK", "action", "player-1", []);
         expect(result.ok).toBe(false);
         if (!result.ok) expect(result.error.reason).toMatch(/no actions remaining/i);
     });
 
+    test("rejects when bonus_action already used", async () => {
+        store.seed("player-1", { bonus_action_used: true });
+        const result = await subsystem.validateAction("player-1", "MAGIC", "bonus_action", "player-1", []);
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.reason).toMatch(/bonus action/i);
+    });
+
+    test("ok for bonus action when bonus_action_used is false", async () => {
+        const result = await subsystem.validateAction("player-1", "MAGIC", "bonus_action", "player-1", []);
+        expect(result.ok).toBe(true);
+    });
+
+    test("rejects when reaction already used", async () => {
+        store.seed("player-1", { reaction_used: true });
+        const result = await subsystem.validateAction("player-1", "ATTACK", "reaction", "player-1", []);
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.reason).toMatch(/reaction/i);
+    });
+
+    test("ok for reaction when reaction_used is false", async () => {
+        const result = await subsystem.validateAction("player-1", "ATTACK", "reaction", "player-1", []);
+        expect(result.ok).toBe(true);
+    });
+
+    test("same action type (MAGIC) can cost action or reaction depending on ability", async () => {
+        // Fireball costs action_remaining; Shield costs reaction_used
+        store.seed("player-1", { actions_remaining: 1, reaction_used: true });
+        const fireball = await subsystem.validateAction("player-1", "MAGIC", "action", "player-1", []);
+        expect(fireball.ok).toBe(true);
+        const shield = await subsystem.validateAction("player-1", "MAGIC", "reaction", "player-1", []);
+        expect(shield.ok).toBe(false);
+        if (!shield.ok) expect(shield.error.reason).toMatch(/reaction/i);
+    });
+
+    test("same action type (ATTACK) can cost action or reaction depending on ability", async () => {
+        // Regular attack costs actions_remaining; opportunity attack costs reaction
+        store.seed("player-1", { actions_remaining: 0, reaction_used: false });
+        const regularAttack = await subsystem.validateAction("player-1", "ATTACK", "action", "player-1", []);
+        expect(regularAttack.ok).toBe(false);
+        if (!regularAttack.ok) expect(regularAttack.error.reason).toMatch(/no actions remaining/i);
+
+        const opportunityAttack = await subsystem.validateAction("player-1", "ATTACK", "reaction", "player-1", []);
+        expect(opportunityAttack.ok).toBe(true);
+    });
+
     test("rejects standard action when incapacitated condition passed", async () => {
-        const result = await subsystem.validateAction("player-1", "ATTACK", "player-1", ["incapacitated"]);
+        const result = await subsystem.validateAction("player-1", "ATTACK", "action", "player-1", ["incapacitated"]);
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.reason).toMatch(/incapacitated/i);
+    });
+
+    test("bonus action blocked when incapacitated", async () => {
+        const result = await subsystem.validateAction("player-1", "MAGIC", "bonus_action", "player-1", [
+            "incapacitated",
+        ]);
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.reason).toMatch(/incapacitated/i);
+    });
+
+    test("reaction blocked when stunned", async () => {
+        const result = await subsystem.validateAction("player-1", "ATTACK", "reaction", "player-1", ["stunned"]);
         expect(result.ok).toBe(false);
         if (!result.ok) expect(result.error.reason).toMatch(/incapacitated/i);
     });
 
     test("DASH blocked when paralyzed (incapacitating condition)", async () => {
-        const result = await subsystem.validateAction("player-1", "DASH", "player-1", ["paralyzed"]);
+        const result = await subsystem.validateAction("player-1", "DASH", "action", "player-1", ["paralyzed"]);
         expect(result.ok).toBe(false);
         if (!result.ok) expect(result.error.reason).toMatch(/incapacitated/i);
     });
 
     test("MAGIC blocked when stunned (incapacitating condition)", async () => {
-        const result = await subsystem.validateAction("player-1", "MAGIC", "player-1", ["stunned"]);
+        const result = await subsystem.validateAction("player-1", "MAGIC", "action", "player-1", ["stunned"]);
         expect(result.ok).toBe(false);
         if (!result.ok) expect(result.error.reason).toMatch(/incapacitated/i);
     });
 
-    test("all 13 action types are blocked by incapacitation", async () => {
+    test("all 13 action types are blocked by incapacitation when costing action", async () => {
         const allActions = [
             "ATTACK",
             "DASH",
@@ -244,9 +303,51 @@ describe("validateAction", () => {
         ] as const;
         for (const action of allActions) {
             store.seed("player-1", defaultResources());
-            const result = await subsystem.validateAction("player-1", action, "player-1", ["incapacitated"]);
+            const result = await subsystem.validateAction("player-1", action, "action", "player-1", ["incapacitated"]);
             expect(result.ok).toBe(false);
         }
+    });
+});
+
+// ── validateAttack ────────────────────────────────────────────────────────────
+
+describe("validateAttack", () => {
+    let store: MemoryResourceStore;
+    let subsystem: ActionEconomySubsystem;
+
+    beforeEach(() => {
+        [subsystem, store] = makeSubsystem();
+        store.seed("player-1", defaultResources());
+    });
+
+    test("ok when attacks_remaining > 0", async () => {
+        store.seed("player-1", { attacks_remaining: 2 });
+        const result = await subsystem.validateAttack("player-1");
+        expect(result.ok).toBe(true);
+    });
+
+    test("err when attacks_remaining is 0", async () => {
+        store.seed("player-1", { attacks_remaining: 0 });
+        const result = await subsystem.validateAttack("player-1");
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.reason).toMatch(/no attacks remaining/i);
+    });
+
+    test("err when attacks_remaining exhausted mid Extra Attack sequence", async () => {
+        store.seed("player-1", { attacks_remaining: 2 });
+
+        // First attack — ok
+        expect((await subsystem.validateAttack("player-1")).ok).toBe(true);
+        await subsystem.spendResource("player-1", { resource: "attack" });
+
+        // Second attack — ok
+        expect((await subsystem.validateAttack("player-1")).ok).toBe(true);
+        await subsystem.spendResource("player-1", { resource: "attack" });
+
+        // Third attempt — exhausted
+        const result = await subsystem.validateAttack("player-1");
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.reason).toMatch(/no attacks remaining/i);
     });
 });
 
