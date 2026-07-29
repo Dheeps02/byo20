@@ -8,7 +8,6 @@ import type { Vec3 } from "../../utils/geometry";
 /** All action types the engine recognises. Each costs one action (see getResourceCost). */
 export type ActionType =
     | "ATTACK"
-    | "CAST_SPELL"
     | "DASH"
     | "DISENGAGE"
     | "DODGE"

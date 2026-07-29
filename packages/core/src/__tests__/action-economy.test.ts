@@ -220,16 +220,15 @@ describe("validateAction", () => {
         if (!result.ok) expect(result.error.reason).toMatch(/incapacitated/i);
     });
 
-    test("CAST_SPELL blocked when stunned (incapacitating condition)", async () => {
-        const result = await subsystem.validateAction("player-1", "CAST_SPELL", "player-1", ["stunned"]);
+    test("MAGIC blocked when stunned (incapacitating condition)", async () => {
+        const result = await subsystem.validateAction("player-1", "MAGIC", "player-1", ["stunned"]);
         expect(result.ok).toBe(false);
         if (!result.ok) expect(result.error.reason).toMatch(/incapacitated/i);
     });
 
-    test("all 14 action types are blocked by incapacitation", async () => {
+    test("all 13 action types are blocked by incapacitation", async () => {
         const allActions = [
             "ATTACK",
-            "CAST_SPELL",
             "DASH",
             "DISENGAGE",
             "DODGE",
