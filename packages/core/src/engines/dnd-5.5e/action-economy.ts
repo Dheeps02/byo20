@@ -2,6 +2,7 @@ import type { ActionResources, ConditionName, GameRejection, Result } from "@byo
 import { getLogger } from "../../logger";
 import { computeSphere } from "../../utils/geometry";
 import type { Vec3 } from "../../utils/geometry";
+import { distance } from "../../utils/math";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -89,21 +90,6 @@ export interface ConditionsSubsystem {
 
 /** Condition names whose incapacitated effect blocks all actions. */
 const INCAPACITATING_CONDITIONS = new Set(["incapacitated", "paralyzed", "petrified", "stunned", "unconscious"]);
-
-// ── Geometry helper (distance not exported from geometry.ts) ──────────────────
-
-/**
- * Euclidean distance between two 3-D points.
- * @param a - First point.
- * @param b - Second point.
- * @returns Distance in world units (1 unit = 5 ft).
- */
-function dist3(a: Vec3, b: Vec3): number {
-    const dx = a.x - b.x;
-    const dy = a.y - b.y;
-    const dz = a.z - b.z;
-    return Math.sqrt(dx * dx + dy * dy + dz * dz);
-}
 
 /**
  * Maps an ActionType to the SpendableResource it consumes.
@@ -383,7 +369,7 @@ export class ActionEconomySubsystem {
             if (!withinFiveOfPrev.has(combatant.id)) continue;
 
             // Creature left this combatant's 5ft reach (1 world unit = 5ft).
-            if (dist3(combatant.position, newPosition) <= 1) continue;
+            if (distance(combatant.position, newPosition) <= 1) continue;
 
             // Skip allies unless pvpEnabled or friendlyFire overrides the team filter.
             const isAlly = combatant.teamId === moving.teamId;
