@@ -492,14 +492,23 @@ Every `PLAYER_ACTION` received is validated before resolving:
 
 ```
 1. Is it this player's turn? (ACTIVE_TURN, correct combatant_id)
-2. Does this action cost Action / Bonus Action / Reaction / Movement?
-3. Is that resource already spent?
+2. Engine resolves resourceCost from ability definition (SRD data lookup via abilityId).
+   Generic actions (DASH, DODGE, DISENGAGE, HIDE, HELP, SEARCH, STUDY, READY, UTILIZE,
+   INFLUENCE) default to "action". IMPROVISED defaults to "action" unless DM overrides.
+   The transport layer never derives resource cost — that is always the engine's job.
+3. Is that resource already spent / at zero?
 4. Is the action legal given current conditions?
-   (e.g. Incapacitated → no actions. Silenced → no verbal spells. Speed 0 → no movement.)
+   (e.g. Incapacitated → no actions, bonus actions, or reactions.
+    Silenced → no verbal spells. Speed 0 → no movement.)
 5. Is the target valid? (range, line of sight, etc.)
 6. → Valid: resolve
    → Invalid: reject with reason, emit ACTION_REJECTED
 ```
+
+**Attack sub-resource:** `validateAttack()` must be called before each individual attack
+roll within an Attack action. This is separate from `validateAction()` — `attacks_remaining`
+is a sub-resource spent per roll, not per action declaration. The combat engine calls
+`validateAttack()` → `spendResource({ resource: "attack" })` for each roll in sequence.
 
 ---
 
