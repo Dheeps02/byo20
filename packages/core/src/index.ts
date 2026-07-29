@@ -90,7 +90,8 @@ export {
     computeLine,
     computeCylinder,
 } from "./utils/geometry";
-export type { Vec3, BoundedEntity } from "./utils/geometry";
+export type { Vec3 } from "./utils/math";
+export type { BoundedEntity } from "./utils/geometry";
 
 // ── Conditions constant + stub ────────────────────────────────────────────────
 export { CONDITIONS, StubConditionsSubsystem } from "./engines/dnd-5.5e/conditions";

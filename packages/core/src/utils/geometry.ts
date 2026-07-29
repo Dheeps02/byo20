@@ -9,7 +9,6 @@
 import { getLogger } from "../logger";
 import { distance, dot, normalise, vecLength } from "./math";
 import type { Vec3 } from "./math";
-export type { Vec3 } from "./math";
 
 /** An entity with a position and a bounding sphere radius (in world units). */
 export interface BoundedEntity {

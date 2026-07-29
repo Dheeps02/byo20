@@ -1,8 +1,8 @@
 import type { ActionResources, ConditionName, GameRejection, Result } from "@byo20/shared";
 import { getLogger } from "../../logger";
 import { computeSphere } from "../../utils/geometry";
-import type { Vec3 } from "../../utils/geometry";
 import { distance } from "../../utils/math";
+import type { Vec3 } from "../../utils/math";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 

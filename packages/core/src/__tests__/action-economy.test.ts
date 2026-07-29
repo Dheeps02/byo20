@@ -3,7 +3,7 @@ import type { ActionResources } from "@byo20/shared";
 import { ActionEconomySubsystem } from "../engines/dnd-5.5e/action-economy";
 import type { ActionResourceStore, CombatantState, ConditionsSubsystem } from "../engines/dnd-5.5e/action-economy";
 import { initEngine } from "../index";
-import type { Vec3 } from "../utils/geometry";
+import type { Vec3 } from "../utils/math";
 
 beforeAll(() => {
     initEngine();
