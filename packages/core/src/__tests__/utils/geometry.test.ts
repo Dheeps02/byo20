@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { initEngine } from "../../index";
-import type { BoundedEntity, Vec3 } from "../../utils/geometry";
+import type { BoundedEntity } from "../../utils/geometry";
 import {
     computeCone,
     computeCube,
@@ -9,6 +9,7 @@ import {
     computeLine,
     computeSphere,
 } from "../../utils/geometry";
+import type { Vec3 } from "../../utils/math";
 
 beforeAll(() => {
     initEngine();

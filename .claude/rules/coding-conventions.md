@@ -8,6 +8,8 @@
 
 ## Docstrings
 - Every function, type, interface, class, and enum gets a JSDoc `/** ... */` docstring — exported or not
+- Every function and method parameter gets a `@param name - description` tag; no exceptions
+- Every function and method with a non-void return gets a `@returns description` tag; no exceptions
 - One line is fine for obvious things; a short paragraph for anything with non-trivial behaviour or constraints
 - No multi-line blocks for simple getters or trivial wrappers
 

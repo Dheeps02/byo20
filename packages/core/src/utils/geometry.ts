@@ -7,42 +7,17 @@
  * a self-hosted game). Bounding sphere intersection is used for entity detection.
  */
 import { getLogger } from "../logger";
-
-/** A point in 3D world space. */
-export interface Vec3 {
-    x: number;
-    y: number;
-    z: number;
-}
+import { distance, dot, normalise, vecLength } from "./math";
+import type { Vec3 } from "./math";
 
 /** An entity with a position and a bounding sphere radius (in world units). */
 export interface BoundedEntity {
+    /** Unique entity identifier. */
     id: string;
+    /** Entity centre in world space. */
     position: Vec3;
+    /** Bounding sphere radius in world units. */
     boundingRadius: number;
-}
-
-// ─── Internal vector math ────────────────────────────────────────────────────
-
-function vecLength(v: Vec3): number {
-    return Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-}
-
-function normalise(v: Vec3): Vec3 {
-    const len = vecLength(v);
-    if (len === 0) return { x: 0, y: 0, z: 0 };
-    return { x: v.x / len, y: v.y / len, z: v.z / len };
-}
-
-function dot(a: Vec3, b: Vec3): number {
-    return a.x * b.x + a.y * b.y + a.z * b.z;
-}
-
-function distance(a: Vec3, b: Vec3): number {
-    const dx = a.x - b.x;
-    const dy = a.y - b.y;
-    const dz = a.z - b.z;
-    return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
 
 // ─── AoE shape functions ─────────────────────────────────────────────────────
