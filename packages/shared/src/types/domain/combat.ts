@@ -39,21 +39,3 @@ export interface InitiativeEntry {
     isCurrentTurn: boolean;
     surprised: boolean;
 }
-
-/**
- * Active effect shape — stored in Redis as JSON under `encounter:{id}:effects` HASH.
- * Both conditions and light sources use this shape, discriminated by `type`.
- */
-export interface ActiveEffect {
-    id: string;
-    type: "condition" | "light";
-    sourceId: string;
-    spellId: string | null;
-    name: string;
-    conditionId?: string;
-    radiusFt?: number;
-    color?: string;
-    durationRounds: number | null;
-    appliedAtRound: number | null;
-    concentration: boolean;
-}

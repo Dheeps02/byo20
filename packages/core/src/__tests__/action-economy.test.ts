@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, test } from "bun:test";
-import type { ActionResources } from "@byo20/shared";
+import type { ActionResources, ConditionName } from "@byo20/shared";
 import { ActionEconomySubsystem } from "../engines/dnd-5.5e/action-economy";
 import type { ActionResourceStore, CombatantState, IConditionsSubsystem } from "../engines/dnd-5.5e/action-economy";
 import { initEngine } from "../index";
@@ -41,7 +41,7 @@ class MemoryResourceStore implements ActionResourceStore {
 }
 
 class NoopConditions implements IConditionsSubsystem {
-    async getActiveConditions(_combatantId: string): Promise<string[]> {
+    async getActiveConditions(_combatantId: string): Promise<ConditionName[]> {
         return [];
     }
 }

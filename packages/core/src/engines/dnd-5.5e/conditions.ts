@@ -19,6 +19,12 @@ import type {
     ModifierResult,
     Result,
 } from "@byo20/shared";
+import type {
+    Condition,
+    CheckType as EngineCheckType,
+    ModifierResult as EngineModifierResult,
+    RollMode,
+} from "../../interfaces/rules-engine";
 import { getLogger } from "../../logger";
 import type { IConditionsSubsystem } from "./action-economy";
 
@@ -49,7 +55,14 @@ export const CONDITIONS: readonly ConditionName[] = [
 const INCAPACITATING: readonly ConditionName[] = ["incapacitated", "paralyzed", "petrified", "stunned", "unconscious"];
 
 /** Conditions that reduce movement to 0. */
-const ZERO_SPEED: readonly ConditionName[] = ["grappled", "paralyzed", "petrified", "restrained", "stunned", "unconscious"];
+const ZERO_SPEED: readonly ConditionName[] = [
+    "grappled",
+    "paralyzed",
+    "petrified",
+    "restrained",
+    "stunned",
+    "unconscious",
+];
 
 /**
  * Conditions that cause the entity to auto-fail STR and DEX saving throws.
@@ -199,12 +212,15 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
 
         // Idempotency: return existing effect if same (conditionName, sourceId) already active
         const current = await this.effects.getActiveEffects(opts.entityId);
-        const existing = current.find(
-            (e) => e.conditionName === opts.conditionName && e.sourceId === opts.sourceId,
-        );
+        const existing = current.find((e) => e.conditionName === opts.conditionName && e.sourceId === opts.sourceId);
         if (existing) {
             getLogger().debug(
-                { encounterId: this.encounterId, entityId: opts.entityId, conditionName: opts.conditionName, sourceId: opts.sourceId },
+                {
+                    encounterId: this.encounterId,
+                    entityId: opts.entityId,
+                    conditionName: opts.conditionName,
+                    sourceId: opts.sourceId,
+                },
                 "applyCondition: idempotent — effect already present",
             );
             return { ok: true, value: existing };
@@ -223,7 +239,12 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
 
         await this.effects.addEntityEffect(opts.entityId, effect);
         getLogger().debug(
-            { encounterId: this.encounterId, entityId: opts.entityId, conditionName: opts.conditionName, effectId: effect.id },
+            {
+                encounterId: this.encounterId,
+                entityId: opts.entityId,
+                conditionName: opts.conditionName,
+                effectId: effect.id,
+            },
             "applyCondition",
         );
         return { ok: true, value: effect };
@@ -244,10 +265,7 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
         sourceId: string,
     ): Promise<Result<void, GameRejection>> {
         await this.effects.removeEntityEffectsBySource(entityId, conditionName, sourceId);
-        getLogger().debug(
-            { encounterId: this.encounterId, entityId, conditionName, sourceId },
-            "removeCondition",
-        );
+        getLogger().debug({ encounterId: this.encounterId, entityId, conditionName, sourceId }, "removeCondition");
         return { ok: true, value: undefined };
     }
 
@@ -428,7 +446,13 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
         });
 
         getLogger().debug(
-            { encounterId: this.encounterId, entityId, characterCampaignStateId, conditions: activeConditions, exhaustionLevel },
+            {
+                encounterId: this.encounterId,
+                entityId,
+                characterCampaignStateId,
+                conditions: activeConditions,
+                exhaustionLevel,
+            },
             "flushConditionsToPostgres",
         );
     }
@@ -449,4 +473,60 @@ export class StubConditionsSubsystem implements IConditionsSubsystem {
     async getActiveConditions(_entityId: string): Promise<ConditionName[]> {
         return [];
     }
+}
+
+// ── Standalone evaluateConditions (for IRulesEngine.evaluateConditions) ────────
+
+/**
+ * Evaluate a set of conditions and produce the engine-internal modifier profile.
+ * Called by `DnD5eRulesEngine.evaluateConditions` — bridges engine-internal types
+ * (`Condition[]`, engine `CheckType`) to the PHB condition rules.
+ *
+ * Advantage and disadvantage from separate conditions cancel out per standard PHB rules.
+ *
+ * @param conds - Active conditions as engine-internal `Condition` values.
+ * @param checkType - Engine-internal check type discriminant (`"ability" | "skill" | "saving_throw" | "attack"`).
+ * @returns Engine-internal `ModifierResult` covering roll modes, movement, and action availability.
+ */
+export function evaluateConditions(conds: Condition[], checkType: EngineCheckType): EngineModifierResult {
+    // Condition and ConditionName are structurally identical string literal unions.
+    const set = new Set(conds as unknown as ConditionName[]);
+
+    const incapacitated = INCAPACITATING.some((c) => set.has(c));
+    const zeroSpeed = ZERO_SPEED.some((c) => set.has(c));
+    const grantsCriticalHits = AUTO_CRIT_TARGET.some((c) => set.has(c));
+    const autoFailStrDex = checkType === "saving_throw" && AUTO_FAIL_CONDITIONS.some((c) => set.has(c));
+
+    // ── Attack roll mode: advantage/disadvantage cancel per PHB ───────────────
+    let attackRollMode: RollMode = "normal";
+    if (checkType === "attack") {
+        const adv = set.has("invisible");
+        const dis = (["blinded", "frightened", "poisoned", "prone", "restrained"] as const).some((c) => set.has(c));
+        if (adv && !dis) attackRollMode = "advantage";
+        else if (!adv && dis) attackRollMode = "disadvantage";
+    }
+
+    // ── Ability/skill check mode ──────────────────────────────────────────────
+    let abilityCheckMode: RollMode = "normal";
+    if (checkType === "ability" || checkType === "skill") {
+        if ((["frightened", "poisoned"] as const).some((c) => set.has(c))) abilityCheckMode = "disadvantage";
+    }
+
+    // ── Saving throw mode: restrained → disadvantage on DEX saves ────────────
+    let savingThrowMode: RollMode = "normal";
+    if (checkType === "saving_throw" && set.has("restrained")) savingThrowMode = "disadvantage";
+
+    return {
+        attackRollMode,
+        abilityCheckMode,
+        savingThrowMode,
+        canMove: !zeroSpeed,
+        canTakeActions: !incapacitated,
+        canTakeBonusActions: !incapacitated,
+        canTakeReactions: !incapacitated,
+        autoFailStrDex,
+        criticalHitRangeExtension: 0,
+        grantsCriticalHits,
+        speedMultiplier: zeroSpeed ? 0 : 1,
+    };
 }

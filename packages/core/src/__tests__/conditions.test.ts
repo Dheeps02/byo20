@@ -37,11 +37,7 @@ class MemoryEffectsStore implements EncounterEffectsStore {
         this.data.set(entityId, [...current, effect]);
     }
 
-    async removeEntityEffectsBySource(
-        entityId: string,
-        conditionName: ConditionName,
-        sourceId: string,
-    ): Promise<void> {
+    async removeEntityEffectsBySource(entityId: string, conditionName: ConditionName, sourceId: string): Promise<void> {
         const current = this.data.get(entityId) ?? [];
         const remaining = current.filter((e) => !(e.conditionName === conditionName && e.sourceId === sourceId));
         if (remaining.length === 0) {
@@ -296,15 +292,12 @@ describe("isIncapacitated", () => {
         expect(sub.isIncapacitated([])).toBe(false);
     });
 
-    test.each([
-        ["incapacitated"],
-        ["paralyzed"],
-        ["stunned"],
-        ["petrified"],
-        ["unconscious"],
-    ] as ConditionName[][])("%s → true", (condition) => {
-        expect(sub.isIncapacitated([condition as ConditionName])).toBe(true);
-    });
+    test.each([["incapacitated"], ["paralyzed"], ["stunned"], ["petrified"], ["unconscious"]] as ConditionName[][])(
+        "%s → true",
+        (condition) => {
+            expect(sub.isIncapacitated([condition as ConditionName])).toBe(true);
+        },
+    );
 
     test("non-incapacitating conditions → false", () => {
         expect(sub.isIncapacitated(["blinded", "poisoned", "prone"])).toBe(false);

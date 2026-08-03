@@ -1,3 +1,5 @@
+import type { ActionResources, ActiveEffect, ConditionName } from "@byo20/shared";
+import { ActiveEffectSchema } from "@byo20/shared";
 /**
  * Redis client and typed helpers for BYO20's session state.
  *
@@ -15,8 +17,6 @@
  * Agenda timers use ZRANGEBYSCORE on the game clock value, not wall time.
  */
 import Redis from "ioredis";
-import type { ActionResources, ActiveEffect, ConditionName } from "@byo20/shared";
-import { ActiveEffectSchema } from "@byo20/shared";
 import { getLogger } from "../logger";
 
 /** Safety-net TTL for combat keys. If an encounter or turn ends without the server
@@ -194,7 +194,10 @@ export async function getActiveEffects(redis: Redis, encounterId: string, entity
         if (result.success) {
             effects.push(result.data);
         } else {
-            getLogger().warn({ encounterId, entityId, issues: result.error.issues }, "getActiveEffects: dropping malformed effect");
+            getLogger().warn(
+                { encounterId, entityId, issues: result.error.issues },
+                "getActiveEffects: dropping malformed effect",
+            );
         }
     }
     getLogger().debug({ encounterId, entityId, count: effects.length }, "getActiveEffects");
@@ -234,10 +237,18 @@ export async function setActiveEffects(
  * @param entityId - entity UUID
  * @param effect - the effect to append
  */
-export async function addEntityEffect(redis: Redis, encounterId: string, entityId: string, effect: ActiveEffect): Promise<void> {
+export async function addEntityEffect(
+    redis: Redis,
+    encounterId: string,
+    entityId: string,
+    effect: ActiveEffect,
+): Promise<void> {
     const current = await getActiveEffects(redis, encounterId, entityId);
     await setActiveEffects(redis, encounterId, entityId, [...current, effect]);
-    getLogger().debug({ encounterId, entityId, effectId: effect.id, conditionName: effect.conditionName }, "addEntityEffect");
+    getLogger().debug(
+        { encounterId, entityId, effectId: effect.id, conditionName: effect.conditionName },
+        "addEntityEffect",
+    );
 }
 
 /**
