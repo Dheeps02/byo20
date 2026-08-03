@@ -536,10 +536,12 @@ is a sub-resource spent per roll, not per action declaration. The combat engine 
 
 ### Stacking Rules
 
-- A condition doesn't stack with itself — a creature either has it or doesn't.
+- A condition doesn't stack with itself from the *same source* — a creature either has it from that source or doesn't.
+- The **same condition from different sources** does stack as distinct `ActiveEffect` entries. A character can be Frightened of two creatures simultaneously. Removing a condition requires matching both `conditionName` and `sourceId`; clearing one source leaves the condition active if another source remains.
 - Multiple different conditions stack additively — each contributes independently.
 - Exhaustion is the only exception — stackable as numeric levels 1-6.
 - Exhaustion tracked as a separate `exhaustion_level` integer, not in the conditions array.
+- Exhaustion level is cached in Redis under `character:{id}:exhaustion` (STRING) for the duration of combat; seeded from `character_campaign_state.exhaustion_level` at `COMBAT_START` and flushed back at `COMBAT_ENDED`.
 
 ### Inheritance
 
@@ -567,35 +569,41 @@ Every active condition (tracked as an `ActiveEffect` in Redis) has a scope:
 ### ActiveEffect Shape (Redis)
 
 ```
+EffectScope = "COMBAT" | "TIMED" | "SUSTAINED"
+
 ActiveEffect {
-  target_id: string       // who the effect is on
-  source_id: string       // who applied it
-  source: string          // "prone", "slow", "bless", etc.
-  scope: COMBAT | TIMED | SUSTAINED
-  expires_at: number | null  // world clock minutes, null if COMBAT or SUSTAINED
-  stat: string            // what it affects
-  modifier: any           // how it affects it
+  id: string              // UUID — uniquely identifies this effect instance
+  causeId: string         // UUID — groups all effects from one orchestrator invocation
+  conditionName: ConditionName  // one of the 15 ConditionName values
+  targetId: string        // entity UUID the effect applies to
+  sourceId: string        // entity UUID that applied it, or "system"
+  sourceKind: string      // "spell" | "ability" | "environment" | "system"
+  scope: EffectScope      // COMBAT | TIMED | SUSTAINED
+  expiresAtRound: number | null  // combat round number, null when scope is COMBAT or SUSTAINED
 }
 
-// Stored per combatant in Redis:
-combatEffects: Map<target_id, ActiveEffect[]>
+// Stored per entity in the encounter effects hash in Redis:
+encounter:{encounterId}:effects  HASH  entityId → JSON ActiveEffect[]
 ```
 
 ### Query Interface
 
-The conditions system exposes a single query function that the combat engine calls before every roll:
+The conditions system exposes a query method that the combat engine calls before every roll:
 
 ```
-getModifiers(conditions: string[], checkType: CheckType) → ModifierResult
+// CheckType uses UPPERCASE discriminants (from @byo20/shared):
+CheckType = "ABILITY_CHECK" | "SKILL_CHECK" | "SAVING_THROW" | "ATTACK_ROLL"
+
+getModifiers(conditions: ConditionName[], checkType: CheckType) → ModifierResult
 
 ModifierResult {
   advantage: boolean
   disadvantage: boolean
   autoCrit: boolean
   autoFail: boolean
-  speedOverride: number | null
+  speedMultiplier: number   // 0 = fully immobilised, 1 = normal; multiply base speed
   actionsBlocked: boolean
-  sources: string[]   // which conditions caused these modifiers
+  sources: ConditionName[]  // which conditions caused these modifiers
 }
 ```
 
@@ -614,9 +622,27 @@ ModifierResult {
 
 Multiple sources on the same side don't stack — one Advantage source and three Advantage sources produce the same result.
 
+### ConditionsSubsystem Method Surface
+
+The `ConditionsSubsystem` class is the single point of entry for all condition operations. It owns both Redis (live combat) and Postgres (persistent state) writes for conditions and exhaustion.
+
+```
+applyCondition(opts: ApplyConditionOptions): Promise<Result<ActiveEffect, GameRejection>>
+removeCondition(encounterId, entityId, conditionName, sourceId): Promise<Result<void, GameRejection>>
+getActiveConditions(encounterId, entityId): Promise<ConditionName[]>
+getActiveEffects(encounterId, entityId): Promise<ActiveEffect[]>
+getModifiers(conditions: ConditionName[], checkType: CheckType): ModifierResult
+isIncapacitated(conditions: ConditionName[]): boolean
+getExhaustionLevel(characterId): Promise<number>
+setExhaustionLevel(characterId, level): Promise<Result<void, GameRejection>>
+flushConditionsToPostgres(encounterId, entityId, characterCampaignStateId): Promise<void>
+```
+
+`ApplyConditionOptions` carries `encounterId`, `entityId`, `conditionName`, `sourceId`, `sourceKind`, `scope`, `expiresAtRound`, and `causeId`.
+
 ### Implementation
 
-Condition effects are hardcoded in the engine for v1. The `srd.conditions` Postgres table stores human-readable descriptions for UI display only. Homebrew conditions are a v2 concern.
+Condition effects are hardcoded in the engine for v1 via `ConditionsSubsystem`. The `srd.conditions` Postgres table stores human-readable descriptions for UI display only. Homebrew conditions are a v2 concern.
 
 ---
 
