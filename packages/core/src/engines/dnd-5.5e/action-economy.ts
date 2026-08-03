@@ -81,13 +81,13 @@ export interface ActionResourceStore {
 }
 
 /** Minimal conditions query needed by action validation. */
-export interface ConditionsSubsystem {
+export interface IConditionsSubsystem {
     /**
-     * Return the active condition names for a combatant.
+     * Return the active condition names for a combatant from the encounter effects store.
      * @param combatantId - Combatant UUID.
-     * @returns Array of lowercase condition name strings.
+     * @returns Array of active `ConditionName` values.
      */
-    getActiveConditions(combatantId: string): Promise<string[]>;
+    getActiveConditions(combatantId: string): Promise<ConditionName[]>;
 }
 
 // ── Internal constants ────────────────────────────────────────────────────────
@@ -109,7 +109,7 @@ export class ActionEconomySubsystem {
      */
     constructor(
         private readonly store: ActionResourceStore,
-        private readonly conditions: ConditionsSubsystem,
+        private readonly conditions: IConditionsSubsystem,
     ) {}
 
     /**

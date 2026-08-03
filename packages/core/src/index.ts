@@ -93,8 +93,9 @@ export {
 export type { Vec3 } from "./utils/math";
 export type { BoundedEntity } from "./utils/geometry";
 
-// ── Conditions constant + stub ────────────────────────────────────────────────
-export { CONDITIONS, StubConditionsSubsystem } from "./engines/dnd-5.5e/conditions";
+// ── Conditions subsystem ──────────────────────────────────────────────────────
+export { CONDITIONS, ConditionsSubsystem, StubConditionsSubsystem } from "./engines/dnd-5.5e/conditions";
+export type { EncounterEffectsStore, ExhaustionStore } from "./engines/dnd-5.5e/conditions";
 
 // ── Action economy subsystem ──────────────────────────────────────────────────
 export { ActionEconomySubsystem } from "./engines/dnd-5.5e/action-economy";
@@ -105,7 +106,7 @@ export type {
     OACandidate,
     CombatantState,
     ActionResourceStore,
-    ConditionsSubsystem,
+    IConditionsSubsystem,
 } from "./engines/dnd-5.5e/action-economy";
 
 // ── Error class ───────────────────────────────────────────────────────────────
