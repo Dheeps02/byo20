@@ -26,7 +26,7 @@ import type {
     RollMode,
 } from "../../interfaces/rules-engine";
 import { getLogger } from "../../logger";
-import type { IConditionsSubsystem } from "./interfaces";
+import type { IConditionsSubsystem, IEncounterEffectsStore, IExhaustionStore } from "./interfaces";
 
 // ── Canonical condition list ───────────────────────────────────────────────────
 
@@ -77,55 +77,6 @@ const AUTO_FAIL_CONDITIONS: readonly ConditionName[] = ["paralyzed", "petrified"
  */
 const AUTO_CRIT_TARGET: readonly ConditionName[] = ["paralyzed", "unconscious"];
 
-// ── Dependency interfaces (implemented by storage layer, mocked in tests) ──────
-
-/**
- * Active effects storage for a single encounter.
- * The implementation in apps/server wraps the Redis HASH at `encounter:{id}:effects`.
- * Every method is scoped to the encounter this store was created for.
- */
-export interface EncounterEffectsStore {
-    /**
-     * Fetch all validated `ActiveEffect` entries for an entity.
-     * @param entityId - Entity UUID.
-     * @returns Active effects list; empty if none stored.
-     */
-    getActiveEffects(entityId: string): Promise<ActiveEffect[]>;
-    /**
-     * Append a single effect to an entity's list.
-     * @param entityId - Entity UUID.
-     * @param effect - The effect to append.
-     */
-    addEntityEffect(entityId: string, effect: ActiveEffect): Promise<void>;
-    /**
-     * Remove all effects for an entity where conditionName and sourceId both match.
-     * @param entityId - Entity UUID.
-     * @param conditionName - Condition name to remove.
-     * @param sourceId - Source entity UUID (or `"system"`) to remove; other sources remain.
-     */
-    removeEntityEffectsBySource(entityId: string, conditionName: ConditionName, sourceId: string): Promise<void>;
-}
-
-/**
- * Exhaustion level cache for the duration of one combat encounter.
- * The implementation wraps the Redis STRING at `character:{id}:exhaustion`.
- */
-export interface ExhaustionStore {
-    /**
-     * Read the current exhaustion level for a character.
-     * Returns 0 if the key is absent; always seed from Postgres at COMBAT_START.
-     * @param characterId - Character UUID.
-     * @returns Exhaustion level 0-6.
-     */
-    getExhaustionLevel(characterId: string): Promise<number>;
-    /**
-     * Write the exhaustion level for a character.
-     * @param characterId - Character UUID.
-     * @param level - Exhaustion level 0-6.
-     */
-    setExhaustionLevel(characterId: string, level: number): Promise<void>;
-}
-
 // ── Exhaustion level bounds ────────────────────────────────────────────────────
 
 /** Minimum valid exhaustion level (none). */
@@ -151,8 +102,8 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
      * @param encounterId - UUID of the encounter this instance is bound to.
      */
     constructor(
-        private readonly effects: EncounterEffectsStore,
-        private readonly exhaustion: ExhaustionStore,
+        private readonly effects: IEncounterEffectsStore,
+        private readonly exhaustion: IExhaustionStore,
         private readonly store: IGameStateStore,
         private readonly encounterId: string,
     ) {}

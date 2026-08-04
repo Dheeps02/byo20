@@ -95,7 +95,6 @@ export type { BoundedEntity } from "./utils/geometry";
 
 // ── Conditions subsystem ──────────────────────────────────────────────────────
 export { CONDITIONS, ConditionsSubsystem, StubConditionsSubsystem } from "./engines/dnd-5.5e/conditions";
-export type { EncounterEffectsStore, ExhaustionStore } from "./engines/dnd-5.5e/conditions";
 
 // ── Action economy subsystem ──────────────────────────────────────────────────
 export { ActionEconomySubsystem } from "./engines/dnd-5.5e/action-economy";
@@ -105,9 +104,13 @@ export type {
     SpendOptions,
     OACandidate,
     CombatantState,
-    ActionResourceStore,
 } from "./engines/dnd-5.5e/action-economy";
-export type { IConditionsSubsystem } from "./engines/dnd-5.5e/interfaces";
+export type {
+    IConditionsSubsystem,
+    IEncounterEffectsStore,
+    IExhaustionStore,
+    IActionResourceStore,
+} from "./engines/dnd-5.5e/interfaces";
 
 // ── Error class ───────────────────────────────────────────────────────────────
 export { NotImplementedError } from "./errors";

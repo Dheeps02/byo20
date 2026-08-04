@@ -13,7 +13,7 @@ import type {
     IGameStateStore,
 } from "@byo20/shared";
 import { ConditionsSubsystem } from "../engines/dnd-5.5e/conditions";
-import type { EncounterEffectsStore, ExhaustionStore } from "../engines/dnd-5.5e/conditions";
+import type { IEncounterEffectsStore, IExhaustionStore } from "../engines/dnd-5.5e/interfaces";
 import { initEngine } from "../index";
 
 // ── Initialise logger ─────────────────────────────────────────────────────────
@@ -25,7 +25,7 @@ beforeAll(() => {
 // ── Test doubles ──────────────────────────────────────────────────────────────
 
 /** In-memory implementation of EncounterEffectsStore. Stores effects keyed by entityId. */
-class MemoryEffectsStore implements EncounterEffectsStore {
+class MemoryEffectsStore implements IEncounterEffectsStore {
     private data = new Map<string, ActiveEffect[]>();
 
     async getActiveEffects(entityId: string): Promise<ActiveEffect[]> {
@@ -59,7 +59,7 @@ class MemoryEffectsStore implements EncounterEffectsStore {
 }
 
 /** In-memory implementation of ExhaustionStore. */
-class MemoryExhaustionStore implements ExhaustionStore {
+class MemoryExhaustionStore implements IExhaustionStore {
     private data = new Map<string, number>();
 
     async getExhaustionLevel(characterId: string): Promise<number> {

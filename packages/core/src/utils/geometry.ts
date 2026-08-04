@@ -11,14 +11,14 @@ import { distance, dot, normalise, vecLength } from "./math";
 import type { Vec3 } from "./math";
 
 /** An entity with a position and a bounding sphere radius (in world units). */
-export interface BoundedEntity {
+export type BoundedEntity = {
     /** Unique entity identifier. */
     id: string;
     /** Entity centre in world space. */
     position: Vec3;
     /** Bounding sphere radius in world units. */
     boundingRadius: number;
-}
+};
 
 // ─── AoE shape functions ─────────────────────────────────────────────────────
 

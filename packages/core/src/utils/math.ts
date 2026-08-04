@@ -6,14 +6,14 @@
  */
 
 /** A point or direction vector in 3D world space. */
-export interface Vec3 {
+export type Vec3 = {
     /** X coordinate (world units). */
     x: number;
     /** Y coordinate (world units, vertical axis). */
     y: number;
     /** Z coordinate (world units). */
     z: number;
-}
+};
 
 /**
  * Euclidean length of a vector.
