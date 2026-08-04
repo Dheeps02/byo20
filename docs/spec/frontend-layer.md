@@ -485,6 +485,23 @@ Player-facing reference panel. HTML/CSS modal overlay — not a Babylon.js scene
 
 ---
 
+## Display Conventions
+
+### Units of measurement
+
+The engine stores and computes all distances in **feet** — the SRD is written in feet and the engine uses those values verbatim.
+
+The renderer is responsible for converting to the player's preferred unit before display. The conversion is not a locale lookup — it is fixed arithmetic based on the D&D grid:
+
+- 1 square = 5 ft = 1.5 m
+- Formula: `metres = feet / 5 * 1.5`
+
+This always produces clean numbers for real game values (30 ft → 9 m, 60 ft → 18 m, 120 ft → 36 m).
+
+**TODO:** Implement a `feetToMetres(feet: number): number` utility in `@byo20/shared` and a user preference toggle (ft / m) stored in `byo20_local`. The renderer reads the preference from Zustand and formats all distance strings through the utility before display. The engine and transport layers never change.
+
+---
+
 ## Storage Cross-References
 
 Changes introduced by this layer and applied to storage-layer.md:
