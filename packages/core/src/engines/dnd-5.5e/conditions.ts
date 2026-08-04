@@ -26,7 +26,7 @@ import type {
     RollMode,
 } from "../../interfaces/rules-engine";
 import { getLogger } from "../../logger";
-import type { IConditionsSubsystem } from "./action-economy";
+import type { IConditionsSubsystem } from "./interfaces";
 
 // ── Canonical condition list ───────────────────────────────────────────────────
 

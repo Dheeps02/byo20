@@ -106,8 +106,8 @@ export type {
     OACandidate,
     CombatantState,
     ActionResourceStore,
-    IConditionsSubsystem,
 } from "./engines/dnd-5.5e/action-economy";
+export type { IConditionsSubsystem } from "./engines/dnd-5.5e/interfaces";
 
 // ── Error class ───────────────────────────────────────────────────────────────
 export { NotImplementedError } from "./errors";

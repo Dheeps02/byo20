@@ -3,6 +3,7 @@ import { getLogger } from "../../logger";
 import { computeSphere } from "../../utils/geometry";
 import { distance } from "../../utils/math";
 import type { Vec3 } from "../../utils/math";
+import type { IConditionsSubsystem } from "./interfaces";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -78,16 +79,6 @@ export interface ActionResourceStore {
      * @param resources - New resource values to persist.
      */
     setTurnResources(combatantId: string, resources: ActionResources): Promise<void>;
-}
-
-/** Minimal conditions query needed by action validation. */
-export interface IConditionsSubsystem {
-    /**
-     * Return the active condition names for a combatant from the encounter effects store.
-     * @param combatantId - Combatant UUID.
-     * @returns Array of active `ConditionName` values.
-     */
-    getActiveConditions(combatantId: string): Promise<ConditionName[]>;
 }
 
 // ── Internal constants ────────────────────────────────────────────────────────

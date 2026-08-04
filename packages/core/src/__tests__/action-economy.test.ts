@@ -1,7 +1,8 @@
 import { beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import type { ActionResources, ConditionName } from "@byo20/shared";
 import { ActionEconomySubsystem } from "../engines/dnd-5.5e/action-economy";
-import type { ActionResourceStore, CombatantState, IConditionsSubsystem } from "../engines/dnd-5.5e/action-economy";
+import type { ActionResourceStore, CombatantState } from "../engines/dnd-5.5e/action-economy";
+import type { IConditionsSubsystem } from "../engines/dnd-5.5e/interfaces";
 import { initEngine } from "../index";
 import type { Vec3 } from "../utils/math";
 
