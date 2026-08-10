@@ -158,12 +158,14 @@ export type ActiveEffect = z.infer<typeof ActiveEffectSchema>;
  * - `ABILITY_CHECK` — any ability or skill check
  * - `ATTACK_ROLL` — attack made BY this entity
  * - `ATTACK_ROLL_TARGET` — this entity is the attack target (drives autoCrit)
+ * - `INITIATIVE` — initiative roll (d20 + DEX); exhaustion flatBonus applies
  * - `SAVE_STR / SAVE_DEX / SAVE_CON / SAVE_INT / SAVE_WIS / SAVE_CHA` — per-ability saving throws
  */
 export const CheckTypeSchema = z.enum([
     "ABILITY_CHECK",
     "ATTACK_ROLL",
     "ATTACK_ROLL_TARGET",
+    "INITIATIVE",
     "SAVE_STR",
     "SAVE_DEX",
     "SAVE_CON",
