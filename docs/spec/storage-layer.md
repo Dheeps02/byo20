@@ -1235,6 +1235,8 @@ Redis holds live-session data that must survive round-trips faster than a Postgr
 campaign:{id}:agenda          → ZSET, scored by fires_at_clock (game-time minutes)
 encounter:{id}:effects        → HASH, keyed by entity_id → JSON active effect list
 character:{id}:turn_resources → HASH, ActionResources shape (see @byo20/shared)
+character:{id}:exhaustion     → STRING, integer 0-6 — combat-session cache of exhaustion_level;
+                                seeded from Postgres at COMBAT_START, flushed back at COMBAT_ENDED
 world:{id}:clock              → STRING, integer — in-game minutes elapsed
 ```
 

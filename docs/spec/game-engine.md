@@ -521,25 +521,27 @@ is a sub-resource spent per roll, not per action declaration. The combat engine 
 | **Blinded** | Own attacks Disadvantage. Attacks against have Advantage. Auto-fail sight checks. |
 | **Charmed** | Can't attack/harm charmer. Charmer has Advantage on social checks. |
 | **Deafened** | Auto-fail hearing checks. |
-| **Exhaustion** | Stackable 1-6. Each level: -2 to all d20 rolls, -5ft speed. Die at level 6. Long rest removes 1 level. |
+| **Exhaustion** | Stackable 1-6. Each level: -2 to all d20 tests (2024 PHB). Speed reduced by 5ft per level (2024 PHB). Die at level 6. Long rest removes 1 level. |
 | **Frightened** | Disadvantage on attacks/checks while source in line of sight. Can't move toward source. |
-| **Grappled** | Speed 0. Ends if grappler incapacitated or out of range. |
+| **Grappled** | Speed 0 (cannot increase). SUSTAINED — ends when grappler is Incapacitated, or when the grappled creature is moved beyond the grappler's reach. |
 | **Incapacitated** | No actions, bonus actions, or reactions. Breaks concentration. |
 | **Invisible** | Own attacks Advantage. Attacks against have Disadvantage. Can't be seen normally. |
 | **Paralyzed** | Includes Incapacitated. Speed 0. Auto-fail STR/DEX saves. Attacks against Advantage. Hits within 5ft = auto-crit. |
 | **Petrified** | Includes Incapacitated. Speed 0. Auto-fail STR/DEX saves. Attacks against Advantage. Resistance to all damage. Immune to poison. |
 | **Poisoned** | Disadvantage on attack rolls and ability checks. |
-| **Prone** | Own attacks Disadvantage. Melee attacks against Advantage. Ranged attacks against Disadvantage. Can only crawl or spend half speed to stand. |
+| **Prone** | Own attacks Disadvantage. Melee attacks against Advantage (within 5 ft); ranged attacks against Disadvantage (beyond 5 ft). SUSTAINED — standing costs half Speed; crawling costs double movement. |
 | **Restrained** | Speed 0. Attacks against Advantage. Own attacks Disadvantage. Disadvantage on DEX saves. |
 | **Stunned** | Includes Incapacitated. Speed 0. Auto-fail STR/DEX saves. Attacks against Advantage. |
 | **Unconscious** | Includes Incapacitated + Prone. Drop held items. Auto-fail STR/DEX saves. Attacks against Advantage. Hits within 5ft = auto-crit. Unaware of surroundings. |
 
 ### Stacking Rules
 
-- A condition doesn't stack with itself — a creature either has it or doesn't.
+- A condition doesn't stack with itself from the *same source* — a creature either has it from that source or doesn't.
+- The **same condition from different sources** does stack as distinct `ActiveEffect` entries. A character can be Frightened of two creatures simultaneously. Removing a condition requires matching both `conditionName` and `sourceId`; clearing one source leaves the condition active if another source remains.
 - Multiple different conditions stack additively — each contributes independently.
 - Exhaustion is the only exception — stackable as numeric levels 1-6.
 - Exhaustion tracked as a separate `exhaustion_level` integer, not in the conditions array.
+- Exhaustion level is cached in Redis under `character:{id}:exhaustion` (STRING) for the duration of combat; seeded from `character_campaign_state.exhaustion_level` at `COMBAT_START` and flushed back at `COMBAT_ENDED`.
 
 ### Inheritance
 
@@ -558,44 +560,56 @@ isIncapacitated = conditions.includes("incapacitated")
 
 Every active condition (tracked as an `ActiveEffect` in Redis) has a scope:
 
-| Scope | Description | Cleared |
-|---|---|---|
-| `COMBAT` | Combat-specific effect (e.g. Dodge action's Disadvantage effect) | At `COMBAT_ENDED` |
-| `TIMED` | Has explicit `expires_at` world clock timestamp | When world clock passes `expires_at` |
-| `SUSTAINED` | Persists until a specific counter-action | Prone → stand up. Grappled → break grapple. |
+| Scope | Description | Expiry fields | Cleared |
+|---|---|---|---|
+| `COMBAT` | Combat-specific effect (e.g. Dodge action's Disadvantage effect) | Both `null` | At `COMBAT_ENDED` |
+| `TIMED` | Expires at a specific round or world-clock time | `expiresAtRound` and/or `expiresAtTime` set | When round or clock passes expiry |
+| `SUSTAINED` | Persists until a specific counter-action | Both `null` | Prone → stand up. Grappled → break grapple. |
 
 ### ActiveEffect Shape (Redis)
 
 ```
+EffectScope = "COMBAT" | "TIMED" | "SUSTAINED"
+
 ActiveEffect {
-  target_id: string       // who the effect is on
-  source_id: string       // who applied it
-  source: string          // "prone", "slow", "bless", etc.
-  scope: COMBAT | TIMED | SUSTAINED
-  expires_at: number | null  // world clock minutes, null if COMBAT or SUSTAINED
-  stat: string            // what it affects
-  modifier: any           // how it affects it
+  id: string              // UUID — uniquely identifies this effect instance
+  name: string            // ConditionName for conditions; spell/ability name otherwise
+  targetId: string        // entity UUID the effect applies to
+  sourceId: string        // entity UUID that applied it, or "system"
+  scope: EffectScope      // COMBAT | TIMED | SUSTAINED
+  expiresAtTime: number | null   // world-clock integer minutes, null when COMBAT or SUSTAINED
+  expiresAtRound: number | null  // combat round number, null when COMBAT or SUSTAINED
 }
 
-// Stored per combatant in Redis:
-combatEffects: Map<target_id, ActiveEffect[]>
+// Stored per entity in the encounter effects hash in Redis:
+encounter:{encounterId}:effects  HASH  entityId → JSON ActiveEffect[]
 ```
 
 ### Query Interface
 
-The conditions system exposes a single query function that the combat engine calls before every roll:
+The conditions system exposes a query method that the combat engine calls before every roll:
 
 ```
-getModifiers(conditions: string[], checkType: CheckType) → ModifierResult
+// CheckType uses UPPERCASE discriminants (from @byo20/shared):
+CheckType =
+  | "ABILITY_CHECK"       // any ability or skill check
+  | "ATTACK_ROLL"         // attack made BY this entity
+  | "ATTACK_ROLL_TARGET"  // this entity is the melee attack target (drives autoCrit)
+  | "INITIATIVE"          // initiative roll (d20 + DEX); exhaustion flatBonus applies
+  | "SAVE_STR" | "SAVE_DEX" | "SAVE_CON" | "SAVE_INT" | "SAVE_WIS" | "SAVE_CHA"
+
+getModifiers(conditions: ConditionName[], exhaustionLevel: number, checkType: CheckType) → ModifierResult
 
 ModifierResult {
   advantage: boolean
   disadvantage: boolean
   autoCrit: boolean
   autoFail: boolean
-  speedOverride: number | null
+  flatBonus: number         // flat d20 modifier; exhaustion contributes -2 per level (2024 PHB)
+  speedOverride: number | null  // null = no override; 0 = fully immobilised (Grappled, Paralyzed, etc.)
+  speedReduction: number    // flat feet subtracted from base speed; 5 * exhaustionLevel (2024 PHB: -5ft per level)
   actionsBlocked: boolean
-  sources: string[]   // which conditions caused these modifiers
+  sources: ConditionName[]  // which conditions caused these modifiers
 }
 ```
 
@@ -614,9 +628,38 @@ ModifierResult {
 
 Multiple sources on the same side don't stack — one Advantage source and three Advantage sources produce the same result.
 
+### ConditionsSubsystem Method Surface
+
+The `ConditionsSubsystem` class is the single point of entry for all condition operations. It owns both Redis (live combat) and Postgres (persistent state) writes for conditions and exhaustion.
+
+```
+// Storage-backed — bound to encounterId at construction
+applyCondition(opts: ApplyConditionOptions): Promise<Result<ActiveEffect, GameRejection>>
+removeCondition(entityId, conditionName, sourceId?): Promise<Result<void, GameRejection>>
+removeConditionsBySource(entityId, sourceId): Promise<Result<void, GameRejection>>
+clearAllConditions(entityId): Promise<Result<void, GameRejection>>
+tickExpirations(entityId, currentClockMinutes, currentRound): Promise<ConditionName[]>
+getActiveConditions(entityId): Promise<ConditionName[]>
+getActiveEffects(entityId): Promise<ActiveEffect[]>
+isEntityIncapacitated(entityId): Promise<boolean>
+flushConditionsToPostgres(entityId, characterCampaignStateId): Promise<void>
+
+// Exhaustion — Redis cache
+getExhaustionLevel(characterId): Promise<number>
+setExhaustionLevel(characterId, level): Promise<Result<void, GameRejection>>
+incrementExhaustion(characterId): Promise<Result<number, GameRejection>>
+decrementExhaustion(characterId): Promise<Result<number, GameRejection>>
+
+// Pure static — no I/O
+static getModifiers(conditions, exhaustionLevel, checkType): ModifierResult
+static isIncapacitated(conditions): boolean
+```
+
+`ApplyConditionOptions` carries `encounterId`, `entityId`, `conditionName`, `sourceId`, `scope`, `expiresAtRound`, and `expiresAtTime`.
+
 ### Implementation
 
-Condition effects are hardcoded in the engine for v1. The `srd.conditions` Postgres table stores human-readable descriptions for UI display only. Homebrew conditions are a v2 concern.
+Condition effects are hardcoded in the engine for v1 via `ConditionsSubsystem`. The `srd.conditions` Postgres table stores human-readable descriptions for UI display only. Homebrew conditions are a v2 concern.
 
 ---
 

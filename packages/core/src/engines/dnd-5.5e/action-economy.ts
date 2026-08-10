@@ -3,6 +3,7 @@ import { getLogger } from "../../logger";
 import { computeSphere } from "../../utils/geometry";
 import { distance } from "../../utils/math";
 import type { Vec3 } from "../../utils/math";
+import type { IActionResourceStore, IConditionsSubsystem } from "./interfaces";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -39,13 +40,13 @@ export type SpendOptions =
     | { resource: "movement"; feet: number; difficultTerrain?: boolean };
 
 /** A combatant eligible to make an opportunity attack. */
-export interface OACandidate {
+export type OACandidate = {
     /** UUID of the combatant eligible to make the opportunity attack. */
     combatantId: string;
-}
+};
 
 /** Minimal per-combatant state needed for OA resolution. */
-export interface CombatantState {
+export type CombatantState = {
     /** Combatant UUID. */
     id: string;
     /** Current world position; 1 unit = 5 ft. */
@@ -58,37 +59,7 @@ export interface CombatantState {
     reaction_used: boolean;
     /** True when a charm or domination effect makes this combatant attack its own team. */
     friendlyFire: boolean;
-}
-
-// ── Injectable interfaces ─────────────────────────────────────────────────────
-
-/** Thin read/write interface over the turn-resources Redis HASH. */
-export interface ActionResourceStore {
-    /**
-     * Fetch the current-turn resource budget for a combatant.
-     * Returns max-budget defaults when no key exists (e.g. before the first reset).
-     * @param combatantId - Combatant UUID.
-     * @returns The combatant's current ActionResources.
-     */
-    getTurnResources(combatantId: string): Promise<ActionResources>;
-
-    /**
-     * Write the current-turn resource budget for a combatant.
-     * @param combatantId - Combatant UUID.
-     * @param resources - New resource values to persist.
-     */
-    setTurnResources(combatantId: string, resources: ActionResources): Promise<void>;
-}
-
-/** Minimal conditions query needed by action validation. */
-export interface ConditionsSubsystem {
-    /**
-     * Return the active condition names for a combatant.
-     * @param combatantId - Combatant UUID.
-     * @returns Array of lowercase condition name strings.
-     */
-    getActiveConditions(combatantId: string): Promise<string[]>;
-}
+};
 
 // ── Internal constants ────────────────────────────────────────────────────────
 
@@ -108,8 +79,8 @@ export class ActionEconomySubsystem {
      * @param conditions - Query interface for a combatant's active conditions.
      */
     constructor(
-        private readonly store: ActionResourceStore,
-        private readonly conditions: ConditionsSubsystem,
+        private readonly store: IActionResourceStore,
+        private readonly conditions: IConditionsSubsystem,
     ) {}
 
     /**

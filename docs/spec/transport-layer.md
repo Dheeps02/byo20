@@ -135,6 +135,7 @@ Every message — in both directions — uses the same JSON envelope:
 {
   "type": "ATTACK_RESULT",
   "id": "uuid-v4",
+  "causeId": "uuid-v4",
   "timestamp": 1234567890123,
   "to": ["dm", "player_abc123"],
   "payload": { ... }
@@ -145,6 +146,7 @@ Every message — in both directions — uses the same JSON envelope:
 |---|---|
 | `type` | What kind of message this is |
 | `id` | Unique per message, used for deduplication |
+| `causeId` | UUID grouping all messages produced by a single orchestrator invocation — lets clients correlate the attack, damage, condition, narration chain for one action |
 | `timestamp` | Server-stamped, canonical ordering |
 | `to` | Routing target (see Routing section) |
 | `payload` | Content — shape varies per type |
@@ -179,6 +181,7 @@ Every message — in both directions — uses the same JSON envelope:
 | `SAVING_THROW` | Prompt player to roll, or broadcast result |
 | `CONDITION_APPLIED` | Poisoned, stunned, prone, etc. |
 | `CONDITION_REMOVED` | Condition lifted |
+| `EXHAUSTION_CHANGED` | Exhaustion level increased or decreased; payload carries `{ characterId, oldLevel, newLevel }` |
 | `DEATH_SAVE_RESULT` | Success/fail count update |
 | `TURN_END` | Turn over |
 | `COMBAT_END` | Combat resolved |
@@ -208,6 +211,7 @@ Every message — in both directions — uses the same JSON envelope:
 | `STATE_SNAPSHOT` | Full game state dump — sent on connect/reconnect |
 | `STATE_DELTA` | Periodic sync push (configurable interval, default 5 min) |
 | `ACTION_RECEIVED` | Immediate ACK — server received your action, processing |
+| `CAUSE_RESOLVED` | Signals that all messages for a given `causeId` have been emitted; payload carries `{ causeId }` — clients use this to close any pending UI animations tied to the cause |
 | `SYSTEM` | Kick, pause, session end, DM notifications |
 
 ---

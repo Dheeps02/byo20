@@ -1,4 +1,5 @@
-import type { ActionResources } from "@byo20/shared";
+import type { ActionResources, ActiveEffect } from "@byo20/shared";
+import { ActiveEffectSchema } from "@byo20/shared";
 /**
  * Redis client and typed helpers for BYO20's session state.
  *
@@ -7,8 +8,9 @@ import type { ActionResources } from "@byo20/shared";
  *
  * Key schema:
  *   campaign:{id}:agenda          → ZSET scored by fires_at_clock (game-time minutes)
- *   encounter:{id}:effects        → HASH keyed by entity_id → JSON effect list
+ *   encounter:{id}:effects        → HASH keyed by entity_id → JSON ActiveEffect list
  *   character:{id}:turn_resources → HASH, ActionResources shape (see @byo20/shared)
+ *   character:{id}:exhaustion     → STRING integer 0-6, combat-session cache
  *   world:{id}:clock              → STRING integer — in-game minutes elapsed
  *
  * IMPORTANT: EXPIREAT is wall-clock and must never be used for game-time events.
@@ -47,6 +49,8 @@ export const effectsKey = (encounterId: string) => `encounter:${encounterId}:eff
 export const turnResourcesKey = (characterId: string) => `character:${characterId}:turn_resources`;
 /** Redis key for a campaign's world clock string. */
 export const worldClockKey = (campaignId: string) => `world:${campaignId}:clock`;
+/** Redis key for a character's combat-session exhaustion level string. */
+export const exhaustionKey = (characterId: string) => `character:${characterId}:exhaustion`;
 
 // ── World clock ───────────────────────────────────────────────────────────────
 
@@ -153,6 +157,169 @@ export async function setEntityEffects(
 /** Delete the entire effects hash for an encounter (called on encounter end). */
 export async function clearEncounterEffects(redis: Redis, encounterId: string): Promise<void> {
     await redis.del(effectsKey(encounterId));
+}
+
+// ── Typed ActiveEffect helpers ────────────────────────────────────────────────
+
+/**
+ * Fetch and validate the `ActiveEffect` list for an entity in an encounter.
+ * Entries that fail Zod validation are silently dropped — malformed data cannot
+ * block combat resolution, and the engine re-applies effects from its own state.
+ *
+ * @param redis - ioredis client
+ * @param encounterId - encounter UUID
+ * @param entityId - entity UUID
+ * @returns validated array of `ActiveEffect`, empty if none stored
+ */
+export async function getActiveEffects(redis: Redis, encounterId: string, entityId: string): Promise<ActiveEffect[]> {
+    const raw = await redis.hget(effectsKey(encounterId), entityId);
+    if (!raw) {
+        getLogger().debug({ encounterId, entityId }, "getActiveEffects: no effects found");
+        return [];
+    }
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(raw);
+    } catch {
+        getLogger().warn({ encounterId, entityId }, "getActiveEffects: JSON parse failed, returning []");
+        return [];
+    }
+    if (!Array.isArray(parsed)) {
+        getLogger().warn({ encounterId, entityId }, "getActiveEffects: stored value is not an array, returning []");
+        return [];
+    }
+    const effects: ActiveEffect[] = [];
+    for (const item of parsed) {
+        const result = ActiveEffectSchema.safeParse(item);
+        if (result.success) {
+            effects.push(result.data);
+        } else {
+            getLogger().warn(
+                { encounterId, entityId, issues: result.error.issues },
+                "getActiveEffects: dropping malformed effect",
+            );
+        }
+    }
+    getLogger().debug({ encounterId, entityId, count: effects.length }, "getActiveEffects");
+    return effects;
+}
+
+/**
+ * Overwrite the full `ActiveEffect` list for an entity in an encounter.
+ * Refreshes the encounter-level safety-net TTL on every write.
+ *
+ * @param redis - ioredis client
+ * @param encounterId - encounter UUID
+ * @param entityId - entity UUID
+ * @param effects - complete replacement list (may be empty to clear one entity's effects)
+ */
+export async function setActiveEffects(
+    redis: Redis,
+    encounterId: string,
+    entityId: string,
+    effects: ActiveEffect[],
+): Promise<void> {
+    const key = effectsKey(encounterId);
+    const pipeline = redis.pipeline();
+    pipeline.hset(key, entityId, JSON.stringify(effects));
+    pipeline.expire(key, EFFECTS_TTL_SECONDS);
+    await pipeline.exec();
+    getLogger().debug({ encounterId, entityId, count: effects.length }, "setActiveEffects");
+}
+
+/**
+ * Append a single `ActiveEffect` to an entity's effect list.
+ * Reads the current list, appends, then writes back — not atomic but sequential
+ * per-encounter action processing in the engine makes races impossible in practice.
+ *
+ * @param redis - ioredis client
+ * @param encounterId - encounter UUID
+ * @param entityId - entity UUID
+ * @param effect - the effect to append
+ */
+export async function addEntityEffect(
+    redis: Redis,
+    encounterId: string,
+    entityId: string,
+    effect: ActiveEffect,
+): Promise<void> {
+    const current = await getActiveEffects(redis, encounterId, entityId);
+    await setActiveEffects(redis, encounterId, entityId, [...current, effect]);
+    getLogger().debug({ encounterId, entityId, effectId: effect.id, name: effect.name }, "addEntityEffect");
+}
+
+/**
+ * Remove all `ActiveEffect` entries that match both `conditionName` and `sourceId` for an entity.
+ * If the resulting list is empty, the entity's field is deleted from the hash (HDEL).
+ * This supports multi-source conditions: clearing one source leaves other-source entries intact.
+ *
+ * @param redis - ioredis client
+ * @param encounterId - encounter UUID
+ * @param entityId - entity UUID
+ * @param conditionName - the condition to remove
+ * @param sourceId - the specific source UUID (or `"system"`) to remove — other sources remain
+ */
+export async function removeEntityEffectsBySource(
+    redis: Redis,
+    encounterId: string,
+    entityId: string,
+    name: string,
+    sourceId: string,
+): Promise<void> {
+    const current = await getActiveEffects(redis, encounterId, entityId);
+    const remaining = current.filter((e) => !(e.name === name && e.sourceId === sourceId));
+    if (remaining.length === 0) {
+        await redis.hdel(effectsKey(encounterId), entityId);
+    } else {
+        await setActiveEffects(redis, encounterId, entityId, remaining);
+    }
+    getLogger().debug(
+        { encounterId, entityId, name, sourceId, removed: current.length - remaining.length },
+        "removeEntityEffectsBySource",
+    );
+}
+
+// ── Exhaustion (per character, combat-session cache) ──────────────────────────
+
+/**
+ * Read a character's exhaustion level from the Redis combat-session cache.
+ * Returns `0` when the key is absent — meaning no cache yet (not necessarily level 0).
+ * Always seed from Postgres at `COMBAT_START` via `setExhaustionCache` before reading.
+ *
+ * @param redis - ioredis client
+ * @param characterId - character UUID
+ * @returns exhaustion level 0-6
+ */
+export async function getExhaustionCache(redis: Redis, characterId: string): Promise<number> {
+    const val = await redis.get(exhaustionKey(characterId));
+    const level = val !== null ? Number.parseInt(val, 10) : 0;
+    getLogger().debug({ characterId, level }, "getExhaustionCache");
+    return level;
+}
+
+/**
+ * Write a character's exhaustion level to the Redis combat-session cache.
+ * Called at `COMBAT_START` (seed from Postgres) and when exhaustion changes mid-combat.
+ * The engine flushes this back to Postgres at `COMBAT_ENDED`.
+ *
+ * @param redis - ioredis client
+ * @param characterId - character UUID
+ * @param level - exhaustion level 0-6
+ */
+export async function setExhaustionCache(redis: Redis, characterId: string, level: number): Promise<void> {
+    await redis.set(exhaustionKey(characterId), level);
+    getLogger().debug({ characterId, level }, "setExhaustionCache");
+}
+
+/**
+ * Delete a character's exhaustion cache key (called after flushing back to Postgres at combat end).
+ *
+ * @param redis - ioredis client
+ * @param characterId - character UUID
+ */
+export async function clearExhaustionCache(redis: Redis, characterId: string): Promise<void> {
+    await redis.del(exhaustionKey(characterId));
+    getLogger().debug({ characterId }, "clearExhaustionCache");
 }
 
 // ── Turn resources (per character) ────────────────────────────────────────────

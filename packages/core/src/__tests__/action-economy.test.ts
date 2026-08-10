@@ -1,7 +1,9 @@
 import { beforeAll, beforeEach, describe, expect, test } from "bun:test";
-import type { ActionResources } from "@byo20/shared";
+import type { ActionResources, ConditionName } from "@byo20/shared";
 import { ActionEconomySubsystem } from "../engines/dnd-5.5e/action-economy";
-import type { ActionResourceStore, CombatantState, ConditionsSubsystem } from "../engines/dnd-5.5e/action-economy";
+import type { CombatantState } from "../engines/dnd-5.5e/action-economy";
+import type { IActionResourceStore } from "../engines/dnd-5.5e/interfaces";
+import type { IConditionsSubsystem } from "../engines/dnd-5.5e/interfaces";
 import { initEngine } from "../index";
 import type { Vec3 } from "../utils/math";
 
@@ -22,7 +24,7 @@ function defaultResources(): ActionResources {
     };
 }
 
-class MemoryResourceStore implements ActionResourceStore {
+class MemoryResourceStore implements IActionResourceStore {
     private data = new Map<string, ActionResources>();
 
     async getTurnResources(combatantId: string): Promise<ActionResources> {
@@ -40,8 +42,8 @@ class MemoryResourceStore implements ActionResourceStore {
     }
 }
 
-class NoopConditions implements ConditionsSubsystem {
-    async getActiveConditions(_combatantId: string): Promise<string[]> {
+class NoopConditions implements IConditionsSubsystem {
+    async getActiveConditions(_combatantId: string): Promise<ConditionName[]> {
         return [];
     }
 }

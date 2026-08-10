@@ -6,6 +6,14 @@
 - Prefix interfaces with `I`: `IRulesEngine`, `IGameStateStore`
 - No implicit returns on functions with meaningful output
 
+## Interface Placement
+- Interfaces live in dedicated interface files — never defined inline inside an implementation file
+- Top-level engine contract: `interfaces/rules-engine.ts`
+- Subsystem-to-subsystem contracts within a layer: `{layer}/interfaces.ts` (e.g. `engines/dnd-5.5e/interfaces.ts`)
+- Both the consumer (imports to use) and the provider (imports to declare `implements`) point at the interface file — neither depends on the other
+- This keeps subsystem files decoupled: a file that uses an interface does not need to know which file implements it, and vice versa
+- Never define an interface in file A because file B happens to implement it — that couples A and B through the definition
+
 ## Docstrings
 - Every function, type, interface, class, and enum gets a JSDoc `/** ... */` docstring — exported or not
 - Every function and method parameter gets a `@param name - description` tag; no exceptions

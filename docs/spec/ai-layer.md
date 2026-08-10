@@ -161,6 +161,7 @@ The orchestrator is the coordinator. It receives an `EvaluationResult` from the 
 4. Invoke via LLM adapter
 5. Handle chained invocations (e.g. encounter gen → narration)
 6. Route output: structured JSON → game engine, prose → transport
+7. Stamp every outbound WS envelope with a shared `causeId` UUID for the duration of the invocation chain — all messages (condition applied, damage result, narration, CAUSE_RESOLVED) share one `causeId` so clients can correlate the full effect of a single player action
 
 ### Specialist Routing
 
