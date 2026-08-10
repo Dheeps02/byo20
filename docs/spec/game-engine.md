@@ -599,14 +599,16 @@ CheckType =
   | "ATTACK_ROLL_TARGET"  // this entity is the melee attack target (drives autoCrit)
   | "SAVE_STR" | "SAVE_DEX" | "SAVE_CON" | "SAVE_INT" | "SAVE_WIS" | "SAVE_CHA"
 
-getModifiers(conditions: ConditionName[], checkType: CheckType) → ModifierResult
+getModifiers(conditions: ConditionName[], exhaustionLevel: number, checkType: CheckType) → ModifierResult
 
 ModifierResult {
   advantage: boolean
   disadvantage: boolean
   autoCrit: boolean
   autoFail: boolean
-  speedMultiplier: number   // 0 = fully immobilised, 1 = normal; multiply base speed
+  flatBonus: number         // flat d20 modifier; exhaustion contributes -1 per level (2024 PHB)
+  speedOverride: number | null  // null = no override; 0 = fully immobilised (Grappled, Paralyzed, etc.)
+  speedReduction: number    // flat feet subtracted from base speed; 0 in v1
   actionsBlocked: boolean
   sources: ConditionName[]  // which conditions caused these modifiers
 }

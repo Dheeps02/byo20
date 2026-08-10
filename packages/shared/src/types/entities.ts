@@ -188,10 +188,21 @@ export const ModifierResultSchema = z.object({
     /** True when the entity automatically fails this type of save (STR/DEX saves vs Paralyzed etc.). */
     autoFail: z.boolean(),
     /**
-     * Multiplier applied to the entity's base speed.
-     * `0` = fully immobilised (Grappled, Restrained, Paralyzed, etc.), `1` = normal speed.
+     * Flat integer bonus (negative = penalty) added to the d20 roll.
+     * Exhaustion contributes `-exhaustionLevel` here (2024 PHB: -1 per level to all d20 tests).
      */
-    speedMultiplier: z.number().min(0).max(1),
+    flatBonus: z.number().int(),
+    /**
+     * Absolute speed override in feet. `null` means no override — use base speed minus `speedReduction`.
+     * Set to `0` by conditions that fully immobilise (Grappled, Restrained, Paralyzed, etc.).
+     */
+    speedOverride: z.number().int().min(0).nullable(),
+    /**
+     * Flat feet subtracted from base speed before applying any override.
+     * Exhaustion level 5 halves speed — the engine converts this using base speed at query time.
+     * For now always `0`; placeholder for future exhaustion-speed integration.
+     */
+    speedReduction: z.number().int().min(0),
     /** True when the entity cannot take actions or bonus actions (Incapacitated and its supersets). */
     actionsBlocked: z.boolean(),
     /** Which conditions contributed to the non-neutral fields above — used for GUI tooltips and combat log. */

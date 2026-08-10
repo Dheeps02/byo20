@@ -238,18 +238,22 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
      * (any advantage + any disadvantage → single d20) when consuming this result.
      *
      * @param conditions - Active condition names for the entity making (or receiving) the roll.
+     * @param exhaustionLevel - Current exhaustion level 0-6; contributes -1 per level to `flatBonus`.
      * @param checkType - Category of the roll being made.
      * @returns Modifier profile covering advantage, disadvantage, autoCrit, autoFail, speed, and blocked actions.
      */
-    getModifiers(conditions: ConditionName[], checkType: CheckType): ModifierResult {
+    getModifiers(conditions: ConditionName[], exhaustionLevel: number, checkType: CheckType): ModifierResult {
         const set = new Set(conditions);
         const sources = new Set<ConditionName>();
         let advantage = false;
         let disadvantage = false;
         let autoCrit = false;
         let autoFail = false;
-        let speedMultiplier = 1;
+        let speedOverride: number | null = null;
         let actionsBlocked = false;
+
+        // ── flatBonus: exhaustion — 2024 PHB: -1 per level to all d20 tests ───
+        const flatBonus = exhaustionLevel > 0 ? -exhaustionLevel : 0;
 
         // ── actionsBlocked: Incapacitated + supersets ──────────────────────────
         for (const c of INCAPACITATING) {
@@ -259,10 +263,10 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
             }
         }
 
-        // ── speedMultiplier: zero-speed conditions ─────────────────────────────
+        // ── speedOverride: zero-speed conditions set it to 0 ──────────────────
         for (const c of ZERO_SPEED) {
             if (set.has(c)) {
-                speedMultiplier = 0;
+                speedOverride = 0;
                 sources.add(c);
             }
         }
@@ -322,7 +326,9 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
             disadvantage,
             autoCrit,
             autoFail,
-            speedMultiplier,
+            flatBonus,
+            speedOverride,
+            speedReduction: 0,
             actionsBlocked,
             sources: [...sources],
         };
