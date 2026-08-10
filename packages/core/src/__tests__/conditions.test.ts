@@ -656,8 +656,24 @@ describe("tickExpirations", () => {
 
     test("removes TIMED effects whose expiresAtRound <= currentRound", async () => {
         const entity = "entity-tick";
-        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "frightened", scope: "TIMED", expiresAtRound: 3, sourceId: "s1" }));
-        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "poisoned", scope: "TIMED", expiresAtRound: 5, sourceId: "s2" }));
+        await sub.applyCondition(
+            makeOpts({
+                entityId: entity,
+                conditionName: "frightened",
+                scope: "TIMED",
+                expiresAtRound: 3,
+                sourceId: "s1",
+            }),
+        );
+        await sub.applyCondition(
+            makeOpts({
+                entityId: entity,
+                conditionName: "poisoned",
+                scope: "TIMED",
+                expiresAtRound: 5,
+                sourceId: "s2",
+            }),
+        );
 
         const result = await sub.tickExpirations(entity, 3);
         expect(result.ok).toBe(true);
@@ -669,8 +685,24 @@ describe("tickExpirations", () => {
 
     test("does not remove COMBAT or SUSTAINED effects", async () => {
         const entity = "entity-tick2";
-        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "blinded", scope: "COMBAT", expiresAtRound: null, sourceId: "s1" }));
-        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "grappled", scope: "SUSTAINED", expiresAtRound: null, sourceId: "s2" }));
+        await sub.applyCondition(
+            makeOpts({
+                entityId: entity,
+                conditionName: "blinded",
+                scope: "COMBAT",
+                expiresAtRound: null,
+                sourceId: "s1",
+            }),
+        );
+        await sub.applyCondition(
+            makeOpts({
+                entityId: entity,
+                conditionName: "grappled",
+                scope: "SUSTAINED",
+                expiresAtRound: null,
+                sourceId: "s2",
+            }),
+        );
 
         await sub.tickExpirations(entity, 10);
 
@@ -679,7 +711,15 @@ describe("tickExpirations", () => {
 
     test("leaves TIMED effects that have not yet expired", async () => {
         const entity = "entity-tick3";
-        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "frightened", scope: "TIMED", expiresAtRound: 5, sourceId: "s1" }));
+        await sub.applyCondition(
+            makeOpts({
+                entityId: entity,
+                conditionName: "frightened",
+                scope: "TIMED",
+                expiresAtRound: 5,
+                sourceId: "s1",
+            }),
+        );
 
         await sub.tickExpirations(entity, 4);
 

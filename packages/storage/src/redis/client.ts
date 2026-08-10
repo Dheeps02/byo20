@@ -245,10 +245,7 @@ export async function addEntityEffect(
 ): Promise<void> {
     const current = await getActiveEffects(redis, encounterId, entityId);
     await setActiveEffects(redis, encounterId, entityId, [...current, effect]);
-    getLogger().debug(
-        { encounterId, entityId, effectId: effect.id, name: effect.name },
-        "addEntityEffect",
-    );
+    getLogger().debug({ encounterId, entityId, effectId: effect.id, name: effect.name }, "addEntityEffect");
 }
 
 /**
