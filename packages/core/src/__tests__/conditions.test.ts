@@ -382,6 +382,21 @@ describe("getModifiers", () => {
         expect(r.flatBonus).toBe(-4);
         expect(r.disadvantage).toBe(true);
     });
+
+    test("exhaustion level 0 → speedReduction=0", () => {
+        const r = ConditionsSubsystem.getModifiers([], 0, "ATTACK_ROLL");
+        expect(r.speedReduction).toBe(0);
+    });
+
+    test("exhaustion level 3 → speedReduction=15", () => {
+        const r = ConditionsSubsystem.getModifiers([], 3, "ATTACK_ROLL");
+        expect(r.speedReduction).toBe(15);
+    });
+
+    test("exhaustion level 6 → speedReduction=30", () => {
+        const r = ConditionsSubsystem.getModifiers([], 6, "ABILITY_CHECK");
+        expect(r.speedReduction).toBe(30);
+    });
 });
 
 // ── isIncapacitated (pure function) ───────────────────────────────────────────

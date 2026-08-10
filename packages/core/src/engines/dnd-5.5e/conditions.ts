@@ -457,7 +457,7 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
             autoFail,
             flatBonus,
             speedOverride,
-            speedReduction: 0,
+            speedReduction: 5 * exhaustionLevel,
             actionsBlocked,
             sources: [...sources],
         };

@@ -201,8 +201,7 @@ export const ModifierResultSchema = z.object({
     speedOverride: z.number().int().min(0).nullable(),
     /**
      * Flat feet subtracted from base speed before applying any override.
-     * Exhaustion level 5 halves speed — the engine converts this using base speed at query time.
-     * For now always `0`; placeholder for future exhaustion-speed integration.
+     * Exhaustion contributes `5 * exhaustionLevel` here (2024 PHB: -5ft per level, cumulative).
      */
     speedReduction: z.number().int().min(0),
     /** True when the entity cannot take actions or bonus actions (Incapacitated and its supersets). */
