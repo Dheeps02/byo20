@@ -521,15 +521,15 @@ is a sub-resource spent per roll, not per action declaration. The combat engine 
 | **Blinded** | Own attacks Disadvantage. Attacks against have Advantage. Auto-fail sight checks. |
 | **Charmed** | Can't attack/harm charmer. Charmer has Advantage on social checks. |
 | **Deafened** | Auto-fail hearing checks. |
-| **Exhaustion** | Stackable 1-6. Each level: -2 to all d20 rolls, -5ft speed. Die at level 6. Long rest removes 1 level. |
+| **Exhaustion** | Stackable 1-6. Each level: -1 to all d20 tests (2024 PHB). Speed halved at level 5. Die at level 6. Long rest removes 1 level. |
 | **Frightened** | Disadvantage on attacks/checks while source in line of sight. Can't move toward source. |
-| **Grappled** | Speed 0. Ends if grappler incapacitated or out of range. |
+| **Grappled** | Speed 0 (cannot increase). SUSTAINED — ends when grappler is Incapacitated, or when the grappled creature is moved beyond the grappler's reach. |
 | **Incapacitated** | No actions, bonus actions, or reactions. Breaks concentration. |
 | **Invisible** | Own attacks Advantage. Attacks against have Disadvantage. Can't be seen normally. |
 | **Paralyzed** | Includes Incapacitated. Speed 0. Auto-fail STR/DEX saves. Attacks against Advantage. Hits within 5ft = auto-crit. |
 | **Petrified** | Includes Incapacitated. Speed 0. Auto-fail STR/DEX saves. Attacks against Advantage. Resistance to all damage. Immune to poison. |
 | **Poisoned** | Disadvantage on attack rolls and ability checks. |
-| **Prone** | Own attacks Disadvantage. Melee attacks against Advantage. Ranged attacks against Disadvantage. Can only crawl or spend half speed to stand. |
+| **Prone** | Own attacks Disadvantage. Melee attacks against Advantage (within 5 ft); ranged attacks against Disadvantage (beyond 5 ft). SUSTAINED — standing costs half Speed; crawling costs double movement. |
 | **Restrained** | Speed 0. Attacks against Advantage. Own attacks Disadvantage. Disadvantage on DEX saves. |
 | **Stunned** | Includes Incapacitated. Speed 0. Auto-fail STR/DEX saves. Attacks against Advantage. |
 | **Unconscious** | Includes Incapacitated + Prone. Drop held items. Auto-fail STR/DEX saves. Attacks against Advantage. Hits within 5ft = auto-crit. Unaware of surroundings. |
@@ -560,11 +560,11 @@ isIncapacitated = conditions.includes("incapacitated")
 
 Every active condition (tracked as an `ActiveEffect` in Redis) has a scope:
 
-| Scope | Description | Cleared |
-|---|---|---|
-| `COMBAT` | Combat-specific effect (e.g. Dodge action's Disadvantage effect) | At `COMBAT_ENDED` |
-| `TIMED` | Has explicit `expires_at` world clock timestamp | When world clock passes `expires_at` |
-| `SUSTAINED` | Persists until a specific counter-action | Prone → stand up. Grappled → break grapple. |
+| Scope | Description | Expiry fields | Cleared |
+|---|---|---|---|
+| `COMBAT` | Combat-specific effect (e.g. Dodge action's Disadvantage effect) | Both `null` | At `COMBAT_ENDED` |
+| `TIMED` | Expires at a specific round or world-clock time | `expiresAtRound` and/or `expiresAtTime` set | When round or clock passes expiry |
+| `SUSTAINED` | Persists until a specific counter-action | Both `null` | Prone → stand up. Grappled → break grapple. |
 
 ### ActiveEffect Shape (Redis)
 
