@@ -335,7 +335,7 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
 
     /**
      * Compute the modifier profile for a set of conditions and a specific roll type.
-     * Pure function — no I/O. Called by the combat engine before every roll.
+     * Pure static function — no I/O. Called by the combat engine before every roll.
      *
      * Advantage and disadvantage from separate conditions stack independently on their
      * respective sides; the engine applies the standard PHB cancellation rule
@@ -346,7 +346,7 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
      * @param checkType - Category of the roll being made.
      * @returns Modifier profile covering advantage, disadvantage, autoCrit, autoFail, speed, and blocked actions.
      */
-    getModifiers(conditions: ConditionName[], exhaustionLevel: number, checkType: CheckType): ModifierResult {
+    static getModifiers(conditions: ConditionName[], exhaustionLevel: number, checkType: CheckType): ModifierResult {
         const set = new Set(conditions);
         const sources = new Set<ConditionName>();
         let advantage = false;
@@ -439,14 +439,27 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
     }
 
     /**
-     * Return whether the entity is incapacitated (unable to act).
-     * Incapacitated is implied by Paralyzed, Petrified, Stunned, and Unconscious.
+     * Return whether a condition list includes any incapacitating condition.
+     * Pure static function — takes conditions already loaded by the caller.
+     * Use `isEntityIncapacitated` when you only have an entityId and want a single async call.
      *
      * @param conditions - Active condition names for the entity.
      * @returns True if any incapacitating condition is present.
      */
-    isIncapacitated(conditions: ConditionName[]): boolean {
+    static isIncapacitated(conditions: ConditionName[]): boolean {
         return INCAPACITATING.some((c) => conditions.includes(c));
+    }
+
+    /**
+     * Async convenience wrapper: reads active conditions from the store and checks incapacitation.
+     * Prefer `isIncapacitated` (static) when conditions are already available to avoid extra I/O.
+     *
+     * @param entityId - Entity UUID.
+     * @returns True if the entity is incapacitated.
+     */
+    async isEntityIncapacitated(entityId: string): Promise<boolean> {
+        const conditions = await this.getActiveConditions(entityId);
+        return ConditionsSubsystem.isIncapacitated(conditions);
     }
 
     /**
