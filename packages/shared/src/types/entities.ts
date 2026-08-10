@@ -189,7 +189,7 @@ export const ModifierResultSchema = z.object({
     autoFail: z.boolean(),
     /**
      * Flat integer bonus (negative = penalty) added to the d20 roll.
-     * Exhaustion contributes `-exhaustionLevel` here (2024 PHB: -1 per level to all d20 tests).
+     * Exhaustion contributes `-(2 * exhaustionLevel)` here (2024 PHB: -2 per level to all d20 tests).
      */
     flatBonus: z.number().int(),
     /**

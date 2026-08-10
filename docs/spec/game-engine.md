@@ -521,7 +521,7 @@ is a sub-resource spent per roll, not per action declaration. The combat engine 
 | **Blinded** | Own attacks Disadvantage. Attacks against have Advantage. Auto-fail sight checks. |
 | **Charmed** | Can't attack/harm charmer. Charmer has Advantage on social checks. |
 | **Deafened** | Auto-fail hearing checks. |
-| **Exhaustion** | Stackable 1-6. Each level: -1 to all d20 tests (2024 PHB). Speed halved at level 5. Die at level 6. Long rest removes 1 level. |
+| **Exhaustion** | Stackable 1-6. Each level: -2 to all d20 tests (2024 PHB). Speed halved at level 5. Die at level 6. Long rest removes 1 level. |
 | **Frightened** | Disadvantage on attacks/checks while source in line of sight. Can't move toward source. |
 | **Grappled** | Speed 0 (cannot increase). SUSTAINED — ends when grappler is Incapacitated, or when the grappled creature is moved beyond the grappler's reach. |
 | **Incapacitated** | No actions, bonus actions, or reactions. Breaks concentration. |
@@ -606,7 +606,7 @@ ModifierResult {
   disadvantage: boolean
   autoCrit: boolean
   autoFail: boolean
-  flatBonus: number         // flat d20 modifier; exhaustion contributes -1 per level (2024 PHB)
+  flatBonus: number         // flat d20 modifier; exhaustion contributes -2 per level (2024 PHB)
   speedOverride: number | null  // null = no override; 0 = fully immobilised (Grappled, Paralyzed, etc.)
   speedReduction: number    // flat feet subtracted from base speed; 0 in v1
   actionsBlocked: boolean

@@ -327,19 +327,19 @@ describe("getModifiers", () => {
         expect(r.flatBonus).toBe(0);
     });
 
-    test("exhaustion level 3 → flatBonus=-3", () => {
+    test("exhaustion level 3 → flatBonus=-6", () => {
         const r = ConditionsSubsystem.getModifiers([], 3, "ATTACK_ROLL");
-        expect(r.flatBonus).toBe(-3);
+        expect(r.flatBonus).toBe(-6);
     });
 
-    test("exhaustion level 6 → flatBonus=-6", () => {
+    test("exhaustion level 6 → flatBonus=-12", () => {
         const r = ConditionsSubsystem.getModifiers([], 6, "ABILITY_CHECK");
-        expect(r.flatBonus).toBe(-6);
+        expect(r.flatBonus).toBe(-12);
     });
 
     test("conditions + exhaustion: both flatBonus and condition modifiers apply", () => {
         const r = ConditionsSubsystem.getModifiers(["poisoned"], 2, "ATTACK_ROLL");
-        expect(r.flatBonus).toBe(-2);
+        expect(r.flatBonus).toBe(-4);
         expect(r.disadvantage).toBe(true);
     });
 });

@@ -342,7 +342,7 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
      * (any advantage + any disadvantage → single d20) when consuming this result.
      *
      * @param conditions - Active condition names for the entity making (or receiving) the roll.
-     * @param exhaustionLevel - Current exhaustion level 0-6; contributes -1 per level to `flatBonus`.
+     * @param exhaustionLevel - Current exhaustion level 0-6; contributes -2 per level to `flatBonus`.
      * @param checkType - Category of the roll being made.
      * @returns Modifier profile covering advantage, disadvantage, autoCrit, autoFail, speed, and blocked actions.
      */
@@ -356,8 +356,8 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
         let speedOverride: number | null = null;
         let actionsBlocked = false;
 
-        // ── flatBonus: exhaustion — 2024 PHB: -1 per level to all d20 tests ───
-        const flatBonus = exhaustionLevel > 0 ? -exhaustionLevel : 0;
+        // ── flatBonus: exhaustion — 2024 PHB: -2 per level to all d20 tests ───
+        const flatBonus = exhaustionLevel > 0 ? -(2 * exhaustionLevel) : 0;
 
         // ── actionsBlocked: Incapacitated + supersets ──────────────────────────
         for (const c of INCAPACITATING) {
