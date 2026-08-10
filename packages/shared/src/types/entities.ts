@@ -143,7 +143,7 @@ export const ActiveEffectSchema = z.object({
      */
     expiresAtRound: z.number().int().min(1).nullable(),
     /**
-     * World-clock Unix timestamp (ms) at which this TIMED effect expires.
+     * World-clock integer minutes at which this TIMED effect expires. Matches the world-clock system's integer-minutes granularity.
      * `null` when `scope` is `COMBAT` or `SUSTAINED`.
      */
     expiresAtTime: z.number().int().nullable(),
@@ -234,7 +234,7 @@ export const ApplyConditionOptionsSchema = z.object({
      */
     expiresAtRound: z.number().int().min(1).nullable(),
     /**
-     * World-clock integer minutes at which this TIMED effect expires.
+     * World-clock integer minutes at which this TIMED effect expires. Matches the world-clock system's integer-minutes granularity.
      * Mutually exclusive with expiresAtRound — set one or the other, not both.
      * Must be null for COMBAT and SUSTAINED scopes.
      */
