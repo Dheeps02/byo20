@@ -129,8 +129,6 @@ export type EffectScope = z.infer<typeof EffectScopeSchema>;
 export const ActiveEffectSchema = z.object({
     /** UUID uniquely identifying this effect instance. */
     id: z.string().uuid(),
-    /** UUID grouping all effects emitted from one orchestrator invocation. */
-    causeId: z.string().uuid(),
     /** The D&D 5.5e condition this effect represents. */
     conditionName: ConditionNameSchema,
     /** UUID of the entity the effect is applied to. */
@@ -211,8 +209,6 @@ export const ApplyConditionOptionsSchema = z.object({
      * Required when `scope` is `TIMED`; must be `null` for `COMBAT` and `SUSTAINED`.
      */
     expiresAtRound: z.number().int().min(1).nullable(),
-    /** Orchestrator cause UUID to stamp on the resulting `ActiveEffect`. */
-    causeId: z.string().uuid(),
 });
 /** Options bag for `ConditionsSubsystem.applyCondition`. */
 export type ApplyConditionOptions = z.infer<typeof ApplyConditionOptionsSchema>;

@@ -139,7 +139,6 @@ function makeOpts(overrides: Partial<ApplyConditionOptions> = {}): ApplyConditio
         sourceKind: "spell",
         scope: "COMBAT",
         expiresAtRound: null,
-        causeId: "cause-00000001",
         ...overrides,
     };
 }
@@ -332,7 +331,6 @@ describe("applyCondition", () => {
         expect(effect.sourceKind).toBe(opts.sourceKind);
         expect(effect.scope).toBe("COMBAT");
         expect(effect.expiresAtRound).toBeNull();
-        expect(effect.causeId).toBe(opts.causeId);
         expect(typeof effect.id).toBe("string");
         expect(effect.id).toHaveLength(36); // UUID v4 length
     });

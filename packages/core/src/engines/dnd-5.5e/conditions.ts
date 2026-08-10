@@ -179,13 +179,13 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
 
         const effect: ActiveEffect = {
             id: crypto.randomUUID(),
-            causeId: opts.causeId,
             conditionName: opts.conditionName,
             targetId: opts.entityId,
             sourceId: opts.sourceId,
             sourceKind: opts.sourceKind,
             scope: opts.scope,
             expiresAtRound: opts.expiresAtRound,
+            expiresAtTime: null,
         };
 
         await this.effects.addEntityEffect(opts.entityId, effect);
