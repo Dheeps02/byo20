@@ -116,7 +116,7 @@ export const EffectScopeSchema = z.enum(["COMBAT", "TIMED", "SUSTAINED"]);
 /**
  * Lifetime scope of an active effect.
  * - `COMBAT` — cleared automatically when `COMBAT_ENDED` fires.
- * - `TIMED` — expires when the combat round reaches `expiresAtRound`.
+ * - `TIMED` — expires when the combat round reaches `expiresAtRound` or the world clock reaches `expiresAtTime`.
  * - `SUSTAINED` — persists until an explicit counter-action (stand up, break grapple, etc.).
  */
 export type EffectScope = z.infer<typeof EffectScopeSchema>;
