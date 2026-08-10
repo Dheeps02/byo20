@@ -40,12 +40,12 @@ export interface IEncounterEffectsStore {
      */
     addEntityEffect(entityId: string, effect: ActiveEffect): Promise<void>;
     /**
-     * Remove all effects for an entity where conditionName and sourceId both match.
+     * Remove all effects for an entity where name and sourceId both match.
      * @param entityId - Entity UUID.
-     * @param conditionName - Condition name to remove.
+     * @param name - Effect name to remove.
      * @param sourceId - Source entity UUID (or `"system"`) to remove; other sources remain.
      */
-    removeEntityEffectsBySource(entityId: string, conditionName: ConditionName, sourceId: string): Promise<void>;
+    removeEntityEffectsBySource(entityId: string, name: string, sourceId: string): Promise<void>;
 }
 
 /**

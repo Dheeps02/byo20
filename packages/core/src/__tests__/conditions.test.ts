@@ -37,9 +37,9 @@ class MemoryEffectsStore implements IEncounterEffectsStore {
         this.data.set(entityId, [...current, effect]);
     }
 
-    async removeEntityEffectsBySource(entityId: string, conditionName: ConditionName, sourceId: string): Promise<void> {
+    async removeEntityEffectsBySource(entityId: string, name: string, sourceId: string): Promise<void> {
         const current = this.data.get(entityId) ?? [];
-        const remaining = current.filter((e) => !(e.conditionName === conditionName && e.sourceId === sourceId));
+        const remaining = current.filter((e) => !(e.name === name && e.sourceId === sourceId));
         if (remaining.length === 0) {
             this.data.delete(entityId);
         } else {
@@ -324,7 +324,7 @@ describe("applyCondition", () => {
         if (!result.ok) return;
 
         const effect = result.value;
-        expect(effect.conditionName).toBe("poisoned");
+        expect(effect.name).toBe("poisoned");
         expect(effect.targetId).toBe(opts.entityId);
         expect(effect.sourceId).toBe(opts.sourceId);
         expect(effect.scope).toBe("COMBAT");
@@ -339,7 +339,7 @@ describe("applyCondition", () => {
 
         const stored = store.snapshot("entity-A");
         expect(stored).toHaveLength(1);
-        expect(stored[0].conditionName).toBe("blinded");
+        expect(stored[0].name).toBe("blinded");
     });
 
     test("TIMED scope requires non-null expiresAtRound", async () => {

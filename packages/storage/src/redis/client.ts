@@ -1,4 +1,4 @@
-import type { ActionResources, ActiveEffect, ConditionName } from "@byo20/shared";
+import type { ActionResources, ActiveEffect } from "@byo20/shared";
 import { ActiveEffectSchema } from "@byo20/shared";
 /**
  * Redis client and typed helpers for BYO20's session state.
@@ -246,7 +246,7 @@ export async function addEntityEffect(
     const current = await getActiveEffects(redis, encounterId, entityId);
     await setActiveEffects(redis, encounterId, entityId, [...current, effect]);
     getLogger().debug(
-        { encounterId, entityId, effectId: effect.id, conditionName: effect.conditionName },
+        { encounterId, entityId, effectId: effect.id, name: effect.name },
         "addEntityEffect",
     );
 }
@@ -266,18 +266,18 @@ export async function removeEntityEffectsBySource(
     redis: Redis,
     encounterId: string,
     entityId: string,
-    conditionName: ConditionName,
+    name: string,
     sourceId: string,
 ): Promise<void> {
     const current = await getActiveEffects(redis, encounterId, entityId);
-    const remaining = current.filter((e) => !(e.conditionName === conditionName && e.sourceId === sourceId));
+    const remaining = current.filter((e) => !(e.name === name && e.sourceId === sourceId));
     if (remaining.length === 0) {
         await redis.hdel(effectsKey(encounterId), entityId);
     } else {
         await setActiveEffects(redis, encounterId, entityId, remaining);
     }
     getLogger().debug(
-        { encounterId, entityId, conditionName, sourceId, removed: current.length - remaining.length },
+        { encounterId, entityId, name, sourceId, removed: current.length - remaining.length },
         "removeEntityEffectsBySource",
     );
 }

@@ -123,14 +123,14 @@ export type EffectScope = z.infer<typeof EffectScopeSchema>;
 
 /**
  * Zod schema for a single active condition effect stored in Redis.
- * Multiple `ActiveEffect` entries with the same `conditionName` but different `sourceId`
+ * Multiple `ActiveEffect` entries with the same `name` but different `sourceId`
  * values are distinct — the condition persists while any source remains.
  */
 export const ActiveEffectSchema = z.object({
     /** UUID uniquely identifying this effect instance. */
     id: z.string().uuid(),
-    /** The D&D 5.5e condition this effect represents. */
-    conditionName: ConditionNameSchema,
+    /** The effect name — for conditions, matches one of the 15 `ConditionName` values. */
+    name: z.string(),
     /** UUID of the entity the effect is applied to. */
     targetId: z.string().uuid(),
     /** UUID of the entity that applied the effect, or `"system"` for engine-internal sources. */

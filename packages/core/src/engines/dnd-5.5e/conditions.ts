@@ -122,7 +122,7 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
         const active = await this.effects.getActiveEffects(entityId);
         const seen = new Set<ConditionName>();
         for (const e of active) {
-            seen.add(e.conditionName);
+            seen.add(e.name as ConditionName);
         }
         const result = [...seen];
         getLogger().debug({ encounterId: this.encounterId, entityId, conditions: result }, "getActiveConditions");
@@ -163,7 +163,7 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
 
         // Idempotency: return existing effect if same (conditionName, sourceId) already active
         const current = await this.effects.getActiveEffects(opts.entityId);
-        const existing = current.find((e) => e.conditionName === opts.conditionName && e.sourceId === opts.sourceId);
+        const existing = current.find((e) => e.name === opts.conditionName && e.sourceId === opts.sourceId);
         if (existing) {
             getLogger().debug(
                 {
@@ -179,7 +179,7 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
 
         const effect: ActiveEffect = {
             id: crypto.randomUUID(),
-            conditionName: opts.conditionName,
+            name: opts.conditionName,
             targetId: opts.entityId,
             sourceId: opts.sourceId,
             scope: opts.scope,
