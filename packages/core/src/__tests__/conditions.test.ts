@@ -136,7 +136,6 @@ function makeOpts(overrides: Partial<ApplyConditionOptions> = {}): ApplyConditio
         entityId: "entity-00000001",
         conditionName: "poisoned",
         sourceId: "source-00000001",
-        sourceKind: "spell",
         scope: "COMBAT",
         expiresAtRound: null,
         ...overrides,
@@ -328,7 +327,6 @@ describe("applyCondition", () => {
         expect(effect.conditionName).toBe("poisoned");
         expect(effect.targetId).toBe(opts.entityId);
         expect(effect.sourceId).toBe(opts.sourceId);
-        expect(effect.sourceKind).toBe(opts.sourceKind);
         expect(effect.scope).toBe("COMBAT");
         expect(effect.expiresAtRound).toBeNull();
         expect(typeof effect.id).toBe("string");

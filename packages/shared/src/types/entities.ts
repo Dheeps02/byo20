@@ -135,8 +135,6 @@ export const ActiveEffectSchema = z.object({
     targetId: z.string().uuid(),
     /** UUID of the entity that applied the effect, or `"system"` for engine-internal sources. */
     sourceId: z.string(),
-    /** Broad category of the source — used for UI tooltips and log descriptions. */
-    sourceKind: z.enum(["spell", "ability", "environment", "system"]),
     /** Lifetime scope of the effect. */
     scope: EffectScopeSchema,
     /**
@@ -200,8 +198,6 @@ export const ApplyConditionOptionsSchema = z.object({
     conditionName: ConditionNameSchema,
     /** UUID of the entity applying the condition, or `"system"`. */
     sourceId: z.string(),
-    /** Broad source category for tooltip and log display. */
-    sourceKind: z.enum(["spell", "ability", "environment", "system"]),
     /** Lifetime scope of the effect. */
     scope: EffectScopeSchema,
     /**

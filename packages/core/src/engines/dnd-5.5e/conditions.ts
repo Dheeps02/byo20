@@ -182,7 +182,6 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
             conditionName: opts.conditionName,
             targetId: opts.entityId,
             sourceId: opts.sourceId,
-            sourceKind: opts.sourceKind,
             scope: opts.scope,
             expiresAtRound: opts.expiresAtRound,
             expiresAtTime: null,
