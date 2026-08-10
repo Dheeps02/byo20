@@ -573,14 +573,12 @@ EffectScope = "COMBAT" | "TIMED" | "SUSTAINED"
 
 ActiveEffect {
   id: string              // UUID — uniquely identifies this effect instance
-  causeId: string         // UUID — groups all effects from one orchestrator invocation
-  conditionName: ConditionName  // one of the 15 ConditionName values
+  name: string            // ConditionName for conditions; spell/ability name otherwise
   targetId: string        // entity UUID the effect applies to
   sourceId: string        // entity UUID that applied it, or "system"
-  sourceKind: string      // "spell" | "ability" | "environment" | "system"
   scope: EffectScope      // COMBAT | TIMED | SUSTAINED
-  expiresAtRound: number | null  // combat round number, null when scope is COMBAT or SUSTAINED
-  expiresAtTime: number | null   // world-clock ms timestamp, null when scope is COMBAT or SUSTAINED
+  expiresAtTime: number | null   // world-clock integer minutes, null when COMBAT or SUSTAINED
+  expiresAtRound: number | null  // combat round number, null when COMBAT or SUSTAINED
 }
 
 // Stored per entity in the encounter effects hash in Redis:
@@ -634,18 +632,29 @@ Multiple sources on the same side don't stack — one Advantage source and three
 The `ConditionsSubsystem` class is the single point of entry for all condition operations. It owns both Redis (live combat) and Postgres (persistent state) writes for conditions and exhaustion.
 
 ```
+// Storage-backed — bound to encounterId at construction
 applyCondition(opts: ApplyConditionOptions): Promise<Result<ActiveEffect, GameRejection>>
-removeCondition(encounterId, entityId, conditionName, sourceId): Promise<Result<void, GameRejection>>
-getActiveConditions(encounterId, entityId): Promise<ConditionName[]>
-getActiveEffects(encounterId, entityId): Promise<ActiveEffect[]>
-getModifiers(conditions: ConditionName[], checkType: CheckType): ModifierResult
-isIncapacitated(conditions: ConditionName[]): boolean
+removeCondition(entityId, conditionName, sourceId?): Promise<Result<void, GameRejection>>
+removeConditionsBySource(entityId, sourceId): Promise<Result<void, GameRejection>>
+clearAllConditions(entityId): Promise<Result<void, GameRejection>>
+tickExpirations(entityId, currentClockMinutes, currentRound): Promise<ConditionName[]>
+getActiveConditions(entityId): Promise<ConditionName[]>
+getActiveEffects(entityId): Promise<ActiveEffect[]>
+isEntityIncapacitated(entityId): Promise<boolean>
+flushConditionsToPostgres(entityId, characterCampaignStateId): Promise<void>
+
+// Exhaustion — Redis cache
 getExhaustionLevel(characterId): Promise<number>
 setExhaustionLevel(characterId, level): Promise<Result<void, GameRejection>>
-flushConditionsToPostgres(encounterId, entityId, characterCampaignStateId): Promise<void>
+incrementExhaustion(characterId): Promise<Result<number, GameRejection>>
+decrementExhaustion(characterId): Promise<Result<number, GameRejection>>
+
+// Pure static — no I/O
+static getModifiers(conditions, exhaustionLevel, checkType): ModifierResult
+static isIncapacitated(conditions): boolean
 ```
 
-`ApplyConditionOptions` carries `encounterId`, `entityId`, `conditionName`, `sourceId`, `sourceKind`, `scope`, `expiresAtRound`, and `causeId`.
+`ApplyConditionOptions` carries `encounterId`, `entityId`, `conditionName`, `sourceId`, `scope`, `expiresAtRound`, and `expiresAtTime`.
 
 ### Implementation
 
