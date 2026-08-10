@@ -140,21 +140,24 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
      * @returns Ok with the created (or existing) `ActiveEffect`, or err if validation fails.
      */
     async applyCondition(opts: ApplyConditionOptions): Promise<Result<ActiveEffect, GameRejection>> {
-        if (opts.scope === "TIMED" && opts.expiresAtRound === null) {
+        if (opts.scope === "TIMED" && opts.expiresAtRound === null && opts.expiresAtTime === null) {
             return {
                 ok: false,
                 error: {
-                    reason: "TIMED effects must specify expiresAtRound.",
+                    reason: "TIMED effects must specify expiresAtRound or expiresAtTime.",
                     action_type: "CONDITION_APPLY",
                     context: { conditionName: opts.conditionName, scope: opts.scope },
                 },
             };
         }
-        if ((opts.scope === "COMBAT" || opts.scope === "SUSTAINED") && opts.expiresAtRound !== null) {
+        if (
+            (opts.scope === "COMBAT" || opts.scope === "SUSTAINED") &&
+            (opts.expiresAtRound !== null || opts.expiresAtTime !== null)
+        ) {
             return {
                 ok: false,
                 error: {
-                    reason: `${opts.scope} effects must have expiresAtRound = null.`,
+                    reason: `${opts.scope} effects must have both expiry fields null.`,
                     action_type: "CONDITION_APPLY",
                     context: { conditionName: opts.conditionName, scope: opts.scope },
                 },
@@ -184,7 +187,7 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
             sourceId: opts.sourceId,
             scope: opts.scope,
             expiresAtRound: opts.expiresAtRound,
-            expiresAtTime: null,
+            expiresAtTime: opts.expiresAtTime ?? null,
         };
 
         await this.effects.addEntityEffect(opts.entityId, effect);

@@ -231,6 +231,12 @@ export const ApplyConditionOptionsSchema = z.object({
      * Required when `scope` is `TIMED`; must be `null` for `COMBAT` and `SUSTAINED`.
      */
     expiresAtRound: z.number().int().min(1).nullable(),
+    /**
+     * World-clock integer minutes at which this TIMED effect expires.
+     * Mutually exclusive with expiresAtRound — set one or the other, not both.
+     * Must be null for COMBAT and SUSTAINED scopes.
+     */
+    expiresAtTime: z.number().int().nullable(),
 });
 /** Options bag for `ConditionsSubsystem.applyCondition`. */
 export type ApplyConditionOptions = z.infer<typeof ApplyConditionOptionsSchema>;

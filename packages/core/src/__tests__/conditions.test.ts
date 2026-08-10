@@ -162,6 +162,7 @@ function makeOpts(overrides: Partial<ApplyConditionOptions> = {}): ApplyConditio
         sourceId: "source-00000001",
         scope: "COMBAT",
         expiresAtRound: null,
+        expiresAtTime: null,
         ...overrides,
     };
 }
