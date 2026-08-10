@@ -412,6 +412,15 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
             advantage = true;
             sources.add("invisible");
         }
+        // These target conditions grant advantage to attackers.
+        if (checkType === "ATTACK_ROLL_TARGET") {
+            for (const c of ["blinded", "paralyzed", "prone", "restrained", "stunned", "unconscious"] as const) {
+                if (set.has(c)) {
+                    advantage = true;
+                    sources.add(c);
+                }
+            }
+        }
 
         // ── Disadvantage sources ───────────────────────────────────────────────
         if (checkType === "ATTACK_ROLL") {
@@ -429,6 +438,11 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
                     sources.add(c);
                 }
             }
+        }
+        // Invisible target — attacks against it have disadvantage.
+        if (checkType === "ATTACK_ROLL_TARGET" && set.has("invisible")) {
+            disadvantage = true;
+            sources.add("invisible");
         }
         // Restrained imposes disadvantage on DEX saves specifically (PHB).
         if (checkType === "SAVE_DEX" && set.has("restrained")) {

@@ -323,6 +323,45 @@ describe("getModifiers", () => {
         expect(r.sources).not.toContain("deafened");
     });
 
+    test("blinded target → advantage on ATTACK_ROLL_TARGET", () => {
+        const r = ConditionsSubsystem.getModifiers(["blinded"], 0, "ATTACK_ROLL_TARGET");
+        expect(r.advantage).toBe(true);
+        expect(r.sources).toContain("blinded");
+    });
+
+    test("prone target → advantage on ATTACK_ROLL_TARGET", () => {
+        const r = ConditionsSubsystem.getModifiers(["prone"], 0, "ATTACK_ROLL_TARGET");
+        expect(r.advantage).toBe(true);
+    });
+
+    test("restrained target → advantage on ATTACK_ROLL_TARGET", () => {
+        const r = ConditionsSubsystem.getModifiers(["restrained"], 0, "ATTACK_ROLL_TARGET");
+        expect(r.advantage).toBe(true);
+    });
+
+    test("stunned target → advantage on ATTACK_ROLL_TARGET, no autoCrit", () => {
+        const r = ConditionsSubsystem.getModifiers(["stunned"], 0, "ATTACK_ROLL_TARGET");
+        expect(r.advantage).toBe(true);
+        expect(r.autoCrit).toBe(false);
+    });
+
+    test("invisible target → disadvantage on ATTACK_ROLL_TARGET", () => {
+        const r = ConditionsSubsystem.getModifiers(["invisible"], 0, "ATTACK_ROLL_TARGET");
+        expect(r.disadvantage).toBe(true);
+    });
+
+    test("paralyzed target → advantage and autoCrit on ATTACK_ROLL_TARGET", () => {
+        const r = ConditionsSubsystem.getModifiers(["paralyzed"], 0, "ATTACK_ROLL_TARGET");
+        expect(r.advantage).toBe(true);
+        expect(r.autoCrit).toBe(true);
+    });
+
+    test("unconscious target → advantage and autoCrit on ATTACK_ROLL_TARGET", () => {
+        const r = ConditionsSubsystem.getModifiers(["unconscious"], 0, "ATTACK_ROLL_TARGET");
+        expect(r.advantage).toBe(true);
+        expect(r.autoCrit).toBe(true);
+    });
+
     test("exhaustion level 0 → flatBonus=0", () => {
         const r = ConditionsSubsystem.getModifiers([], 0, "ATTACK_ROLL");
         expect(r.flatBonus).toBe(0);
