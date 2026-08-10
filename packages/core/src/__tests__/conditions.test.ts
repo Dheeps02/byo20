@@ -676,8 +676,8 @@ describe("tickExpirations", () => {
             }),
         );
 
-        const result = await sub.tickExpirations(entity, 3);
-        expect(result.ok).toBe(true);
+        const expired = await sub.tickExpirations(entity, 0, 3);
+        expect(expired).toContain("frightened");
 
         const remaining = store.snapshot(entity);
         expect(remaining).toHaveLength(1);
@@ -705,8 +705,8 @@ describe("tickExpirations", () => {
             }),
         );
 
-        await sub.tickExpirations(entity, 10);
-
+        const expired = await sub.tickExpirations(entity, 0, 10);
+        expect(expired).toHaveLength(0);
         expect(store.snapshot(entity)).toHaveLength(2);
     });
 
@@ -722,9 +722,74 @@ describe("tickExpirations", () => {
             }),
         );
 
-        await sub.tickExpirations(entity, 4);
-
+        const expired = await sub.tickExpirations(entity, 0, 4);
+        expect(expired).toHaveLength(0);
         expect(store.snapshot(entity)).toHaveLength(1);
+    });
+
+    test("clock-expired: expiresAtTime <= currentClockMinutes → expired and returned", async () => {
+        const entity = "entity-clock1";
+        await sub.applyCondition(
+            makeOpts({
+                entityId: entity,
+                conditionName: "charmed",
+                scope: "TIMED",
+                expiresAtTime: 100,
+                expiresAtRound: null,
+                sourceId: "s1",
+            }),
+        );
+
+        const expired = await sub.tickExpirations(entity, 100, 0);
+        expect(expired).toContain("charmed");
+        expect(store.snapshot(entity)).toHaveLength(0);
+    });
+
+    test("clock-not-expired: expiresAtTime > currentClockMinutes → not expired", async () => {
+        const entity = "entity-clock2";
+        await sub.applyCondition(
+            makeOpts({
+                entityId: entity,
+                conditionName: "charmed",
+                scope: "TIMED",
+                expiresAtTime: 100,
+                expiresAtRound: null,
+                sourceId: "s1",
+            }),
+        );
+
+        const expired = await sub.tickExpirations(entity, 99, 0);
+        expect(expired).toHaveLength(0);
+        expect(store.snapshot(entity)).toHaveLength(1);
+    });
+
+    test("mix: round-expired and clock-expired → both returned", async () => {
+        const entity = "entity-clock3";
+        await sub.applyCondition(
+            makeOpts({
+                entityId: entity,
+                conditionName: "frightened",
+                scope: "TIMED",
+                expiresAtRound: 5,
+                expiresAtTime: null,
+                sourceId: "s1",
+            }),
+        );
+        await sub.applyCondition(
+            makeOpts({
+                entityId: entity,
+                conditionName: "charmed",
+                scope: "TIMED",
+                expiresAtTime: 100,
+                expiresAtRound: null,
+                sourceId: "s2",
+            }),
+        );
+
+        const expired = await sub.tickExpirations(entity, 100, 5);
+        expect(expired).toContain("frightened");
+        expect(expired).toContain("charmed");
+        expect(store.snapshot(entity)).toHaveLength(0);
     });
 });
 

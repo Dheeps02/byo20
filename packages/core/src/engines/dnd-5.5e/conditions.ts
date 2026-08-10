@@ -256,26 +256,34 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
     }
 
     /**
-     * Remove all TIMED effects whose `expiresAtRound` is ≤ `currentRound`.
+     * Remove all effects whose `expiresAtRound` ≤ `currentRound` or `expiresAtTime` ≤ `currentClockMinutes`.
      * Called at the start of each round by the combat engine.
      *
      * @param entityId - Entity UUID.
+     * @param currentClockMinutes - Current world-clock value in integer minutes.
      * @param currentRound - The round number that has just started.
-     * @returns Ok on success.
+     * @returns Array of expired condition names (deduplicated); empty if nothing expired.
      */
-    async tickExpirations(entityId: string, currentRound: number): Promise<Result<void, GameRejection>> {
+    async tickExpirations(
+        entityId: string,
+        currentClockMinutes: number,
+        currentRound: number,
+    ): Promise<ConditionName[]> {
         const all = await this.effects.getActiveEffects(entityId);
         const expired = all.filter(
-            (e) => e.scope === "TIMED" && e.expiresAtRound !== null && e.expiresAtRound <= currentRound,
+            (e) =>
+                (e.expiresAtRound !== null && e.expiresAtRound <= currentRound) ||
+                (e.expiresAtTime !== null && e.expiresAtTime <= currentClockMinutes),
         );
+        const expiredNames = [...new Set(expired.map((e) => e.name as ConditionName))];
         for (const e of expired) {
             await this.effects.removeEntityEffectsBySource(entityId, e.name, e.sourceId);
         }
         getLogger().debug(
-            { encounterId: this.encounterId, entityId, currentRound, expired: expired.length },
+            { encounterId: this.encounterId, entityId, currentClockMinutes, currentRound, expired: expired.length },
             "tickExpirations",
         );
-        return { ok: true, value: undefined };
+        return expiredNames;
     }
 
     /**
