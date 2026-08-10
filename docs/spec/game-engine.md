@@ -580,6 +580,7 @@ ActiveEffect {
   sourceKind: string      // "spell" | "ability" | "environment" | "system"
   scope: EffectScope      // COMBAT | TIMED | SUSTAINED
   expiresAtRound: number | null  // combat round number, null when scope is COMBAT or SUSTAINED
+  expiresAtTime: number | null   // world-clock ms timestamp, null when scope is COMBAT or SUSTAINED
 }
 
 // Stored per entity in the encounter effects hash in Redis:

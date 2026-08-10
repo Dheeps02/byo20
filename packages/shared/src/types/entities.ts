@@ -146,6 +146,11 @@ export const ActiveEffectSchema = z.object({
      * `null` when `scope` is `COMBAT` (cleared at combat end) or `SUSTAINED` (counter-action required).
      */
     expiresAtRound: z.number().int().min(1).nullable(),
+    /**
+     * World-clock Unix timestamp (ms) at which this TIMED effect expires.
+     * `null` when `scope` is `COMBAT` or `SUSTAINED`.
+     */
+    expiresAtTime: z.number().int().nullable(),
 });
 /** A single active condition effect stored in the Redis encounter effects hash. */
 export type ActiveEffect = z.infer<typeof ActiveEffectSchema>;
