@@ -181,18 +181,17 @@ describe("getModifiers", () => {
         expect(chk.disadvantage).toBe(false);
     });
 
-    test("poisoned → disadvantage on ATTACK_ROLL and ABILITY_CHECK and SKILL_CHECK", () => {
+    test("poisoned → disadvantage on ATTACK_ROLL and ABILITY_CHECK, not on saves", () => {
         expect(sub.getModifiers(["poisoned"], "ATTACK_ROLL").disadvantage).toBe(true);
         expect(sub.getModifiers(["poisoned"], "ABILITY_CHECK").disadvantage).toBe(true);
-        expect(sub.getModifiers(["poisoned"], "SKILL_CHECK").disadvantage).toBe(true);
-        expect(sub.getModifiers(["poisoned"], "SAVING_THROW").disadvantage).toBe(false);
+        expect(sub.getModifiers(["poisoned"], "SAVE_DEX").disadvantage).toBe(false);
+        expect(sub.getModifiers(["poisoned"], "SAVE_STR").disadvantage).toBe(false);
     });
 
-    test("frightened → disadvantage on attacks, ability checks, and skill checks", () => {
+    test("frightened → disadvantage on ATTACK_ROLL and ABILITY_CHECK, not on saves", () => {
         expect(sub.getModifiers(["frightened"], "ATTACK_ROLL").disadvantage).toBe(true);
         expect(sub.getModifiers(["frightened"], "ABILITY_CHECK").disadvantage).toBe(true);
-        expect(sub.getModifiers(["frightened"], "SKILL_CHECK").disadvantage).toBe(true);
-        expect(sub.getModifiers(["frightened"], "SAVING_THROW").disadvantage).toBe(false);
+        expect(sub.getModifiers(["frightened"], "SAVE_DEX").disadvantage).toBe(false);
     });
 
     test("invisible → advantage on ATTACK_ROLL only", () => {
@@ -214,41 +213,58 @@ describe("getModifiers", () => {
         expect(r.speedMultiplier).toBe(1);
     });
 
-    test("paralyzed → actionsBlocked, speedMultiplier=0, autoFail on SAVING_THROW, autoCrit", () => {
-        const save = sub.getModifiers(["paralyzed"], "SAVING_THROW");
-        expect(save.actionsBlocked).toBe(true);
-        expect(save.speedMultiplier).toBe(0);
-        expect(save.autoFail).toBe(true);
-        expect(save.autoCrit).toBe(true);
-        expect(save.sources).toContain("paralyzed");
+    test("paralyzed → actionsBlocked, speedMultiplier=0, autoFail on SAVE_STR and SAVE_DEX, autoCrit on ATTACK_ROLL_TARGET", () => {
+        const saveStr = sub.getModifiers(["paralyzed"], "SAVE_STR");
+        expect(saveStr.actionsBlocked).toBe(true);
+        expect(saveStr.speedMultiplier).toBe(0);
+        expect(saveStr.autoFail).toBe(true);
+        expect(saveStr.sources).toContain("paralyzed");
 
-        // autoFail does not apply to non-saving-throw checks
+        const saveDex = sub.getModifiers(["paralyzed"], "SAVE_DEX");
+        expect(saveDex.autoFail).toBe(true);
+
+        // autoFail only on STR/DEX saves, not other saves
+        const saveCon = sub.getModifiers(["paralyzed"], "SAVE_CON");
+        expect(saveCon.autoFail).toBe(false);
+
+        // autoCrit only when this entity is the attack target
+        const target = sub.getModifiers(["paralyzed"], "ATTACK_ROLL_TARGET");
+        expect(target.autoCrit).toBe(true);
+
+        // autoCrit not set on other check types
         const atk = sub.getModifiers(["paralyzed"], "ATTACK_ROLL");
+        expect(atk.autoCrit).toBe(false);
         expect(atk.autoFail).toBe(false);
     });
 
-    test("stunned → actionsBlocked, speedMultiplier=0, autoFail on SAVING_THROW, no autoCrit", () => {
-        const save = sub.getModifiers(["stunned"], "SAVING_THROW");
+    test("stunned → actionsBlocked, speedMultiplier=0, autoFail on SAVE_STR/DEX, no autoCrit", () => {
+        const save = sub.getModifiers(["stunned"], "SAVE_STR");
         expect(save.actionsBlocked).toBe(true);
         expect(save.speedMultiplier).toBe(0);
         expect(save.autoFail).toBe(true);
-        expect(save.autoCrit).toBe(false);
+
+        const target = sub.getModifiers(["stunned"], "ATTACK_ROLL_TARGET");
+        expect(target.autoCrit).toBe(false);
     });
 
-    test("unconscious → actionsBlocked, speedMultiplier=0, autoFail on SAVING_THROW, autoCrit", () => {
-        const save = sub.getModifiers(["unconscious"], "SAVING_THROW");
+    test("unconscious → actionsBlocked, speedMultiplier=0, autoFail on SAVE_STR/DEX, autoCrit on ATTACK_ROLL_TARGET", () => {
+        const save = sub.getModifiers(["unconscious"], "SAVE_DEX");
         expect(save.actionsBlocked).toBe(true);
         expect(save.speedMultiplier).toBe(0);
         expect(save.autoFail).toBe(true);
-        expect(save.autoCrit).toBe(true);
+
+        const target = sub.getModifiers(["unconscious"], "ATTACK_ROLL_TARGET");
+        expect(target.autoCrit).toBe(true);
     });
 
-    test("petrified → actionsBlocked, speedMultiplier=0, autoFail on SAVING_THROW, no autoCrit", () => {
-        const save = sub.getModifiers(["petrified"], "SAVING_THROW");
+    test("petrified → actionsBlocked, speedMultiplier=0, autoFail on SAVE_STR/DEX, no autoCrit", () => {
+        const save = sub.getModifiers(["petrified"], "SAVE_STR");
         expect(save.actionsBlocked).toBe(true);
         expect(save.speedMultiplier).toBe(0);
         expect(save.autoFail).toBe(true);
-        expect(save.autoCrit).toBe(false);
+
+        const target = sub.getModifiers(["petrified"], "ATTACK_ROLL_TARGET");
+        expect(target.autoCrit).toBe(false);
     });
 
     test("prone → disadvantage on ATTACK_ROLL only", () => {
@@ -256,13 +272,17 @@ describe("getModifiers", () => {
         expect(sub.getModifiers(["prone"], "ABILITY_CHECK").disadvantage).toBe(false);
     });
 
-    test("restrained → speedMultiplier=0, disadvantage on ATTACK_ROLL and SAVING_THROW", () => {
+    test("restrained → speedMultiplier=0, disadvantage on ATTACK_ROLL and SAVE_DEX only", () => {
         const atk = sub.getModifiers(["restrained"], "ATTACK_ROLL");
         expect(atk.speedMultiplier).toBe(0);
         expect(atk.disadvantage).toBe(true);
 
-        const save = sub.getModifiers(["restrained"], "SAVING_THROW");
-        expect(save.disadvantage).toBe(true);
+        const saveDex = sub.getModifiers(["restrained"], "SAVE_DEX");
+        expect(saveDex.disadvantage).toBe(true);
+
+        // Restrained only imposes disadvantage on DEX saves, not other saves
+        const saveStr = sub.getModifiers(["restrained"], "SAVE_STR");
+        expect(saveStr.disadvantage).toBe(false);
     });
 
     test("blinded + invisible → both advantage and disadvantage set (engine cancels)", () => {

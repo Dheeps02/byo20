@@ -154,8 +154,23 @@ export type ActiveEffect = z.infer<typeof ActiveEffectSchema>;
 /**
  * Zod schema for the check types used when computing condition modifiers.
  * UPPERCASE discriminants — engine protocol vocabulary, not DB values.
+ *
+ * - `ABILITY_CHECK` — any ability or skill check
+ * - `ATTACK_ROLL` — attack made BY this entity
+ * - `ATTACK_ROLL_TARGET` — this entity is the attack target (drives autoCrit)
+ * - `SAVE_STR / SAVE_DEX / SAVE_CON / SAVE_INT / SAVE_WIS / SAVE_CHA` — per-ability saving throws
  */
-export const CheckTypeSchema = z.enum(["ABILITY_CHECK", "SKILL_CHECK", "SAVING_THROW", "ATTACK_ROLL"]);
+export const CheckTypeSchema = z.enum([
+    "ABILITY_CHECK",
+    "ATTACK_ROLL",
+    "ATTACK_ROLL_TARGET",
+    "SAVE_STR",
+    "SAVE_DEX",
+    "SAVE_CON",
+    "SAVE_INT",
+    "SAVE_WIS",
+    "SAVE_CHA",
+]);
 /** The category of d20 roll being made — determines which conditions apply modifiers. */
 export type CheckType = z.infer<typeof CheckTypeSchema>;
 

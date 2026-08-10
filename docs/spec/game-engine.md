@@ -593,7 +593,11 @@ The conditions system exposes a query method that the combat engine calls before
 
 ```
 // CheckType uses UPPERCASE discriminants (from @byo20/shared):
-CheckType = "ABILITY_CHECK" | "SKILL_CHECK" | "SAVING_THROW" | "ATTACK_ROLL"
+CheckType =
+  | "ABILITY_CHECK"       // any ability or skill check
+  | "ATTACK_ROLL"         // attack made BY this entity
+  | "ATTACK_ROLL_TARGET"  // this entity is the melee attack target (drives autoCrit)
+  | "SAVE_STR" | "SAVE_DEX" | "SAVE_CON" | "SAVE_INT" | "SAVE_WIS" | "SAVE_CHA"
 
 getModifiers(conditions: ConditionName[], checkType: CheckType) → ModifierResult
 

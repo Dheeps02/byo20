@@ -267,8 +267,8 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
             }
         }
 
-        // ── autoFail: STR/DEX saving throws ───────────────────────────────────
-        if (checkType === "SAVING_THROW") {
+        // ── autoFail: per-ability saves — PHB: paralyzed/petrified/stunned/unconscious auto-fail STR and DEX ──
+        if (checkType === "SAVE_STR" || checkType === "SAVE_DEX") {
             for (const c of AUTO_FAIL_CONDITIONS) {
                 if (set.has(c)) {
                     autoFail = true;
@@ -277,12 +277,14 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
             }
         }
 
-        // ── autoCrit: paralyzed/unconscious grant auto-crits to attackers ──────
-        // This flag is read by the engine when this entity is the ATTACK TARGET.
-        for (const c of AUTO_CRIT_TARGET) {
-            if (set.has(c)) {
-                autoCrit = true;
-                sources.add(c);
+        // ── autoCrit: paralyzed/unconscious grant auto-crits to melee attackers within 5 ft ──
+        // Evaluated when this entity is the ATTACK_ROLL_TARGET.
+        if (checkType === "ATTACK_ROLL_TARGET") {
+            for (const c of AUTO_CRIT_TARGET) {
+                if (set.has(c)) {
+                    autoCrit = true;
+                    sources.add(c);
+                }
             }
         }
 
@@ -301,7 +303,7 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
                 }
             }
         }
-        if (checkType === "ABILITY_CHECK" || checkType === "SKILL_CHECK") {
+        if (checkType === "ABILITY_CHECK") {
             for (const c of ["frightened", "poisoned"] as const) {
                 if (set.has(c)) {
                     disadvantage = true;
@@ -309,8 +311,8 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
                 }
             }
         }
-        if (checkType === "SAVING_THROW" && set.has("restrained")) {
-            // Restrained imposes disadvantage on DEX saves; the engine knows the ability
+        // Restrained imposes disadvantage on DEX saves specifically (PHB).
+        if (checkType === "SAVE_DEX" && set.has("restrained")) {
             disadvantage = true;
             sources.add("restrained");
         }
