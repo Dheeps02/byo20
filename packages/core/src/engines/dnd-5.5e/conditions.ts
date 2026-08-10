@@ -201,20 +201,26 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
     }
 
     /**
-     * Remove all `ActiveEffect` entries for (conditionName, sourceId) from an entity.
-     * If another source has applied the same condition, it remains active.
+     * Remove `ActiveEffect` entries for a condition from an entity.
+     * When `sourceId` is provided, only the matching (conditionName, sourceId) entry is removed;
+     * other sources applying the same condition remain active.
+     * When `sourceId` is omitted, all effects for that condition name are removed regardless of source.
      *
      * @param entityId - Entity UUID.
      * @param conditionName - Condition to remove.
-     * @param sourceId - The specific source to remove (other sources remain).
+     * @param sourceId - Optional. The specific source to remove; omit to clear all sources.
      * @returns Ok on success.
      */
     async removeCondition(
         entityId: string,
         conditionName: ConditionName,
-        sourceId: string,
+        sourceId?: string,
     ): Promise<Result<void, GameRejection>> {
-        await this.effects.removeEntityEffectsBySource(entityId, conditionName, sourceId);
+        if (sourceId !== undefined) {
+            await this.effects.removeEntityEffectsBySource(entityId, conditionName, sourceId);
+        } else {
+            await this.effects.removeAllEffectsByCondition(entityId, conditionName);
+        }
         getLogger().debug({ encounterId: this.encounterId, entityId, conditionName, sourceId }, "removeCondition");
         return { ok: true, value: undefined };
     }

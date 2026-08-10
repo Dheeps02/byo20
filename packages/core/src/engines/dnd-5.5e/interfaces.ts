@@ -54,6 +54,13 @@ export interface IEncounterEffectsStore {
      */
     removeAllEffectsBySource(entityId: string, sourceId: string): Promise<void>;
     /**
+     * Remove all effects for an entity where effect name matches, regardless of source.
+     * Used when `removeCondition` is called without a specific `sourceId`.
+     * @param entityId - Entity UUID.
+     * @param name - Effect name to remove from all sources.
+     */
+    removeAllEffectsByCondition(entityId: string, name: string): Promise<void>;
+    /**
      * Remove all effects for an entity, unconditionally.
      * Used at COMBAT_ENDED to wipe COMBAT-scoped effects.
      * @param entityId - Entity UUID.

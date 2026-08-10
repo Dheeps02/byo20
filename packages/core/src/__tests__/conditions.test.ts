@@ -61,6 +61,16 @@ class MemoryEffectsStore implements IEncounterEffectsStore {
         this.data.delete(entityId);
     }
 
+    async removeAllEffectsByCondition(entityId: string, name: string): Promise<void> {
+        const current = this.data.get(entityId) ?? [];
+        const remaining = current.filter((e) => e.name !== name);
+        if (remaining.length === 0) {
+            this.data.delete(entityId);
+        } else {
+            this.data.set(entityId, remaining);
+        }
+    }
+
     /** Test helper — preset effects without going through applyCondition. */
     seed(entityId: string, effects: ActiveEffect[]): void {
         this.data.set(entityId, [...effects]);
@@ -487,6 +497,20 @@ describe("removeCondition", () => {
     test("returns ok even when no matching effect exists", async () => {
         const result = await sub.removeCondition("entity-unknown", "blinded", "no-source");
         expect(result.ok).toBe(true);
+    });
+
+    test("omitting sourceId removes all sources for the condition", async () => {
+        const entity = "entity-all-sources";
+        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "frightened", sourceId: "src-A" }));
+        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "frightened", sourceId: "src-B" }));
+        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "blinded", sourceId: "src-C" }));
+
+        const result = await sub.removeCondition(entity, "frightened");
+        expect(result.ok).toBe(true);
+
+        const remaining = store.snapshot(entity);
+        expect(remaining).toHaveLength(1);
+        expect(remaining[0].name).toBe("blinded");
     });
 });
 
