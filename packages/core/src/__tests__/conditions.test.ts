@@ -47,6 +47,20 @@ class MemoryEffectsStore implements IEncounterEffectsStore {
         }
     }
 
+    async removeAllEffectsBySource(entityId: string, sourceId: string): Promise<void> {
+        const current = this.data.get(entityId) ?? [];
+        const remaining = current.filter((e) => e.sourceId !== sourceId);
+        if (remaining.length === 0) {
+            this.data.delete(entityId);
+        } else {
+            this.data.set(entityId, remaining);
+        }
+    }
+
+    async clearAllEffects(entityId: string): Promise<void> {
+        this.data.delete(entityId);
+    }
+
     /** Test helper — preset effects without going through applyCondition. */
     seed(entityId: string, effects: ActiveEffect[]): void {
         this.data.set(entityId, [...effects]);
@@ -530,6 +544,161 @@ describe("getActiveEffects", () => {
 
         const effects = await sub.getActiveEffects(entity);
         expect(effects).toHaveLength(2);
+    });
+});
+
+// ── removeConditionsBySource ──────────────────────────────────────────────────
+
+describe("removeConditionsBySource", () => {
+    let sub: ConditionsSubsystem;
+    let store: MemoryEffectsStore;
+
+    beforeEach(() => {
+        [sub, store] = makeSubsystem();
+    });
+
+    test("removes all effects from the given source, leaves other sources intact", async () => {
+        const entity = "entity-rcs";
+        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "frightened", sourceId: "dragon" }));
+        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "poisoned", sourceId: "dragon" }));
+        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "blinded", sourceId: "goblin" }));
+
+        const result = await sub.removeConditionsBySource(entity, "dragon");
+        expect(result.ok).toBe(true);
+
+        const remaining = store.snapshot(entity);
+        expect(remaining).toHaveLength(1);
+        expect(remaining[0].sourceId).toBe("goblin");
+    });
+
+    test("returns ok when source has no effects", async () => {
+        const result = await sub.removeConditionsBySource("entity-none", "no-source");
+        expect(result.ok).toBe(true);
+    });
+});
+
+// ── clearAllConditions ────────────────────────────────────────────────────────
+
+describe("clearAllConditions", () => {
+    let sub: ConditionsSubsystem;
+    let store: MemoryEffectsStore;
+
+    beforeEach(() => {
+        [sub, store] = makeSubsystem();
+    });
+
+    test("wipes all effects for the entity", async () => {
+        const entity = "entity-cac";
+        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "frightened", sourceId: "s1" }));
+        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "poisoned", sourceId: "s2" }));
+
+        const result = await sub.clearAllConditions(entity);
+        expect(result.ok).toBe(true);
+        expect(store.snapshot(entity)).toHaveLength(0);
+    });
+
+    test("returns ok when entity has no effects", async () => {
+        const result = await sub.clearAllConditions("entity-empty");
+        expect(result.ok).toBe(true);
+    });
+});
+
+// ── tickExpirations ───────────────────────────────────────────────────────────
+
+describe("tickExpirations", () => {
+    let sub: ConditionsSubsystem;
+    let store: MemoryEffectsStore;
+
+    beforeEach(() => {
+        [sub, store] = makeSubsystem();
+    });
+
+    test("removes TIMED effects whose expiresAtRound <= currentRound", async () => {
+        const entity = "entity-tick";
+        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "frightened", scope: "TIMED", expiresAtRound: 3, sourceId: "s1" }));
+        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "poisoned", scope: "TIMED", expiresAtRound: 5, sourceId: "s2" }));
+
+        const result = await sub.tickExpirations(entity, 3);
+        expect(result.ok).toBe(true);
+
+        const remaining = store.snapshot(entity);
+        expect(remaining).toHaveLength(1);
+        expect(remaining[0].name).toBe("poisoned");
+    });
+
+    test("does not remove COMBAT or SUSTAINED effects", async () => {
+        const entity = "entity-tick2";
+        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "blinded", scope: "COMBAT", expiresAtRound: null, sourceId: "s1" }));
+        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "grappled", scope: "SUSTAINED", expiresAtRound: null, sourceId: "s2" }));
+
+        await sub.tickExpirations(entity, 10);
+
+        expect(store.snapshot(entity)).toHaveLength(2);
+    });
+
+    test("leaves TIMED effects that have not yet expired", async () => {
+        const entity = "entity-tick3";
+        await sub.applyCondition(makeOpts({ entityId: entity, conditionName: "frightened", scope: "TIMED", expiresAtRound: 5, sourceId: "s1" }));
+
+        await sub.tickExpirations(entity, 4);
+
+        expect(store.snapshot(entity)).toHaveLength(1);
+    });
+});
+
+// ── incrementExhaustion / decrementExhaustion ─────────────────────────────────
+
+describe("incrementExhaustion", () => {
+    let sub: ConditionsSubsystem;
+    let xStore: MemoryExhaustionStore;
+
+    beforeEach(() => {
+        [sub, , xStore] = makeSubsystem();
+    });
+
+    test("increments from 0 to 1", async () => {
+        const result = await sub.incrementExhaustion("char-inc");
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        expect(result.value).toBe(1);
+        expect(await xStore.getExhaustionLevel("char-inc")).toBe(1);
+    });
+
+    test("increments from 5 to 6", async () => {
+        await xStore.setExhaustionLevel("char-inc2", 5);
+        const result = await sub.incrementExhaustion("char-inc2");
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        expect(result.value).toBe(6);
+    });
+
+    test("rejects increment at level 6 (maximum)", async () => {
+        await xStore.setExhaustionLevel("char-max", 6);
+        const result = await sub.incrementExhaustion("char-max");
+        expect(result.ok).toBe(false);
+    });
+});
+
+describe("decrementExhaustion", () => {
+    let sub: ConditionsSubsystem;
+    let xStore: MemoryExhaustionStore;
+
+    beforeEach(() => {
+        [sub, , xStore] = makeSubsystem();
+    });
+
+    test("decrements from 3 to 2", async () => {
+        await xStore.setExhaustionLevel("char-dec", 3);
+        const result = await sub.decrementExhaustion("char-dec");
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        expect(result.value).toBe(2);
+        expect(await xStore.getExhaustionLevel("char-dec")).toBe(2);
+    });
+
+    test("rejects decrement at level 0 (minimum)", async () => {
+        const result = await sub.decrementExhaustion("char-zero");
+        expect(result.ok).toBe(false);
     });
 });
 

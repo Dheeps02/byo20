@@ -220,6 +220,104 @@ export class ConditionsSubsystem implements IConditionsSubsystem {
     }
 
     /**
+     * Remove all `ActiveEffect` entries applied by a single source, across all condition names.
+     * Used when Dispel Magic or a similar effect removes everything a caster applied.
+     *
+     * @param entityId - Entity UUID.
+     * @param sourceId - The source whose effects to clear entirely.
+     * @returns Ok on success.
+     */
+    async removeConditionsBySource(entityId: string, sourceId: string): Promise<Result<void, GameRejection>> {
+        await this.effects.removeAllEffectsBySource(entityId, sourceId);
+        getLogger().debug({ encounterId: this.encounterId, entityId, sourceId }, "removeConditionsBySource");
+        return { ok: true, value: undefined };
+    }
+
+    /**
+     * Remove all active effects for an entity unconditionally.
+     * Called at `COMBAT_ENDED` to clear COMBAT-scoped effects before persisting.
+     *
+     * @param entityId - Entity UUID.
+     * @returns Ok on success.
+     */
+    async clearAllConditions(entityId: string): Promise<Result<void, GameRejection>> {
+        await this.effects.clearAllEffects(entityId);
+        getLogger().debug({ encounterId: this.encounterId, entityId }, "clearAllConditions");
+        return { ok: true, value: undefined };
+    }
+
+    /**
+     * Remove all TIMED effects whose `expiresAtRound` is ≤ `currentRound`.
+     * Called at the start of each round by the combat engine.
+     *
+     * @param entityId - Entity UUID.
+     * @param currentRound - The round number that has just started.
+     * @returns Ok on success.
+     */
+    async tickExpirations(entityId: string, currentRound: number): Promise<Result<void, GameRejection>> {
+        const all = await this.effects.getActiveEffects(entityId);
+        const expired = all.filter(
+            (e) => e.scope === "TIMED" && e.expiresAtRound !== null && e.expiresAtRound <= currentRound,
+        );
+        for (const e of expired) {
+            await this.effects.removeEntityEffectsBySource(entityId, e.name, e.sourceId);
+        }
+        getLogger().debug(
+            { encounterId: this.encounterId, entityId, currentRound, expired: expired.length },
+            "tickExpirations",
+        );
+        return { ok: true, value: undefined };
+    }
+
+    /**
+     * Increment a character's exhaustion level by 1, capped at `EXHAUSTION_MAX` (6).
+     *
+     * @param characterId - Character UUID.
+     * @returns Ok with the new level; err if already at maximum.
+     */
+    async incrementExhaustion(characterId: string): Promise<Result<number, GameRejection>> {
+        const current = await this.exhaustion.getExhaustionLevel(characterId);
+        if (current >= EXHAUSTION_MAX) {
+            return {
+                ok: false,
+                error: {
+                    reason: `Exhaustion already at maximum (${EXHAUSTION_MAX}).`,
+                    action_type: "EXHAUSTION_SET",
+                    context: { characterId, level: current },
+                },
+            };
+        }
+        const next = current + 1;
+        await this.exhaustion.setExhaustionLevel(characterId, next);
+        getLogger().debug({ characterId, from: current, to: next }, "incrementExhaustion");
+        return { ok: true, value: next };
+    }
+
+    /**
+     * Decrement a character's exhaustion level by 1, floored at `EXHAUSTION_MIN` (0).
+     *
+     * @param characterId - Character UUID.
+     * @returns Ok with the new level; err if already at minimum.
+     */
+    async decrementExhaustion(characterId: string): Promise<Result<number, GameRejection>> {
+        const current = await this.exhaustion.getExhaustionLevel(characterId);
+        if (current <= EXHAUSTION_MIN) {
+            return {
+                ok: false,
+                error: {
+                    reason: `Exhaustion already at minimum (${EXHAUSTION_MIN}).`,
+                    action_type: "EXHAUSTION_SET",
+                    context: { characterId, level: current },
+                },
+            };
+        }
+        const next = current - 1;
+        await this.exhaustion.setExhaustionLevel(characterId, next);
+        getLogger().debug({ characterId, from: current, to: next }, "decrementExhaustion");
+        return { ok: true, value: next };
+    }
+
+    /**
      * Fetch the raw `ActiveEffect` list for an entity (all sources, all conditions).
      *
      * @param entityId - Entity UUID.

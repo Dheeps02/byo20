@@ -46,6 +46,19 @@ export interface IEncounterEffectsStore {
      * @param sourceId - Source entity UUID (or `"system"`) to remove; other sources remain.
      */
     removeEntityEffectsBySource(entityId: string, name: string, sourceId: string): Promise<void>;
+    /**
+     * Remove all effects for an entity where sourceId matches, regardless of effect name.
+     * Used to clear all conditions a single source applied (e.g. Dispel Magic on a caster).
+     * @param entityId - Entity UUID.
+     * @param sourceId - Source entity UUID (or `"system"`) whose effects to remove.
+     */
+    removeAllEffectsBySource(entityId: string, sourceId: string): Promise<void>;
+    /**
+     * Remove all effects for an entity, unconditionally.
+     * Used at COMBAT_ENDED to wipe COMBAT-scoped effects.
+     * @param entityId - Entity UUID.
+     */
+    clearAllEffects(entityId: string): Promise<void>;
 }
 
 /**
