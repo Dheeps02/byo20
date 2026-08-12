@@ -52,9 +52,22 @@ Valid scopes: `engine`, `transport`, `ai`, `storage`, `shared`, `server`, `deskt
 ## Branching
 
 - `main` — stable, tagged, releases only
-- `dev` — integration branch
-- `feat/*` — one per workstream
-- Never push directly to main
+- `dev` — integration branch, stack trunk for all stacked PRs
+- `feat/*`, `fix/*`, `chore/*`, `docs/*` — one per workstream or stack layer
+- Never push directly to main or dev
+
+### Stacked PRs
+
+Use stacked PRs for work with sequential dependencies. See `.claude/rules/stacked-prs.md`
+for the full workflow. The short version:
+
+```bash
+gh stack init <first-branch>   # start a stack off dev
+gh stack add  <next-branch>    # add a layer on top
+gh stack submit                # push all branches + create all PRs
+```
+
+Standalone PRs are fine for small independent changes.
 
 ## Code Explanations — Required
 
